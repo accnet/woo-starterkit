@@ -6,51 +6,27 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-
-$logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
-$logo_html = '';
-
-if ( $logo_id ) {
-	$logo_html = wp_get_attachment_image( $logo_id, 'medium', false, array( 'class' => 'starterkit-checkout__brand-logo' ) );
-}
 ?>
-<div class="starterkit-checkout-app">
-	<header class="starterkit-checkout-app__header">
-		<div class="starterkit-checkout-app__header-shell">
-			<div class="starterkit-checkout-app__header-main">
-				<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="starterkit-checkout-app__brand" aria-label="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
-					<?php if ( $logo_html ) : ?>
-						<?php echo wp_kses_post( $logo_html ); ?>
-					<?php else : ?>
-						<span class="starterkit-checkout-app__brand-text"><?php bloginfo( 'name' ); ?></span>
-					<?php endif; ?>
-				</a>
+<div class="starterkit-checkout">
+	<?php do_action( 'woocommerce_before_checkout_form', $checkout ); ?>
 
-				<nav class="starterkit-checkout-app__steps" aria-label="<?php esc_attr_e( 'Checkout progress', 'starterkit' ); ?>">
-					<a href="<?php echo esc_url( wc_get_cart_url() ); ?>" class="starterkit-checkout-app__step"><?php esc_html_e( 'Cart', 'starterkit' ); ?></a>
-					<span class="starterkit-checkout-app__separator">/</span>
-					<span class="starterkit-checkout-app__step starterkit-checkout-app__step--active"><?php esc_html_e( 'Checkout', 'starterkit' ); ?></span>
-				</nav>
+	<form name="checkout" method="post" class="starterkit-checkout__form checkout woocommerce-checkout" action="<?php echo esc_url( wc_get_checkout_url() ); ?>" enctype="multipart/form-data">
+		<div class="starterkit-checkout__grid">
+			<div class="starterkit-checkout__main">
+				<?php get_template_part( 'template-parts/commerce/checkout/checkout', 'customer-details' ); ?>
+
+				<div class="starterkit-checkout__payment">
+					<h2 class="starterkit-checkout__section-title"><?php esc_html_e( 'Payment', 'starterkit' ); ?></h2>
+					<p class="starterkit-checkout__section-desc"><?php esc_html_e( 'All transactions are secure and encrypted.', 'starterkit' ); ?></p>
+					<?php woocommerce_checkout_payment(); ?>
+				</div>
 			</div>
-		</div>
-	</header>
 
-	<div class="starterkit-checkout-app__shell">
-		<div class="starterkit-checkout-app__grid">
-			<section class="starterkit-checkout-app__main">
-				<div class="starterkit-checkout-app__main-inner">
-					<div class="starterkit-checkout-app__notice" data-checkout-notice></div>
-					<div id="starterkit-checkout-form-root" class="starterkit-checkout-app__form-root">
-						<div class="starterkit-checkout-app__loading"><?php esc_html_e( 'Preparing checkout...', 'starterkit' ); ?></div>
-					</div>
-				</div>
-			</section>
-
-			<aside class="starterkit-checkout-app__sidebar">
-				<div class="starterkit-checkout-app__sidebar-inner" id="starterkit-checkout-summary-root">
-					<div class="starterkit-checkout-app__loading"><?php esc_html_e( 'Preparing checkout...', 'starterkit' ); ?></div>
-				</div>
+			<aside class="starterkit-checkout__sidebar">
+				<?php get_template_part( 'template-parts/commerce/checkout/checkout', 'summary' ); ?>
 			</aside>
 		</div>
-	</div>
+	</form>
+
+	<?php do_action( 'woocommerce_after_checkout_form', $checkout ); ?>
 </div>

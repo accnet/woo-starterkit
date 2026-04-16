@@ -10,7 +10,13 @@ defined( 'ABSPATH' ) || exit;
 get_header( 'shop' );
 ?>
 <main id="primary" class="site-main starterkit-woocommerce-cart">
-	<?php get_template_part( 'template-parts/commerce/cart/cart', 'page' ); ?>
+	<div class="container">
+		<?php
+		do_action( 'woocommerce_before_cart' );
+		get_template_part( 'template-parts/commerce/cart/cart', 'page' );
+		do_action( 'woocommerce_after_cart' );
+		?>
+	</div>
 </main>
 <?php
 get_footer( 'shop' );

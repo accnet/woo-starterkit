@@ -237,29 +237,12 @@ class AssetManager {
 	 * @return void
 	 */
 	protected function enqueue_commerce_assets() {
-		if ( ! class_exists( 'WooCommerce' ) || ! function_exists( 'is_cart' ) ) {
+		if ( ! function_exists( 'is_cart' ) ) {
 			return;
 		}
 
 		$base = get_template_directory();
 		$uri  = get_template_directory_uri();
-		$core_js = $base . '/assets/js/commerce-store.js';
-
-		if ( file_exists( $core_js ) ) {
-			wp_enqueue_script(
-				'starterkit-commerce-store',
-				$uri . '/assets/js/commerce-store.js',
-				array(),
-				(string) filemtime( $core_js ),
-				true
-			);
-
-			wp_localize_script(
-				'starterkit-commerce-store',
-				'starterkitCommerce',
-				$this->build_commerce_config()
-			);
-		}
 
 		if ( is_cart() ) {
 			$css = $base . '/assets/css/cart.css';
@@ -269,7 +252,7 @@ class AssetManager {
 				wp_enqueue_style( 'starterkit-cart', $uri . '/assets/css/cart.css', array( 'starterkit-theme' ), (string) filemtime( $css ) );
 			}
 			if ( file_exists( $js ) ) {
-				wp_enqueue_script( 'starterkit-cart', $uri . '/assets/js/cart.js', array( 'starterkit-commerce-store' ), (string) filemtime( $js ), true );
+				wp_enqueue_script( 'starterkit-cart', $uri . '/assets/js/cart.js', array(), (string) filemtime( $js ), true );
 			}
 		}
 
@@ -281,104 +264,9 @@ class AssetManager {
 				wp_enqueue_style( 'starterkit-checkout', $uri . '/assets/css/checkout.css', array( 'starterkit-theme' ), (string) filemtime( $css ) );
 			}
 			if ( file_exists( $js ) ) {
-				wp_enqueue_script( 'starterkit-checkout', $uri . '/assets/js/checkout.js', array( 'starterkit-commerce-store' ), (string) filemtime( $js ), true );
+				wp_enqueue_script( 'starterkit-checkout', $uri . '/assets/js/checkout.js', array( 'jquery', 'wc-checkout' ), (string) filemtime( $js ), true );
 			}
 		}
-	}
-
-	/**
-	 * Build front-end config used by custom cart and checkout UIs.
-	 *
-	 * @return array<string, mixed>
-	 */
-	protected function build_commerce_config() {
-		$countries       = function_exists( 'WC' ) ? WC()->countries : null;
-		$allowed         = $countries ? $countries->get_allowed_countries() : array();
-		$states          = $countries ? $countries->get_states() : array();
-		$payment_methods = array();
-		$free_shipping_threshold = (float) starterkit()->settings_manager()->get( 'free_shipping_threshold', '0' );
-
-		if ( function_exists( 'WC' ) && null !== WC()->payment_gateways() ) {
-			foreach ( WC()->payment_gateways()->get_available_payment_gateways() as $gateway ) {
-				$payment_methods[] = array(
-					'id'                => (string) $gateway->id,
-					'title'             => wp_strip_all_tags( (string) $gateway->get_title() ),
-					'description'       => wp_strip_all_tags( (string) $gateway->get_description() ),
-					'order_button_text' => wp_strip_all_tags( (string) $gateway->order_button_text ),
-					'icon_html'         => wp_kses_post( $gateway->get_icon() ),
-					'supports'          => array_values( array_map( 'strval', (array) $gateway->supports ) ),
-					'has_fields'        => ! empty( $gateway->has_fields ),
-				);
-			}
-		}
-
-		return array(
-			'apiBase'        => esc_url_raw( rest_url( 'wc/store/v1' ) ),
-			'nonce'          => wp_create_nonce( 'wc_store_api' ),
-			'cartUrl'        => function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' ),
-			'checkoutUrl'    => function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : home_url( '/checkout/' ),
-			'orderReceivedBase' => function_exists( 'wc_get_checkout_url' ) ? trailingslashit( wc_get_checkout_url() ) . 'order-received/' : trailingslashit( home_url( '/checkout/' ) ) . 'order-received/',
-			'shopUrl'        => function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' ),
-			'countries'      => $allowed,
-			'states'         => $states,
-			'paymentMethods' => $payment_methods,
-			'freeShippingThreshold' => $free_shipping_threshold,
-			'i18n'           => array(
-				'loadingCart'       => __( 'Loading your cart...', 'starterkit' ),
-				'loadingCheckout'   => __( 'Preparing checkout...', 'starterkit' ),
-				'updateError'       => __( 'We could not update your cart. Please try again.', 'starterkit' ),
-				'checkoutError'     => __( 'We could not process checkout. Please review your details and try again.', 'starterkit' ),
-				'emptyCart'         => __( 'Your cart is empty.', 'starterkit' ),
-				'emptyCartBody'     => __( 'Add products before continuing to checkout.', 'starterkit' ),
-				'backToShop'        => __( 'Continue shopping', 'starterkit' ),
-				'applyingCoupon'    => __( 'Applying…', 'starterkit' ),
-				'placeOrder'        => __( 'Place order', 'starterkit' ),
-				'processingOrder'   => __( 'Processing…', 'starterkit' ),
-				'remove'            => __( 'Remove', 'starterkit' ),
-				'subtotal'          => __( 'Subtotal', 'starterkit' ),
-				'shipping'          => __( 'Shipping', 'starterkit' ),
-				'total'             => __( 'Total', 'starterkit' ),
-				'cartTitle'         => __( 'Your cart', 'starterkit' ),
-				'checkoutTitle'     => __( 'Checkout', 'starterkit' ),
-				'contact'           => __( 'Contact', 'starterkit' ),
-				'delivery'          => __( 'Delivery', 'starterkit' ),
-				'payment'           => __( 'Payment', 'starterkit' ),
-				'orderSummary'      => __( 'Order summary', 'starterkit' ),
-				'discountCode'      => __( 'Discount code', 'starterkit' ),
-				'apply'             => __( 'Apply', 'starterkit' ),
-				'selectOption'      => __( 'Select', 'starterkit' ),
-				'shippingPending'   => __( 'Enter shipping address', 'starterkit' ),
-				'paymentUnavailable'=> __( 'No payment methods are currently available for this order.', 'starterkit' ),
-				'itemCountSingular' => __( '%d item', 'starterkit' ),
-				'itemCountPlural'   => __( '%d items', 'starterkit' ),
-				'freeShippingUnlocked' => __( 'You unlocked free shipping.', 'starterkit' ),
-				'freeShippingRemaining' => __( 'Add %s more for free shipping', 'starterkit' ),
-				'cartDrawerTitle'   => __( 'Your cart', 'starterkit' ),
-				'viewCart'          => __( 'View cart', 'starterkit' ),
-				'checkout'          => __( 'Checkout', 'starterkit' ),
-				'continueShopping'  => __( 'Continue shopping', 'starterkit' ),
-				'emptyDrawerBody'   => __( 'Add something good and your bag will appear here.', 'starterkit' ),
-				'orderNotes'        => __( 'Order notes', 'starterkit' ),
-				'shippingMethod'    => __( 'Shipping method', 'starterkit' ),
-				'billingAddress'    => __( 'Billing address', 'starterkit' ),
-				'shippingAddress'   => __( 'Shipping address', 'starterkit' ),
-				'sameAsShipping'    => __( 'Billing address is the same as shipping', 'starterkit' ),
-				'email'             => __( 'Email', 'starterkit' ),
-				'phone'             => __( 'Phone', 'starterkit' ),
-				'firstName'         => __( 'First name', 'starterkit' ),
-				'lastName'          => __( 'Last name', 'starterkit' ),
-				'company'           => __( 'Company', 'starterkit' ),
-				'address1'          => __( 'Address line 1', 'starterkit' ),
-				'address2'          => __( 'Address line 2', 'starterkit' ),
-				'city'              => __( 'City', 'starterkit' ),
-				'postcode'          => __( 'Postcode', 'starterkit' ),
-				'country'           => __( 'Country / Region', 'starterkit' ),
-				'state'             => __( 'State / Province', 'starterkit' ),
-				'orderPlaced'       => __( 'Order created. Redirecting…', 'starterkit' ),
-				'paymentUnsupported'=> __( 'This gateway needs extra fields that are not exposed in the custom checkout yet.', 'starterkit' ),
-				'discount'          => __( 'Discount', 'starterkit' ),
-			),
-		);
 	}
 
 	/**

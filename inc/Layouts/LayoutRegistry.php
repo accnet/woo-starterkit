@@ -93,7 +93,8 @@ class LayoutRegistry {
 					'id'          => 'product-layout-1',
 					'label'       => __( 'Product Layout 1', 'starterkit' ),
 					'description' => __( 'Classic gallery left, summary right composition.', 'starterkit' ),
-					'template'    => 'template-parts/product/product-layout-1.php',
+					'template'    => 'template-parts/product/product-layout-1/product.php',
+					'asset_base'  => 'template-parts/product/product-layout-1',
 					'slots'       => array(
 						'product_before_gallery',
 						'product_after_gallery',
@@ -107,7 +108,8 @@ class LayoutRegistry {
 					'id'          => 'product-layout-2',
 					'label'       => __( 'Product Layout 2', 'starterkit' ),
 					'description' => __( 'Stacked modern product story layout.', 'starterkit' ),
-					'template'    => 'template-parts/product/product-layout-2.php',
+					'template'    => 'template-parts/product/product-layout-2/product.php',
+					'asset_base'  => 'template-parts/product/product-layout-2',
 					'slots'       => array(
 						'product_before_summary',
 						'product_after_summary',
@@ -119,7 +121,8 @@ class LayoutRegistry {
 					'id'          => 'product-layout-3',
 					'label'       => __( 'Product Layout 3', 'starterkit' ),
 					'description' => __( 'Sticky-summary commerce layout with extended merchandising slots.', 'starterkit' ),
-					'template'    => 'template-parts/product/product-layout-3.php',
+					'template'    => 'template-parts/product/product-layout-3/product.php',
+					'asset_base'  => 'template-parts/product/product-layout-3',
 					'slots'       => array(
 						'product_before_gallery',
 						'product_after_gallery',
@@ -137,7 +140,8 @@ class LayoutRegistry {
 					'id'          => 'archive-layout-1',
 					'label'       => __( 'Archive Layout 1', 'starterkit' ),
 					'description' => __( 'Standard grid with title and banner support.', 'starterkit' ),
-					'template'    => 'template-parts/archive/archive-layout-1.php',
+					'template'    => 'template-parts/archive/archive-layout-1/archive.php',
+					'asset_base'  => 'template-parts/archive/archive-layout-1',
 					'slots'       => array(
 						'archive_before_title',
 						'archive_after_title',

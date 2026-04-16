@@ -1,6 +1,6 @@
 <?php
 /**
- * Product layout preset 3 helper markup.
+ * Placeholder for product layout preset 3.
  *
  * @package StarterKit
  */

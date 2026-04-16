@@ -6,5 +6,14 @@
  */
 
 defined( 'ABSPATH' ) || exit;
+
+get_header( 'shop' );
 ?>
-<?php get_template_part( 'template-parts/commerce/checkout/checkout', 'page' ); ?>
+<main id="primary" class="site-main starterkit-woocommerce-checkout">
+	<?php
+	$checkout = WC()->checkout();
+	get_template_part( 'template-parts/commerce/checkout/checkout', 'page' );
+	?>
+</main>
+<?php
+get_footer( 'shop' );

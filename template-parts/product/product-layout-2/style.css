@@ -1,0 +1,32 @@
+.starterkit-product-preset--2 {
+  display: contents;
+}
+
+.starterkit-product-layout.product-layout-2 .product {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.starterkit-product-layout.product-layout-2 .images,
+.starterkit-product-layout.product-layout-2 .summary {
+  width: 100%;
+  float: none;
+  margin: 0;
+}
+
+.starterkit-product-layout.product-layout-2 .images {
+  margin-bottom: clamp(28px, 5vw, 48px);
+}
+
+.starterkit-product-layout.product-layout-2 .summary {
+  max-width: 720px;
+  margin-inline: auto;
+  text-align: left;
+}
+
+.starterkit-product-layout.product-layout-2 .woocommerce-tabs,
+.starterkit-product-layout.product-layout-2 .related,
+.starterkit-product-layout.product-layout-2 .up-sells {
+  max-width: 1120px;
+  margin-inline: auto;
+}

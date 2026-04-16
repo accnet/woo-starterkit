@@ -7,10 +7,4 @@
 
 defined( 'ABSPATH' ) || exit;
 
-get_header( 'shop' );
-?>
-<main id="primary" class="site-main starterkit-woocommerce-cart">
-	<?php get_template_part( 'template-parts/commerce/cart/cart', 'page' ); ?>
-</main>
-<?php
-get_footer( 'shop' );
+/* Silence — handled inside cart-page.php via the is_empty() check. */

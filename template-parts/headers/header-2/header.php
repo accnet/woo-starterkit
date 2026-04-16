@@ -27,7 +27,7 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 			</a>
 		</div>
 		<div class="site-header__panel-actions">
-			<a class="header-cart-link" href="<?php echo esc_url( $cart_url ); ?>" data-cart-drawer-open>
+			<a class="header-cart-link" href="<?php echo esc_url( $cart_url ); ?>">
 				<span class="screen-reader-text"><?php esc_html_e( 'View cart', 'starterkit' ); ?></span>
 				<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
 					<path d="M3 4h2l1.3 8.2a2 2 0 0 0 2 1.8h7.9a2 2 0 0 0 2-1.6L20 7H7"></path>
@@ -45,7 +45,7 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 				<?php wp_nav_menu( array( 'theme_location' => 'primary', 'fallback_cb' => false ) ); ?>
 			</nav>
 			<div class="site-header__panel-cart">
-				<a class="header-cart-button" href="<?php echo esc_url( $cart_url ); ?>" data-cart-drawer-open>
+				<a class="header-cart-button" href="<?php echo esc_url( $cart_url ); ?>">
 					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
 						<path d="M3 4h2l1.3 8.2a2 2 0 0 0 2 1.8h7.9a2 2 0 0 0 2-1.6L20 7H7"></path>
 						<circle cx="10" cy="19" r="1.5"></circle>
