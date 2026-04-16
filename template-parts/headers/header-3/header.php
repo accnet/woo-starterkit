@@ -32,7 +32,7 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 				<button class="header-search-toggle" type="button" aria-expanded="false" aria-controls="site-header-search-3">
 					<span><?php esc_html_e( 'Search', 'starterkit' ); ?></span>
 				</button>
-				<a href="<?php echo esc_url( $cart_url ); ?>" class="header-cart-button">
+				<a href="<?php echo esc_url( $cart_url ); ?>" class="header-cart-button" data-cart-drawer-open>
 					<span class="screen-reader-text"><?php esc_html_e( 'View cart', 'starterkit' ); ?></span>
 					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
 						<path d="M3 4h2l1.3 8.2a2 2 0 0 0 2 1.8h7.9a2 2 0 0 0 2-1.6L20 7H7"></path>

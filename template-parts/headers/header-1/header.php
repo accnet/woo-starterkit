@@ -36,7 +36,7 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 				<button class="header-search-button" type="button" aria-expanded="false" aria-controls="site-header-search-1">
 					<?php esc_html_e( 'Search', 'starterkit' ); ?>
 				</button>
-				<a class="header-cart-button" href="<?php echo esc_url( $cart_url ); ?>">
+				<a class="header-cart-button" href="<?php echo esc_url( $cart_url ); ?>" data-cart-drawer-open>
 					<?php esc_html_e( 'Cart', 'starterkit' ); ?>
 					<span class="header-cart-count"><?php echo esc_html( (string) $cart_count ); ?></span>
 				</a>
@@ -51,7 +51,7 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 					<path d="M16 16l5 5"></path>
 				</svg>
 			</button>
-			<a class="header-icon-button header-cart-link" href="<?php echo esc_url( $cart_url ); ?>">
+			<a class="header-icon-button header-cart-link" href="<?php echo esc_url( $cart_url ); ?>" data-cart-drawer-open>
 				<span class="screen-reader-text"><?php esc_html_e( 'View cart', 'starterkit' ); ?></span>
 				<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
 					<path d="M3 4h2l1.3 8.2a2 2 0 0 0 2 1.8h7.9a2 2 0 0 0 2-1.6L20 7H7"></path>
