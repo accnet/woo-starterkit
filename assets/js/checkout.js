@@ -6,14 +6,56 @@
 (function () {
   'use strict';
 
+  function cleanLabelText(text) {
+    return (text || '')
+      .replace(/\s*\*+\s*$/, '')
+      .replace(/\s*\(optional\)\s*$/i, '')
+      .trim();
+  }
+
+  function initFieldPlaceholders() {
+    var rows = document.querySelectorAll('.starterkit-checkout-details__fields .form-row');
+    if (!rows.length) return;
+
+    rows.forEach(function (row) {
+      var label = row.querySelector('label');
+      var text = cleanLabelText(label ? label.textContent : '');
+      if (!text) return;
+
+      var input = row.querySelector('input.input-text, textarea.input-text');
+      if (input && !input.getAttribute('placeholder')) {
+        input.setAttribute('placeholder', text);
+      }
+
+      var select = row.querySelector('select');
+      if (select) {
+        if (!select.getAttribute('data-placeholder')) {
+          select.setAttribute('data-placeholder', text);
+        }
+
+        var firstOption = select.options && select.options.length ? select.options[0] : null;
+        if (firstOption && !firstOption.value && !firstOption.textContent.trim()) {
+          firstOption.textContent = text;
+        }
+      }
+    });
+  }
+
   /* ── Payment method highlight ── */
 
   function initPaymentHighlight() {
-    var container = document.querySelector('.starterkit-checkout__payment');
+    var container = document.querySelector('.starterkit-checkout-summary, .starterkit-checkout__payment');
     if (!container) return;
 
     var payments = container.querySelector('.wc_payment_methods');
     if (!payments) return;
+
+    if (!payments.dataset.starterkitBound) {
+      payments.addEventListener('change', function (e) {
+        if (e.target.matches('input[name="payment_method"]')) refreshActive();
+      });
+      payments.dataset.starterkitBound = 'true';
+    }
 
     function refreshActive() {
       payments.querySelectorAll('.wc_payment_method').forEach(function (li) {
@@ -25,10 +67,6 @@
         if (parent) parent.classList.add('active');
       }
     }
-
-    payments.addEventListener('change', function (e) {
-      if (e.target.matches('input[name="payment_method"]')) refreshActive();
-    });
 
     refreshActive();
   }
@@ -94,6 +132,7 @@
   /* ── Init ── */
 
   function init() {
+    initFieldPlaceholders();
     initPaymentHighlight();
     initDiscountCode();
     if (typeof jQuery !== 'undefined') {
@@ -110,6 +149,7 @@
   /* Re-init payment highlight after WooCommerce AJAX updates. */
   if (typeof jQuery !== 'undefined') {
     jQuery(document.body).on('updated_checkout', function () {
+      initFieldPlaceholders();
       initPaymentHighlight();
     });
   }
