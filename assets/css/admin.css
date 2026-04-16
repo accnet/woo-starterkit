@@ -1,0 +1,85 @@
+.starterkit-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 24px;
+}
+
+.starterkit-admin-main,
+.starterkit-admin-sidebar {
+  min-width: 0;
+}
+
+.starterkit-field,
+.starterkit-list-item {
+  padding: 16px;
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.starterkit-list-group {
+  display: grid;
+  gap: 12px;
+}
+
+.starterkit-list-item-header,
+.starterkit-list-actions,
+.starterkit-media-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.starterkit-list-item-header p {
+  margin: 0;
+}
+
+.starterkit-list-toolbar {
+  display: flex;
+  gap: 10px;
+}
+
+.starterkit-media-field {
+  display: grid;
+  gap: 12px;
+}
+
+.starterkit-media-preview {
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed #c3c4c7;
+  border-radius: 8px;
+  background: #f6f7f7;
+  overflow: hidden;
+}
+
+.starterkit-media-preview img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.starterkit-field-note {
+  color: #50575e;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+
+.starterkit-type-panels {
+  display: grid;
+  gap: 16px;
+}
+
+.starterkit-invalid {
+  border-color: #d63638 !important;
+  box-shadow: 0 0 0 1px #d63638;
+}
+
+@media (max-width: 960px) {
+  .starterkit-admin-grid {
+    grid-template-columns: 1fr;
+  }
+}

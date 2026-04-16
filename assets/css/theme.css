@@ -1,0 +1,338 @@
+:root {
+  --site-font-heading: "Poppins", sans-serif;
+  --site-font-body: "Inter", sans-serif;
+  --color-primary: #111827;
+  --color-secondary: #334155;
+  --color-accent: #f59e0b;
+  --color-bg: #ffffff;
+  --container-width: 1280px;
+  --section-gap: 80px;
+  --radius-md: 12px;
+  --shadow-preset: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--site-font-body);
+  color: var(--color-primary);
+  background: var(--color-bg);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--site-font-heading);
+  line-height: 1.1;
+}
+
+.container {
+  width: min(calc(100% - 32px), var(--container-width));
+  margin: 0 auto;
+}
+
+.site-header,
+.site-footer,
+.starterkit-section,
+.starterkit-home-content,
+.starterkit-product-layout,
+.starterkit-archive-layout {
+  position: relative;
+}
+
+.site-header {
+  border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(18px);
+}
+
+.header-topbar {
+  font-size: 14px;
+  color: var(--color-secondary);
+  border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.header-shell,
+.footer-grid,
+.cta-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--component-gap);
+  padding: var(--component-gap) 0;
+}
+
+.header-shell--split {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.site-title {
+  text-decoration: none;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.site-navigation ul {
+  display: flex;
+  gap: var(--element-gap);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.site-navigation a {
+  text-decoration: none;
+  color: var(--color-primary);
+}
+
+.slot {
+  display: grid;
+  gap: var(--component-gap);
+}
+
+.starterkit-section {
+  padding: clamp(48px, 8vw, var(--section-gap)) 0;
+}
+
+.hero-panel,
+.cta-panel,
+.feature-card,
+.benefit-item,
+.footer-banner {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-preset);
+}
+
+.hero-panel {
+  padding: clamp(32px, 7vw, 72px);
+  background: radial-gradient(circle at top left, rgba(245, 158, 11, 0.18), rgba(255, 255, 255, 0.96) 45%), #fff;
+  background-size: cover;
+  background-position: center;
+}
+
+.section-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hero-actions,
+.benefit-list,
+.feature-grid {
+  display: flex;
+  gap: var(--element-gap);
+  flex-wrap: wrap;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.button-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.button-secondary {
+  background: transparent;
+  border: 1px solid rgba(17, 24, 39, 0.15);
+  color: var(--color-primary);
+}
+
+.cta-panel,
+.footer-banner {
+  padding: 28px;
+  background: var(--color-primary);
+  color: #fff;
+  background-size: cover;
+  background-position: center;
+}
+
+.starterkit-section--cta-light .cta-panel {
+  background-color: #fff4db;
+  color: var(--color-primary);
+}
+
+.starterkit-section--cta-light .button-primary {
+  background: var(--color-accent);
+  color: #111827;
+}
+
+.feature-card,
+.benefit-item {
+  flex: 1 1 280px;
+  padding: var(--component-gap);
+  background: #fff;
+}
+
+.banner-panel,
+.newsletter-panel,
+.image-text-shell,
+.testimonial-card,
+.faq-item,
+.starterkit-product-card {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-preset);
+}
+
+.feature-grid.columns-3 .feature-card {
+  flex-basis: 220px;
+}
+
+.feature-icon {
+  margin: 0 0 12px;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.starterkit-section--benefits.emphasis-strong .benefit-item {
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+.testimonial-grid,
+.starterkit-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--component-gap);
+}
+
+.testimonial-card,
+.starterkit-product-card,
+.faq-item,
+.banner-panel,
+.newsletter-panel,
+.image-text-copy,
+.image-text-media {
+  padding: 24px;
+  background: #fff;
+}
+
+.testimonial-quote {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.testimonial-author,
+.testimonial-role {
+  margin: 0;
+}
+
+.banner-panel,
+.newsletter-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--component-gap);
+}
+
+.faq-list {
+  display: grid;
+  gap: var(--element-gap);
+}
+
+.faq-item summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.starterkit-product-card a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.image-text-shell {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--content-gap);
+  align-items: center;
+}
+
+.starterkit-section--image-text.image-right .image-text-media {
+  order: 2;
+}
+
+.newsletter-form {
+  display: flex;
+  gap: var(--element-gap);
+  flex-wrap: wrap;
+}
+
+.newsletter-form input {
+  min-width: 240px;
+  padding: 12px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 24, 39, 0.1);
+}
+
+.site-footer {
+  padding-top: 48px;
+  background: #0f172a;
+  color: #fff;
+}
+
+.site-footer a,
+.site-footer .site-title {
+  color: #fff;
+}
+
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--element-gap);
+  padding: 20px 0 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.starterkit-home-content {
+  padding: 24px 0 64px;
+}
+
+.starterkit-woocommerce-archive,
+.starterkit-woocommerce-single {
+  padding: 32px 0 64px;
+}
+
+.woocommerce-products-header {
+  margin-bottom: var(--component-gap);
+}
+
+@media (max-width: 782px) {
+  .header-shell,
+  .footer-grid,
+  .cta-panel,
+  .footer-bottom,
+  .banner-panel,
+  .newsletter-panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .site-navigation ul {
+    flex-direction: column;
+  }
+
+  .header-shell--split,
+  .image-text-shell {
+    grid-template-columns: 1fr;
+  }
+}
