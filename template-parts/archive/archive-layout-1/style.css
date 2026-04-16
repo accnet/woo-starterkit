@@ -5,7 +5,6 @@
   min-width: 0;
 }
 
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products,
 .starterkit-archive-preset--1 .products {
   box-sizing: border-box;
   display: grid !important;
@@ -25,7 +24,6 @@
   display: none;
 }
 
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products li.product,
 .starterkit-archive-preset--1 .products li.product {
   box-sizing: border-box;
   display: block;
@@ -41,13 +39,11 @@
   min-width: 0;
 }
 
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products li.product a,
 .starterkit-archive-preset--1 .products li.product a {
   color: inherit;
   text-decoration: none;
 }
 
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products li.product .woocommerce-LoopProduct-link,
 .starterkit-archive-preset--1 .products li.product .woocommerce-LoopProduct-link {
   display: grid;
   gap: 14px;
@@ -55,7 +51,6 @@
   text-align: center;
 }
 
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products li.product img,
 .starterkit-archive-preset--1 .products li.product img {
   display: block;
   width: 100% !important;
@@ -65,7 +60,6 @@
   object-fit: contain;
 }
 
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products li.product .woocommerce-loop-product__title,
 .starterkit-archive-preset--1 .products li.product .woocommerce-loop-product__title {
   margin: 0;
   padding: 0;
@@ -76,7 +70,6 @@
   text-align: center;
 }
 
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products li.product .price,
 .starterkit-archive-preset--1 .products li.product .price {
   display: block;
   margin: 0;
@@ -87,21 +80,15 @@
   text-align: center;
 }
 
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products li.product .price del,
 .starterkit-archive-preset--1 .products li.product .price del {
   opacity: 0.5;
 }
 
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products li.product .price ins,
 .starterkit-archive-preset--1 .products li.product .price ins {
   background: transparent;
   text-decoration: none;
 }
 
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products li.product .button,
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products li.product .added_to_cart,
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products li.product .star-rating,
-.starterkit-archive-layout.archive-layout-1 .starterkit-archive-preset--1 .products li.product .onsale,
 .starterkit-archive-preset--1 .products li.product .button,
 .starterkit-archive-preset--1 .products li.product .added_to_cart,
 .starterkit-archive-preset--1 .products li.product .star-rating,

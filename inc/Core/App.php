@@ -26,7 +26,6 @@ use StarterKit\WooCommerce\ArchiveLayoutManager;
 use StarterKit\WooCommerce\CartDrawerManager;
 use StarterKit\WooCommerce\HookRegistrar;
 use StarterKit\WooCommerce\ProductLayoutManager;
-use StarterKit\WooCommerce\StickyAddToCartManager;
 use StarterKit\Core\PerformanceManager;
 
 class App {
@@ -86,7 +85,6 @@ class App {
 		$this->archive_layout_manager();
 		$this->hook_registrar();
 		$this->cart_drawer_manager();
-		$this->sticky_add_to_cart_manager();
 	}
 
 	/**
@@ -436,20 +434,6 @@ class App {
 			'cart_drawer_manager',
 			function() {
 				return new CartDrawerManager( $this->settings_manager() );
-			}
-		);
-	}
-
-	/**
-	 * WooCommerce sticky add-to-cart manager.
-	 *
-	 * @return StickyAddToCartManager
-	 */
-	public function sticky_add_to_cart_manager() {
-		return $this->service(
-			'sticky_add_to_cart_manager',
-			function() {
-				return new StickyAddToCartManager();
 			}
 		);
 	}

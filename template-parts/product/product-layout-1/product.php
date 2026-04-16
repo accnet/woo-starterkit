@@ -13,16 +13,13 @@ if ( ! $product instanceof \WC_Product ) {
 	return;
 }
 
-$show_variant_price_top = false;
-
-if ( class_exists( '\WootifyCore\Services\ProductService' ) && (int) get_option( 'wootify_core_product_page_move_variant_price_top', 0 ) === 1 ) {
-	$wootify_service = new \WootifyCore\Services\ProductService();
-	$wootify_data    = $wootify_service->get_product_data( (int) $product->get_id() );
-
-	if ( is_array( $wootify_data ) && ! empty( $wootify_data['variants'] ) ) {
-		$show_variant_price_top = true;
-	}
-}
+/**
+ * wootify_variant_price_top_active is set by WootifyCore\Modules\Frontend\TemplateHook
+ * during the woocommerce_single_product_summary hook (priority 6).
+ * We suppress the plugin's built-in placeholder so the theme controls placement.
+ */
+add_filter( 'wootify_suppress_variant_price_top_placeholder', '__return_true' );
+$show_variant_price_top = (bool) apply_filters( 'wootify_variant_price_top_active', false, (int) $product->get_id() );
 ?>
 <div class="starterkit-product-layout product-layout-1">
 	<div class="starterkit-product-layout__product-shell">
