@@ -1,0 +1,11 @@
+.DS_Store
+Thumbs.db
+*.log
+
+# Locally generated fonts
+assets/css/generated-fonts.css
+assets/fonts/generated/
+
+# Local editor and environment metadata
+.idea/
+.vscode/
