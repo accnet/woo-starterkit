@@ -41,6 +41,22 @@ class GlobalSettingsManager {
 			'component_gap'      => '24px',
 			'content_gap'        => '32px',
 			'spacing_scale'      => '80px',
+			'lazy_load_images'   => '1',
+			'disable_emojis'     => '1',
+			'disable_block_css'  => '1',
+			'disable_mediaelement' => '1',
+			'disable_jquery_migrate' => '1',
+			'preconnect_hints'       => '1',
+			'preload_fonts'          => '1',
+			'async_images'           => '1',
+			'disable_cart_fragments'  => '1',
+			'disable_wc_block_css'   => '1',
+			'disable_oembed'         => '1',
+			'header_scripts'     => '',
+			'footer_scripts'     => '',
+			'body_scripts_top'   => '',
+			'body_scripts_bottom' => '',
+			'free_shipping_threshold' => '0',
 		);
 	}
 
@@ -80,6 +96,46 @@ class GlobalSettingsManager {
 				'id'          => '40px',
 				'label'       => __( '2XL', 'starterkit' ),
 				'description' => __( 'Very open spacing.', 'starterkit' ),
+			),
+		);
+	}
+
+	/**
+	 * Preset border radius options.
+	 *
+	 * @return array<string, array<string, string>>
+	 */
+	public function radius_options() {
+		return array(
+			'0px'  => array(
+				'id'          => '0px',
+				'label'       => __( 'None', 'starterkit' ),
+				'description' => __( 'Sharp corners for a clean, rigid look.', 'starterkit' ),
+			),
+			'6px'  => array(
+				'id'          => '6px',
+				'label'       => __( 'Small', 'starterkit' ),
+				'description' => __( 'Subtle rounding with a restrained feel.', 'starterkit' ),
+			),
+			'12px' => array(
+				'id'          => '12px',
+				'label'       => __( 'Medium', 'starterkit' ),
+				'description' => __( 'Balanced default radius for most storefronts.', 'starterkit' ),
+			),
+			'18px' => array(
+				'id'          => '18px',
+				'label'       => __( 'Large', 'starterkit' ),
+				'description' => __( 'Softer corners for a friendlier interface.', 'starterkit' ),
+			),
+			'24px' => array(
+				'id'          => '24px',
+				'label'       => __( 'Extra Large', 'starterkit' ),
+				'description' => __( 'Highly rounded cards and content panels.', 'starterkit' ),
+			),
+			'999px' => array(
+				'id'          => '999px',
+				'label'       => __( 'Pill', 'starterkit' ),
+				'description' => __( 'Maximum rounding where components allow it.', 'starterkit' ),
 			),
 		);
 	}
@@ -243,11 +299,14 @@ class GlobalSettingsManager {
 	 */
 	public function sanitize( $input ) {
 		$input    = is_array( $input ) ? $input : array();
+		$saved    = get_option( self::OPTION_KEY, array() );
+		$saved    = is_array( $saved ) ? $saved : array();
+		$merged   = array_merge( $saved, $input );
 		$defaults = $this->defaults();
 		$output   = array();
 
 		foreach ( $defaults as $key => $value ) {
-			$raw = isset( $input[ $key ] ) ? $input[ $key ] : $value;
+			$raw = isset( $merged[ $key ] ) ? $merged[ $key ] : $value;
 
 			switch ( $key ) {
 				case 'logo_id':
@@ -265,6 +324,11 @@ class GlobalSettingsManager {
 					$raw     = sanitize_text_field( (string) $raw );
 					$output[ $key ] = isset( $options[ $raw ] ) ? $raw : $value;
 					break;
+				case 'border_radius':
+					$options = $this->radius_options();
+					$raw     = sanitize_text_field( (string) $raw );
+					$output[ $key ] = isset( $options[ $raw ] ) ? $raw : $value;
+					break;
 				case 'element_gap':
 				case 'component_gap':
 				case 'content_gap':
@@ -278,6 +342,31 @@ class GlobalSettingsManager {
 					$raw     = sanitize_text_field( (string) $raw );
 					$output[ $key ] = isset( $options[ $raw ] ) ? $raw : $value;
 					break;
+				case 'lazy_load_images':
+				case 'disable_emojis':
+				case 'disable_block_css':
+				case 'disable_mediaelement':
+				case 'disable_jquery_migrate':
+				case 'preconnect_hints':
+				case 'preload_fonts':
+				case 'async_images':
+				case 'disable_cart_fragments':
+				case 'disable_wc_block_css':
+				case 'disable_oembed':
+					$output[ $key ] = ! empty( $raw ) ? '1' : '0';
+					break;
+				case 'header_scripts':
+				case 'footer_scripts':
+				case 'body_scripts_top':
+				case 'body_scripts_bottom':
+					$output[ $key ] = $this->sanitize_code_snippet( $raw );
+					break;
+				case 'free_shipping_threshold':
+					$raw = is_scalar( $raw ) ? (string) $raw : '0';
+					$raw = preg_replace( '/[^0-9.,]/', '', $raw );
+					$raw = str_replace( ',', '.', (string) $raw );
+					$output[ $key ] = (string) max( 0, (float) $raw );
+					break;
 				default:
 					$output[ $key ] = sanitize_text_field( (string) $raw );
 					break;
@@ -285,5 +374,22 @@ class GlobalSettingsManager {
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Sanitize script/code snippets saved by administrators.
+	 *
+	 * @param mixed $value Raw value.
+	 * @return string
+	 */
+	protected function sanitize_code_snippet( $value ) {
+		$value = is_string( $value ) ? $value : '';
+		$value = trim( wp_unslash( $value ) );
+
+		if ( current_user_can( 'unfiltered_html' ) ) {
+			return $value;
+		}
+
+		return wp_kses_post( $value );
 	}
 }

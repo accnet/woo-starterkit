@@ -1,0 +1,113 @@
+.starterkit-sticky-atc {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 9990;
+  padding: 12px 0 max(12px, env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid rgba(17, 24, 39, 0.08);
+  box-shadow: 0 -12px 30px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.starterkit-sticky-atc[hidden] {
+  display: none;
+}
+
+.starterkit-sticky-atc__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--component-gap);
+}
+
+.starterkit-sticky-atc__product {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.starterkit-sticky-atc__image img {
+  display: block;
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: calc(var(--radius-md) - 4px);
+}
+
+.starterkit-sticky-atc__copy {
+  min-width: 0;
+}
+
+.starterkit-sticky-atc__title {
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+
+.starterkit-sticky-atc__price {
+  color: var(--color-secondary);
+  font-size: 14px;
+}
+
+.starterkit-sticky-atc__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.starterkit-sticky-atc__qty {
+  width: 76px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-primary);
+  text-align: center;
+  font-weight: 600;
+}
+
+.starterkit-sticky-atc__button.is-loading {
+  pointer-events: none;
+  opacity: 0.78;
+}
+
+.starterkit-sticky-atc__button.is-loading::after {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-left: 8px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  animation: starterkit-sticky-atc-spin 0.7s linear infinite;
+}
+
+@media (max-width: 782px) {
+  .starterkit-sticky-atc__inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .starterkit-sticky-atc__actions {
+    width: 100%;
+  }
+
+  .starterkit-sticky-atc__qty {
+    width: 88px;
+  }
+
+  .starterkit-sticky-atc__button {
+    flex: 1;
+  }
+}
+
+@keyframes starterkit-sticky-atc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

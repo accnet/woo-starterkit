@@ -1,0 +1,18 @@
+.starterkit-section--hero .hero-panel {
+  padding: clamp(32px, 7vw, 72px);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-preset);
+  background: radial-gradient(circle at top left, rgba(245, 158, 11, 0.18), rgba(255, 255, 255, 0.96) 45%), #fff;
+  background-size: cover;
+  background-position: center;
+}
+
+.starterkit-section--hero.align-center {
+  text-align: center;
+}
+
+.starterkit-section--hero .hero-actions {
+  display: flex;
+  gap: var(--element-gap);
+  flex-wrap: wrap;
+}

@@ -10,8 +10,8 @@ defined( 'ABSPATH' ) || exit;
 get_header( 'shop' );
 ?>
 <main id="primary" class="site-main starterkit-woocommerce-archive">
-	<?php do_action( 'woocommerce_before_main_content' ); ?>
 	<div class="container">
+		<?php do_action( 'woocommerce_before_main_content' ); ?>
 		<header class="woocommerce-products-header">
 			<?php starterkit_render_slot( 'archive_before_title' ); ?>
 			<?php if ( apply_filters( 'woocommerce_show_page_title', true ) ) : ?>
@@ -30,8 +30,8 @@ get_header( 'shop' );
 		<?php else : ?>
 			<?php do_action( 'woocommerce_no_products_found' ); ?>
 		<?php endif; ?>
+		<?php do_action( 'woocommerce_after_main_content' ); ?>
 	</div>
-	<?php do_action( 'woocommerce_after_main_content' ); ?>
 </main>
 <?php
 get_footer( 'shop' );

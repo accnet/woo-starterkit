@@ -1,0 +1,22 @@
+.starterkit-section--testimonials .testimonial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--component-gap);
+}
+
+.starterkit-section--testimonials .testimonial-card {
+  padding: 24px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-preset);
+  background: #fff;
+}
+
+.starterkit-section--testimonials .testimonial-quote {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.starterkit-section--testimonials .testimonial-author,
+.starterkit-section--testimonials .testimonial-role {
+  margin: 0;
+}

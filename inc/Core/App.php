@@ -23,8 +23,11 @@ use StarterKit\Settings\CssVariableOutput;
 use StarterKit\Settings\FontEmbedManager;
 use StarterKit\Settings\GlobalSettingsManager;
 use StarterKit\WooCommerce\ArchiveLayoutManager;
+use StarterKit\WooCommerce\CartDrawerManager;
 use StarterKit\WooCommerce\HookRegistrar;
 use StarterKit\WooCommerce\ProductLayoutManager;
+use StarterKit\WooCommerce\StickyAddToCartManager;
+use StarterKit\Core\PerformanceManager;
 
 class App {
 	/**
@@ -61,7 +64,6 @@ class App {
 	 */
 	public function boot() {
 		$this->theme_setup();
-		$this->asset_manager();
 		$this->settings_manager();
 		$this->font_embed_manager();
 		$this->css_variable_output();
@@ -77,9 +79,14 @@ class App {
 		$this->section_repository();
 		$this->section_renderer();
 		$this->slot_renderer();
+		$this->asset_manager();
+		$this->performance_manager();
+		$this->script_injection_manager();
 		$this->product_layout_manager();
 		$this->archive_layout_manager();
 		$this->hook_registrar();
+		$this->cart_drawer_manager();
+		$this->sticky_add_to_cart_manager();
 	}
 
 	/**
@@ -120,7 +127,43 @@ class App {
 		return $this->service(
 			'asset_manager',
 			function() {
-				return new AssetManager( $this->settings_manager() );
+				return new AssetManager(
+					$this->settings_manager(),
+					$this->layout_registry(),
+					$this->section_type_registry(),
+					$this->section_repository(),
+					$this->context_resolver(),
+					$this->display_rule_evaluator(),
+					$this->layout_resolver()
+				);
+			}
+		);
+	}
+
+	/**
+	 * Performance manager service.
+	 *
+	 * @return PerformanceManager
+	 */
+	public function performance_manager() {
+		return $this->service(
+			'performance_manager',
+			function() {
+				return new PerformanceManager( $this->settings_manager() );
+			}
+		);
+	}
+
+	/**
+	 * Script injection manager service.
+	 *
+	 * @return ScriptInjectionManager
+	 */
+	public function script_injection_manager() {
+		return $this->service(
+			'script_injection_manager',
+			function() {
+				return new ScriptInjectionManager( $this->settings_manager() );
 			}
 		);
 	}
@@ -379,6 +422,34 @@ class App {
 			'hook_registrar',
 			function() {
 				return new HookRegistrar( $this->product_layout_manager(), $this->archive_layout_manager() );
+			}
+		);
+	}
+
+	/**
+	 * WooCommerce cart drawer manager.
+	 *
+	 * @return CartDrawerManager
+	 */
+	public function cart_drawer_manager() {
+		return $this->service(
+			'cart_drawer_manager',
+			function() {
+				return new CartDrawerManager( $this->settings_manager() );
+			}
+		);
+	}
+
+	/**
+	 * WooCommerce sticky add-to-cart manager.
+	 *
+	 * @return StickyAddToCartManager
+	 */
+	public function sticky_add_to_cart_manager() {
+		return $this->service(
+			'sticky_add_to_cart_manager',
+			function() {
+				return new StickyAddToCartManager();
 			}
 		);
 	}

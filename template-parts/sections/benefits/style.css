@@ -1,0 +1,17 @@
+.starterkit-section--benefits .benefit-list {
+  display: flex;
+  gap: var(--element-gap);
+  flex-wrap: wrap;
+}
+
+.starterkit-section--benefits .benefit-item {
+  flex: 1 1 280px;
+  padding: var(--component-gap);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-preset);
+  background: #fff;
+}
+
+.starterkit-section--benefits.emphasis-strong .benefit-item {
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}

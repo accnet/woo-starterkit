@@ -37,9 +37,44 @@ class SettingsPage {
 
 		add_action( 'admin_menu', array( $this, 'register_page' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 		add_action( 'admin_post_starterkit_export_config', array( $this, 'export_config' ) );
 		add_action( 'admin_post_starterkit_import_config', array( $this, 'import_config' ) );
 		add_action( 'admin_notices', array( $this, 'render_admin_notice' ) );
+		add_action( 'wp_head', array( $this, 'render_favicon' ) );
+	}
+
+	/**
+	 * Enqueue media uploader on settings page.
+	 *
+	 * @param string $hook_suffix Admin page hook.
+	 * @return void
+	 */
+	public function enqueue_admin_assets( $hook_suffix ) {
+		if ( 'toplevel_page_starterkit-theme-builder' !== $hook_suffix ) {
+			return;
+		}
+
+		wp_enqueue_media();
+	}
+
+	/**
+	 * Output favicon link tag.
+	 *
+	 * @return void
+	 */
+	public function render_favicon() {
+		$favicon_id = (int) $this->settings->get( 'favicon_id', 0 );
+
+		if ( ! $favicon_id ) {
+			return;
+		}
+
+		$url = wp_get_attachment_image_url( $favicon_id, 'full' );
+
+		if ( $url ) {
+			echo '<link rel="icon" href="' . esc_url( $url ) . '" />' . "\n";
+		}
 	}
 
 	/**
@@ -49,8 +84,8 @@ class SettingsPage {
 	 */
 	public function register_page() {
 		add_menu_page(
-			__( 'Theme Builder Settings', 'starterkit' ),
-			__( 'Theme Builder', 'starterkit' ),
+			__( 'Theme Settings', 'starterkit' ),
+			__( 'Theme Settings', 'starterkit' ),
 			'manage_options',
 			'starterkit-theme-builder',
 			array( $this, 'render_page' ),
@@ -77,7 +112,7 @@ class SettingsPage {
 		register_setting(
 			'starterkit_theme_builder',
 			GlobalSettingsManager::OPTION_KEY,
-			array( $this->settings, 'sanitize' )
+			array( 'sanitize_callback' => array( $this->settings, 'sanitize' ) )
 		);
 	}
 
@@ -92,11 +127,13 @@ class SettingsPage {
 		$tab      = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'branding';
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Theme Builder Settings', 'starterkit' ); ?></h1>
+			<h1><?php esc_html_e( 'Theme Settings', 'starterkit' ); ?></h1>
 			<h2 class="nav-tab-wrapper">
 				<?php $this->render_tab( 'branding', __( 'Branding', 'starterkit' ), $tab ); ?>
+				<?php $this->render_tab( 'global', __( 'Global Settings', 'starterkit' ), $tab ); ?>
 				<?php $this->render_tab( 'design', __( 'Design Tokens', 'starterkit' ), $tab ); ?>
 				<?php $this->render_tab( 'layouts', __( 'Layouts', 'starterkit' ), $tab ); ?>
+				<?php $this->render_tab( 'performance', __( 'Performance', 'starterkit' ), $tab ); ?>
 				<?php $this->render_tab( 'tools', __( 'Tools', 'starterkit' ), $tab ); ?>
 			</h2>
 
@@ -105,10 +142,21 @@ class SettingsPage {
 
 				<?php if ( 'branding' === $tab ) : ?>
 					<table class="form-table" role="presentation">
+						<?php $this->render_media_row( 'logo_id', __( 'Logo', 'starterkit' ), (int) $settings['logo_id'] ); ?>
+						<?php $this->render_media_row( 'favicon_id', __( 'Favicon', 'starterkit' ), (int) $settings['favicon_id'] ); ?>
 						<?php $this->render_select_row( 'heading_font', __( 'Heading Font', 'starterkit' ), $settings['heading_font'], $this->settings->google_font_options() ); ?>
 						<?php $this->render_select_row( 'body_font', __( 'Body Font', 'starterkit' ), $settings['body_font'], $this->settings->google_font_options() ); ?>
+						<?php $this->render_select_row( 'border_radius', __( 'Border Radius', 'starterkit' ), $settings['border_radius'], $this->settings->radius_options() ); ?>
 						<?php $this->render_input_row( 'button_style', __( 'Button Style', 'starterkit' ), $settings['button_style'] ); ?>
 						<?php $this->render_input_row( 'shadow_preset', __( 'Shadow Preset', 'starterkit' ), $settings['shadow_preset'] ); ?>
+					</table>
+				<?php elseif ( 'global' === $tab ) : ?>
+					<table class="form-table" role="presentation">
+						<?php $this->render_input_row( 'free_shipping_threshold', __( 'Free Shipping Threshold', 'starterkit' ), $settings['free_shipping_threshold'] ); ?>
+						<?php $this->render_textarea_row( 'header_scripts', __( 'Header Scripts', 'starterkit' ), $settings['header_scripts'], __( 'Injected inside <head>. Useful for verification tags, analytics bootstrap, or third-party head snippets.', 'starterkit' ) ); ?>
+						<?php $this->render_textarea_row( 'body_scripts_top', __( 'Body Scripts - Top', 'starterkit' ), $settings['body_scripts_top'], __( 'Injected immediately after <body>. Common for GTM noscript or tag manager body snippets.', 'starterkit' ) ); ?>
+						<?php $this->render_textarea_row( 'body_scripts_bottom', __( 'Body Scripts - Bottom', 'starterkit' ), $settings['body_scripts_bottom'], __( 'Injected before the site footer template. Useful for global widgets or deferred embeds.', 'starterkit' ) ); ?>
+						<?php $this->render_textarea_row( 'footer_scripts', __( 'Footer Scripts', 'starterkit' ), $settings['footer_scripts'], __( 'Injected near wp_footer() before </body>. Best for tracking and non-critical scripts.', 'starterkit' ) ); ?>
 					</table>
 				<?php elseif ( 'design' === $tab ) : ?>
 					<table class="form-table" role="presentation">
@@ -116,7 +164,6 @@ class SettingsPage {
 						<?php $this->render_input_row( 'color_secondary', __( 'Secondary Color', 'starterkit' ), $settings['color_secondary'] ); ?>
 						<?php $this->render_input_row( 'color_accent', __( 'Accent Color', 'starterkit' ), $settings['color_accent'] ); ?>
 						<?php $this->render_input_row( 'color_background', __( 'Background Color', 'starterkit' ), $settings['color_background'] ); ?>
-						<?php $this->render_input_row( 'border_radius', __( 'Border Radius', 'starterkit' ), $settings['border_radius'] ); ?>
 						<?php $this->render_select_row( 'element_gap', __( 'Element Gap', 'starterkit' ), $settings['element_gap'], $this->settings->spacing_options() ); ?>
 						<?php $this->render_select_row( 'component_gap', __( 'Component Gap', 'starterkit' ), $settings['component_gap'], $this->settings->spacing_options() ); ?>
 						<?php $this->render_select_row( 'content_gap', __( 'Content Gap', 'starterkit' ), $settings['content_gap'], $this->settings->spacing_options() ); ?>
@@ -130,6 +177,20 @@ class SettingsPage {
 						<?php $this->render_select_row( 'footer_layout', __( 'Footer Layout', 'starterkit' ), $settings['footer_layout'], $layouts['footers'] ); ?>
 						<?php $this->render_select_row( 'product_layout', __( 'Product Layout', 'starterkit' ), $settings['product_layout'], $layouts['products'] ); ?>
 						<?php $this->render_select_row( 'archive_layout', __( 'Archive Layout', 'starterkit' ), $settings['archive_layout'], $layouts['archives'] ); ?>
+					</table>
+				<?php elseif ( 'performance' === $tab ) : ?>
+					<table class="form-table" role="presentation">
+						<?php $this->render_checkbox_row( 'lazy_load_images', __( 'Lazy Load Images', 'starterkit' ), $settings['lazy_load_images'], __( 'Use native browser lazy-loading on WordPress images and thumbnails.', 'starterkit' ) ); ?>
+						<?php $this->render_checkbox_row( 'disable_emojis', __( 'Disable Emoji Script', 'starterkit' ), $settings['disable_emojis'], __( 'Remove emoji detection scripts, styles, and related TinyMCE conversions.', 'starterkit' ) ); ?>
+						<?php $this->render_checkbox_row( 'disable_block_css', __( 'Disable Block Library CSS', 'starterkit' ), $settings['disable_block_css'], __( 'Skip frontend block library styles when this theme is not using Gutenberg block styling.', 'starterkit' ) ); ?>
+						<?php $this->render_checkbox_row( 'disable_mediaelement', __( 'Disable MediaElement Script and CSS', 'starterkit' ), $settings['disable_mediaelement'], __( 'Prevent loading MediaElement assets on the frontend unless you rely on core audio or video players.', 'starterkit' ) ); ?>
+						<?php $this->render_checkbox_row( 'disable_jquery_migrate', __( 'Disable jQuery Migrate', 'starterkit' ), $settings['disable_jquery_migrate'], __( 'Remove jQuery Migrate from frontend requests for a lighter legacy script payload.', 'starterkit' ) ); ?>
+						<?php $this->render_checkbox_row( 'preconnect_hints', __( 'Resource Hints (Preconnect)', 'starterkit' ), $settings['preconnect_hints'], __( 'Add dns-prefetch and preconnect for Google Fonts and other external domains to reduce DNS/TLS latency.', 'starterkit' ) ); ?>
+						<?php $this->render_checkbox_row( 'preload_fonts', __( 'Preload Fonts', 'starterkit' ), $settings['preload_fonts'], __( 'Preload locally embedded WOFF2 font files so the browser fetches them before parsing CSS.', 'starterkit' ) ); ?>
+						<?php $this->render_checkbox_row( 'async_images', __( 'Async Image Decoding', 'starterkit' ), $settings['async_images'], __( 'Add decoding="async" and fetchpriority hints on images to improve rendering performance.', 'starterkit' ) ); ?>
+						<?php $this->render_checkbox_row( 'disable_cart_fragments', __( 'Disable WC Cart Fragments', 'starterkit' ), $settings['disable_cart_fragments'], __( 'Disable the heavy wc-cart-fragments script on pages where the cart drawer handles updates via AJAX.', 'starterkit' ) ); ?>
+						<?php $this->render_checkbox_row( 'disable_wc_block_css', __( 'Disable WooCommerce Block CSS', 'starterkit' ), $settings['disable_wc_block_css'], __( 'Remove WooCommerce Blocks stylesheets when the theme does not use WooCommerce block components.', 'starterkit' ) ); ?>
+						<?php $this->render_checkbox_row( 'disable_oembed', __( 'Disable oEmbed', 'starterkit' ), $settings['disable_oembed'], __( 'Remove oEmbed discovery links and scripts if your site does not embed external content.', 'starterkit' ) ); ?>
 					</table>
 				<?php endif; ?>
 
@@ -194,6 +255,115 @@ class SettingsPage {
 				</select>
 				<?php if ( isset( $options[ $selected ]['description'] ) && ! empty( $options[ $selected ]['description'] ) ) : ?>
 					<p class="description"><?php echo esc_html( $options[ $selected ]['description'] ); ?></p>
+				<?php endif; ?>
+			</td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * Render a media upload field row.
+	 *
+	 * @param string $name Field key.
+	 * @param string $label Field label.
+	 * @param int    $attachment_id Attachment ID.
+	 * @return void
+	 */
+	protected function render_media_row( $name, $label, $attachment_id ) {
+		$preview = $attachment_id ? wp_get_attachment_image_url( $attachment_id, 'medium' ) : '';
+		$field_name = GlobalSettingsManager::OPTION_KEY . '[' . $name . ']';
+		?>
+		<tr>
+			<th scope="row"><?php echo esc_html( $label ); ?></th>
+			<td>
+				<div class="starterkit-media-field" id="starterkit-media-<?php echo esc_attr( $name ); ?>">
+					<div class="starterkit-media-preview">
+						<?php if ( $preview ) : ?>
+							<img src="<?php echo esc_url( $preview ); ?>" alt="">
+						<?php endif; ?>
+					</div>
+					<input type="hidden" name="<?php echo esc_attr( $field_name ); ?>" value="<?php echo esc_attr( (string) $attachment_id ); ?>" class="starterkit-media-value">
+					<div class="starterkit-media-actions">
+						<button type="button" class="button starterkit-media-select"><?php esc_html_e( 'Select Image', 'starterkit' ); ?></button>
+						<button type="button" class="button starterkit-media-remove" <?php echo ! $attachment_id ? 'style="display:none"' : ''; ?>><?php esc_html_e( 'Remove', 'starterkit' ); ?></button>
+					</div>
+				</div>
+				<script>
+				(function(){
+					var wrap = document.getElementById('starterkit-media-<?php echo esc_js( $name ); ?>');
+					if (!wrap) return;
+					var input = wrap.querySelector('.starterkit-media-value');
+					var preview = wrap.querySelector('.starterkit-media-preview');
+					var removeBtn = wrap.querySelector('.starterkit-media-remove');
+
+					wrap.querySelector('.starterkit-media-select').addEventListener('click', function(){
+						var frame = wp.media({ title: '<?php echo esc_js( $label ); ?>', multiple: false, library: { type: 'image' } });
+						frame.on('select', function(){
+							var attachment = frame.state().get('selection').first().toJSON();
+							var url = attachment.sizes && attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url;
+							input.value = attachment.id;
+							preview.innerHTML = '<img src="' + url + '" alt="">';
+							removeBtn.style.display = '';
+						});
+						frame.open();
+					});
+
+					removeBtn.addEventListener('click', function(){
+						input.value = '0';
+						preview.innerHTML = '';
+						this.style.display = 'none';
+					});
+				})();
+				</script>
+			</td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * Render a checkbox field row.
+	 *
+	 * @param string $name Field key.
+	 * @param string $label Field label.
+	 * @param string $checked Checked value.
+	 * @param string $description Description text.
+	 * @return void
+	 */
+	protected function render_checkbox_row( $name, $label, $checked, $description = '' ) {
+		?>
+		<tr>
+			<th scope="row"><?php echo esc_html( $label ); ?></th>
+			<td>
+				<label for="<?php echo esc_attr( $name ); ?>">
+					<input type="hidden" name="<?php echo esc_attr( GlobalSettingsManager::OPTION_KEY ); ?>[<?php echo esc_attr( $name ); ?>]" value="0">
+					<input type="checkbox" id="<?php echo esc_attr( $name ); ?>" name="<?php echo esc_attr( GlobalSettingsManager::OPTION_KEY ); ?>[<?php echo esc_attr( $name ); ?>]" value="1" <?php checked( '1', (string) $checked ); ?>>
+					<?php esc_html_e( 'Enabled', 'starterkit' ); ?>
+				</label>
+				<?php if ( ! empty( $description ) ) : ?>
+					<p class="description"><?php echo esc_html( $description ); ?></p>
+				<?php endif; ?>
+			</td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * Render a textarea field row.
+	 *
+	 * @param string $name Field key.
+	 * @param string $label Field label.
+	 * @param string $value Field value.
+	 * @param string $description Description text.
+	 * @return void
+	 */
+	protected function render_textarea_row( $name, $label, $value, $description = '' ) {
+		?>
+		<tr>
+			<th scope="row"><label for="<?php echo esc_attr( $name ); ?>"><?php echo esc_html( $label ); ?></label></th>
+			<td>
+				<textarea name="<?php echo esc_attr( GlobalSettingsManager::OPTION_KEY ); ?>[<?php echo esc_attr( $name ); ?>]" id="<?php echo esc_attr( $name ); ?>" rows="8" class="large-text code"><?php echo esc_textarea( $value ); ?></textarea>
+				<?php if ( ! empty( $description ) ) : ?>
+					<p class="description"><?php echo esc_html( $description ); ?></p>
 				<?php endif; ?>
 			</td>
 		</tr>

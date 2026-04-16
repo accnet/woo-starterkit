@@ -73,7 +73,8 @@ class SectionTypeRegistry {
 		return array(
 			'id'            => 'hero',
 			'label'         => __( 'Hero', 'starterkit' ),
-			'template'      => 'template-parts/sections/hero.php',
+			'template'      => 'template-parts/sections/hero/section.php',
+			'asset_base'    => 'template-parts/sections/hero',
 			'allowed_slots' => array( 'home_after_header', 'home_before_content' ),
 			'fields'        => array(
 				array( 'name' => 'eyebrow', 'label' => __( 'Eyebrow', 'starterkit' ), 'type' => 'text' ),
@@ -120,7 +121,8 @@ class SectionTypeRegistry {
 		return array(
 			'id'            => 'cta',
 			'label'         => __( 'Call To Action', 'starterkit' ),
-			'template'      => 'template-parts/sections/cta.php',
+			'template'      => 'template-parts/sections/cta/section.php',
+			'asset_base'    => 'template-parts/sections/cta',
 			'allowed_slots' => array( 'home_after_content', 'archive_before_loop', 'product_after_summary' ),
 			'fields'        => array(
 				array( 'name' => 'heading', 'label' => __( 'Heading', 'starterkit' ), 'type' => 'text' ),
@@ -159,7 +161,8 @@ class SectionTypeRegistry {
 		return array(
 			'id'            => 'features',
 			'label'         => __( 'Features', 'starterkit' ),
-			'template'      => 'template-parts/sections/features.php',
+			'template'      => 'template-parts/sections/features/section.php',
+			'asset_base'    => 'template-parts/sections/features',
 			'allowed_slots' => array( 'home_before_content', 'archive_after_title' ),
 			'fields'        => array(
 				array( 'name' => 'heading', 'label' => __( 'Heading', 'starterkit' ), 'type' => 'text' ),
@@ -212,7 +215,8 @@ class SectionTypeRegistry {
 		return array(
 			'id'            => 'benefits',
 			'label'         => __( 'Benefits', 'starterkit' ),
-			'template'      => 'template-parts/sections/benefits.php',
+			'template'      => 'template-parts/sections/benefits/section.php',
+			'asset_base'    => 'template-parts/sections/benefits',
 			'allowed_slots' => array( 'product_after_summary', 'product_after_tabs' ),
 			'fields'        => array(
 				array( 'name' => 'heading', 'label' => __( 'Heading', 'starterkit' ), 'type' => 'text' ),
@@ -263,7 +267,8 @@ class SectionTypeRegistry {
 		return array(
 			'id'            => 'testimonials',
 			'label'         => __( 'Testimonials', 'starterkit' ),
-			'template'      => 'template-parts/sections/testimonials.php',
+			'template'      => 'template-parts/sections/testimonials/section.php',
+			'asset_base'    => 'template-parts/sections/testimonials',
 			'allowed_slots' => array( 'home_after_content', 'product_after_tabs' ),
 			'fields'        => array(
 				array( 'name' => 'heading', 'label' => __( 'Heading', 'starterkit' ), 'type' => 'text' ),
@@ -307,7 +312,8 @@ class SectionTypeRegistry {
 		return array(
 			'id'            => 'faq',
 			'label'         => __( 'FAQ', 'starterkit' ),
-			'template'      => 'template-parts/sections/faq.php',
+			'template'      => 'template-parts/sections/faq/section.php',
+			'asset_base'    => 'template-parts/sections/faq',
 			'allowed_slots' => array( 'home_after_content', 'product_after_tabs' ),
 			'fields'        => array(
 				array( 'name' => 'heading', 'label' => __( 'Heading', 'starterkit' ), 'type' => 'text' ),
@@ -348,7 +354,8 @@ class SectionTypeRegistry {
 		return array(
 			'id'            => 'banner',
 			'label'         => __( 'Promo Banner', 'starterkit' ),
-			'template'      => 'template-parts/sections/banner.php',
+			'template'      => 'template-parts/sections/banner/section.php',
+			'asset_base'    => 'template-parts/sections/banner',
 			'allowed_slots' => array( 'archive_before_title', 'archive_before_loop', 'home_after_header' ),
 			'fields'        => array(
 				array( 'name' => 'heading', 'label' => __( 'Heading', 'starterkit' ), 'type' => 'text' ),
@@ -377,7 +384,8 @@ class SectionTypeRegistry {
 		return array(
 			'id'            => 'product_grid',
 			'label'         => __( 'Product Grid', 'starterkit' ),
-			'template'      => 'template-parts/sections/product-grid.php',
+			'template'      => 'template-parts/sections/product-grid/section.php',
+			'asset_base'    => 'template-parts/sections/product-grid',
 			'allowed_slots' => array( 'home_after_content', 'archive_after_loop' ),
 			'fields'        => array(
 				array( 'name' => 'heading', 'label' => __( 'Heading', 'starterkit' ), 'type' => 'text' ),
@@ -400,7 +408,8 @@ class SectionTypeRegistry {
 		return array(
 			'id'            => 'image_text',
 			'label'         => __( 'Image + Text', 'starterkit' ),
-			'template'      => 'template-parts/sections/image-text.php',
+			'template'      => 'template-parts/sections/image-text/section.php',
+			'asset_base'    => 'template-parts/sections/image-text',
 			'allowed_slots' => array( 'home_before_content', 'home_after_content' ),
 			'fields'        => array(
 				array( 'name' => 'heading', 'label' => __( 'Heading', 'starterkit' ), 'type' => 'text' ),
@@ -435,7 +444,8 @@ class SectionTypeRegistry {
 		return array(
 			'id'            => 'newsletter',
 			'label'         => __( 'Newsletter', 'starterkit' ),
-			'template'      => 'template-parts/sections/newsletter.php',
+			'template'      => 'template-parts/sections/newsletter/section.php',
+			'asset_base'    => 'template-parts/sections/newsletter',
 			'allowed_slots' => array( 'home_before_footer', 'footer_top' ),
 			'fields'        => array(
 				array( 'name' => 'heading', 'label' => __( 'Heading', 'starterkit' ), 'type' => 'text' ),

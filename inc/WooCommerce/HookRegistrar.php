@@ -48,6 +48,9 @@ class HookRegistrar {
 		add_action( 'woocommerce_after_main_content', array( $this->archive_layout_manager, 'render_layout_close' ), 50 );
 		add_action( 'woocommerce_before_shop_loop', array( $this, 'archive_before_loop' ), 5 );
 		add_action( 'woocommerce_after_shop_loop', array( $this, 'archive_after_loop' ), 50 );
+
+		add_action( 'wp_ajax_starterkit_apply_coupon', array( $this, 'ajax_apply_coupon' ) );
+		add_action( 'wp_ajax_nopriv_starterkit_apply_coupon', array( $this, 'ajax_apply_coupon' ) );
 	}
 
 	/**
@@ -147,9 +150,30 @@ class HookRegistrar {
 	 * @return array<string, string>
 	 */
 	public function filter_breadcrumb_defaults( array $defaults ) {
-		$defaults['wrap_before'] = '<nav class="woocommerce-breadcrumb container" aria-label="Breadcrumb">';
+		$defaults['wrap_before'] = '<nav class="woocommerce-breadcrumb" aria-label="Breadcrumb">';
 		$defaults['wrap_after']  = '</nav>';
 
 		return $defaults;
+	}
+
+	/**
+	 * Apply coupon via AJAX (checkout sidebar discount code).
+	 *
+	 * @return void
+	 */
+	public function ajax_apply_coupon() {
+		check_ajax_referer( 'update-order-review', 'security', false );
+
+		$coupon_code = isset( $_POST['coupon_code'] ) ? wc_format_coupon_code( wp_unslash( $_POST['coupon_code'] ) ) : '';
+
+		if ( empty( $coupon_code ) ) {
+			wp_send_json_error( array( 'message' => __( 'Please enter a coupon code.', 'starterkit' ) ) );
+		}
+
+		if ( ! WC()->cart->has_discount( $coupon_code ) ) {
+			WC()->cart->apply_coupon( $coupon_code );
+		}
+
+		wp_send_json_success();
 	}
 }
