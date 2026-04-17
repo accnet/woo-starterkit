@@ -6,7 +6,6 @@
  */
 ?>
 <footer class="site-footer site-footer--preset-2">
-	<?php starterkit_render_slot( 'footer_top' ); ?>
 	<div class="container footer-banner footer-banner--preset-2">
 		<div>
 			<h3><?php esc_html_e( 'Join the newsletter', 'starterkit' ); ?></h3>
@@ -23,7 +22,6 @@
 		</div>
 	</div>
 	<div class="container footer-bottom footer-bottom--preset-2">
-		<?php starterkit_render_slot( 'footer_bottom' ); ?>
 		<p><?php echo esc_html( gmdate( 'Y' ) ); ?> <?php bloginfo( 'description' ); ?></p>
 	</div>
 </footer>

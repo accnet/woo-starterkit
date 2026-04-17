@@ -12,7 +12,6 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 <header class="site-header site-header--preset-2" data-header-behavior="sticky menu">
 	<div class="header-topbar">
 		<div class="container header-topbar__inner">
-			<?php starterkit_render_slot( 'header_top' ); ?>
 			<span><?php esc_html_e( 'Preset-driven commerce theme', 'starterkit' ); ?></span>
 		</div>
 	</div>
@@ -57,5 +56,4 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 			</div>
 		</div>
 	</div>
-	<?php starterkit_render_slot( 'header_bottom' ); ?>
 </header>

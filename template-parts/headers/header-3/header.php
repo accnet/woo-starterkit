@@ -10,7 +10,6 @@ $cart_url   = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_ur
 $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 ?>
 <header class="site-header site-header--preset-3" data-header-behavior="menu search">
-	<?php starterkit_render_slot( 'header_top' ); ?>
 	<div class="container header-shell header-shell--preset-3">
 		<div class="site-branding">
 			<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="site-title">
@@ -50,5 +49,4 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 			<?php get_search_form(); ?>
 		</div>
 	</div>
-	<?php starterkit_render_slot( 'header_bottom' ); ?>
 </header>

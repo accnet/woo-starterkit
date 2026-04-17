@@ -7,18 +7,11 @@
 
 namespace StarterKit\Core;
 
-use StarterKit\Admin\SectionAdminManager;
-use StarterKit\Admin\SectionMetaBoxes;
 use StarterKit\Admin\SettingsPage;
 use StarterKit\Layouts\LayoutRegistry;
 use StarterKit\Layouts\LayoutResolver;
 use StarterKit\Rules\DisplayRuleEvaluator;
 use StarterKit\Rules\PageContextResolver;
-use StarterKit\Sections\SectionInstanceRepository;
-use StarterKit\Sections\SectionPostType;
-use StarterKit\Sections\SectionRenderer;
-use StarterKit\Sections\SectionTypeRegistry;
-use StarterKit\Sections\SlotRenderer;
 use StarterKit\Settings\CssVariableOutput;
 use StarterKit\Settings\GlobalSettingsManager;
 use StarterKit\WooCommerce\ArchiveLayoutManager;
@@ -66,16 +59,9 @@ class App {
 		$this->css_variable_output();
 		$this->layout_registry();
 		$this->layout_resolver();
-		$this->section_type_registry();
-		$this->section_post_type();
 		$this->settings_page();
-		$this->section_meta_boxes();
-		$this->section_admin_manager();
 		$this->context_resolver();
 		$this->display_rule_evaluator();
-		$this->section_repository();
-		$this->section_renderer();
-		$this->slot_renderer();
 		$this->asset_manager();
 		$this->performance_manager();
 		$this->script_injection_manager();
@@ -126,8 +112,6 @@ class App {
 				return new AssetManager(
 					$this->settings_manager(),
 					$this->layout_registry(),
-					$this->section_type_registry(),
-					$this->section_repository(),
 					$this->context_resolver(),
 					$this->display_rule_evaluator(),
 					$this->layout_resolver()
@@ -221,34 +205,6 @@ class App {
 	}
 
 	/**
-	 * Section type registry.
-	 *
-	 * @return SectionTypeRegistry
-	 */
-	public function section_type_registry() {
-		return $this->service(
-			'section_type_registry',
-			function() {
-				return new SectionTypeRegistry();
-			}
-		);
-	}
-
-	/**
-	 * Section CPT registration.
-	 *
-	 * @return SectionPostType
-	 */
-	public function section_post_type() {
-		return $this->service(
-			'section_post_type',
-			function() {
-				return new SectionPostType();
-			}
-		);
-	}
-
-	/**
 	 * Settings page.
 	 *
 	 * @return SettingsPage
@@ -258,34 +214,6 @@ class App {
 			'settings_page',
 			function() {
 				return new SettingsPage( $this->settings_manager(), $this->layout_registry() );
-			}
-		);
-	}
-
-	/**
-	 * Section meta boxes.
-	 *
-	 * @return SectionMetaBoxes
-	 */
-	public function section_meta_boxes() {
-		return $this->service(
-			'section_meta_boxes',
-			function() {
-				return new SectionMetaBoxes( $this->section_type_registry() );
-			}
-		);
-	}
-
-	/**
-	 * Section admin manager.
-	 *
-	 * @return SectionAdminManager
-	 */
-	public function section_admin_manager() {
-		return $this->service(
-			'section_admin_manager',
-			function() {
-				return new SectionAdminManager();
 			}
 		);
 	}
@@ -314,54 +242,6 @@ class App {
 			'display_rule_evaluator',
 			function() {
 				return new DisplayRuleEvaluator();
-			}
-		);
-	}
-
-	/**
-	 * Section repository.
-	 *
-	 * @return SectionInstanceRepository
-	 */
-	public function section_repository() {
-		return $this->service(
-			'section_repository',
-			function() {
-				return new SectionInstanceRepository();
-			}
-		);
-	}
-
-	/**
-	 * Section renderer.
-	 *
-	 * @return SectionRenderer
-	 */
-	public function section_renderer() {
-		return $this->service(
-			'section_renderer',
-			function() {
-				return new SectionRenderer( $this->section_type_registry(), $this->settings_manager() );
-			}
-		);
-	}
-
-	/**
-	 * Slot renderer.
-	 *
-	 * @return SlotRenderer
-	 */
-	public function slot_renderer() {
-		return $this->service(
-			'slot_renderer',
-			function() {
-				return new SlotRenderer(
-					$this->section_repository(),
-					$this->section_renderer(),
-					$this->context_resolver(),
-					$this->display_rule_evaluator(),
-					$this->layout_resolver()
-				);
 			}
 		);
 	}

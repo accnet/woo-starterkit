@@ -538,8 +538,6 @@ class SettingsPage {
 			}
 		}
 
-		$this->flush_section_caches();
-
 		wp_safe_redirect( admin_url( 'admin.php?page=starterkit-theme-builder&tab=tools&starterkit_notice=import_success' ) );
 		exit;
 	}
@@ -573,26 +571,4 @@ class SettingsPage {
 		}
 	}
 
-	/**
-	 * Flush cached section collections.
-	 *
-	 * @return void
-	 */
-	protected function flush_section_caches() {
-		$slots = array( '' );
-
-		foreach ( $this->layout_registry->all() as $group ) {
-			foreach ( $group as $layout ) {
-				if ( empty( $layout['slots'] ) || ! is_array( $layout['slots'] ) ) {
-					continue;
-				}
-
-				$slots = array_merge( $slots, $layout['slots'] );
-			}
-		}
-
-		foreach ( array_unique( $slots ) as $slot ) {
-			wp_cache_delete( 'starterkit_sections_' . md5( (string) $slot ), 'starterkit' );
-		}
-	}
 }

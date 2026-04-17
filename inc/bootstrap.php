@@ -20,17 +20,4 @@ if ( ! function_exists( 'starterkit' ) ) {
 	}
 }
 
-if ( ! function_exists( 'starterkit_render_slot' ) ) {
-	/**
-	 * Render a configured slot.
-	 *
-	 * @param string $slot_name Slot identifier.
-	 * @param array  $context   Optional context overrides.
-	 * @return void
-	 */
-	function starterkit_render_slot( $slot_name, array $context = array() ) {
-		starterkit()->slot_renderer()->render( $slot_name, $context );
-	}
-}
-
 starterkit()->boot();

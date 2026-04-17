@@ -30,7 +30,6 @@ if ( class_exists( '\WootifyCore\Services\ProductService' ) ) {
 <div class="starterkit-product-layout product-layout-1">
 	<div class="starterkit-product-layout__product-shell">
 		<div class="starterkit-product-layout__gallery-column">
-			<?php starterkit_render_slot( 'product_before_gallery' ); ?>
 			<?php woocommerce_show_product_sale_flash(); ?>
 			<div class="starterkit-product-gallery<?php echo count( $gallery_items ) > 1 ? ' starterkit-product-gallery--has-thumbs' : ''; ?>">
 				<?php if ( count( $gallery_items ) > 1 ) : ?>
@@ -86,12 +85,10 @@ if ( class_exists( '\WootifyCore\Services\ProductService' ) ) {
 					<?php endif; ?>
 				</div>
 			</div>
-			<?php starterkit_render_slot( 'product_after_gallery' ); ?>
 		</div>
 
 		<div class="starterkit-product-layout__summary-column">
 			<div class="summary entry-summary<?php echo $show_variant_price_top ? ' has-wootify-variant-price-top' : ''; ?>">
-				<?php starterkit_render_slot( 'product_before_summary' ); ?>
 				<?php woocommerce_template_single_title(); ?>
 				<?php if ( $show_variant_price_top ) : ?>
 					<div id="wootify-variant-price-top" class="wootify-variant-price-top" style="display:none;">
@@ -104,18 +101,13 @@ if ( class_exists( '\WootifyCore\Services\ProductService' ) ) {
 				<?php woocommerce_template_single_add_to_cart(); ?>
 				<?php woocommerce_template_single_meta(); ?>
 				<?php woocommerce_template_single_sharing(); ?>
-				<?php starterkit_render_slot( 'product_after_summary' ); ?>
 			</div>
 		</div>
 	</div>
 
 	<div class="starterkit-product-layout__supporting">
-		<?php starterkit_render_slot( 'product_before_tabs' ); ?>
 		<?php woocommerce_output_product_data_tabs(); ?>
-		<?php starterkit_render_slot( 'product_after_tabs' ); ?>
-		<?php starterkit_render_slot( 'product_before_related' ); ?>
 		<?php woocommerce_upsell_display(); ?>
 		<?php woocommerce_output_related_products(); ?>
-		<?php starterkit_render_slot( 'product_after_related' ); ?>
 	</div>
 </div>

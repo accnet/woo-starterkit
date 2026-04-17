@@ -11,7 +11,7 @@
 .starterkit-product-layout.product-layout-1 .starterkit-product-layout__product-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(24px, 4vw, 56px);
+  gap: clamp(20px, 4vw, 30px);
   align-items: start;
 }
 
@@ -152,7 +152,7 @@
 
 .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__thumbs .swiper-slide {
   border: 1px solid var(--starterkit-product-border);
-  border-radius: 0;
+  border-radius: 5px;
   overflow: hidden;
   background: #fff;
   cursor: pointer;

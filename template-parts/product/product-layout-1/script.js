@@ -335,49 +335,34 @@
       return;
     }
 
-    var variantId = Number(detail.id || detail.variant_id || 0);
+    var payload = detail.theme_gallery && typeof detail.theme_gallery === 'object' ? detail.theme_gallery : detail;
+    var variantId = Number(payload.variant_id || detail.id || detail.variant_id || 0);
     var featuredSrc = normalizeUrl(
+      payload.featured_image ||
       detail.selected_image_url ||
       detail.image_url ||
       (detail.featured_image && detail.featured_image.src) ||
       ''
     );
-    var gallerySrcs = Array.isArray(detail.selected_gallery_images)
-      ? detail.selected_gallery_images.map(normalizeUrl).filter(Boolean)
-      : [];
+    var gallerySrcs = Array.isArray(payload.gallery_images)
+      ? payload.gallery_images.map(normalizeUrl).filter(Boolean)
+      : (Array.isArray(detail.selected_gallery_images)
+        ? detail.selected_gallery_images.map(normalizeUrl).filter(Boolean)
+        : []);
+    var mode = String(payload.mode || '').toLowerCase();
 
     var slides = [];
 
-    if (gallerySrcs.length > 1) {
+    if (mode === 'replace' && gallerySrcs.length > 1) {
       slides = gallery.starterkitBaseSlides.filter(function (slide) {
         return gallerySrcs.indexOf(slide.normalizedImageSrc) !== -1;
       });
     }
 
-    if (!slides.length && variantId) {
+    if (!slides.length && variantId && mode !== 'prioritize') {
       slides = gallery.starterkitBaseSlides.filter(function (slide) {
         return slide.featuredVariantIds.indexOf(variantId) !== -1 || slide.variantIds.indexOf(variantId) !== -1;
       });
-    }
-
-    if (!slides.length && gallerySrcs.length === 1) {
-      slides = gallery.starterkitBaseSlides.filter(function (slide) {
-        return gallerySrcs.indexOf(slide.normalizedImageSrc) !== -1;
-      });
-
-      if (slides.length <= 1) {
-        slides = gallery.starterkitBaseSlides;
-      }
-    }
-
-    if (!slides.length && featuredSrc) {
-      slides = gallery.starterkitBaseSlides.filter(function (slide) {
-        return slide.normalizedImageSrc === featuredSrc;
-      });
-
-      if (slides.length <= 1) {
-        slides = gallery.starterkitBaseSlides;
-      }
     }
 
     if (!slides.length) {

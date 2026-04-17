@@ -276,6 +276,79 @@ h6 {
   margin-bottom: 20px;
 }
 
+.woocommerce nav.woocommerce-pagination,
+.woocommerce-page nav.woocommerce-pagination {
+  float: none;
+  margin: 32px 0 0;
+  text-align: center;
+}
+
+.woocommerce nav.woocommerce-pagination ul,
+.woocommerce-page nav.woocommerce-pagination ul {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  list-style: none;
+}
+
+.woocommerce nav.woocommerce-pagination ul li,
+.woocommerce-page nav.woocommerce-pagination ul li {
+  float: none;
+  margin: 0;
+  border: 0;
+  overflow: visible;
+}
+
+.woocommerce nav.woocommerce-pagination ul li .page-numbers,
+.woocommerce-page nav.woocommerce-pagination ul li .page-numbers {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  box-shadow: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.woocommerce nav.woocommerce-pagination ul li .page-numbers.current,
+.woocommerce-page nav.woocommerce-pagination ul li .page-numbers.current {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.woocommerce nav.woocommerce-pagination ul li .page-numbers:hover,
+.woocommerce-page nav.woocommerce-pagination ul li .page-numbers:hover,
+.woocommerce nav.woocommerce-pagination ul li .page-numbers:focus,
+.woocommerce-page nav.woocommerce-pagination ul li .page-numbers:focus {
+  border-color: rgba(17, 24, 39, 0.24);
+  background: #f8fafc;
+  color: var(--color-primary);
+  outline: 0;
+}
+
+.woocommerce nav.woocommerce-pagination ul li .page-numbers.current:hover,
+.woocommerce-page nav.woocommerce-pagination ul li .page-numbers.current:hover,
+.woocommerce nav.woocommerce-pagination ul li .page-numbers.current:focus,
+.woocommerce-page nav.woocommerce-pagination ul li .page-numbers.current:focus {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
 @media (max-width: 782px) {
   .woocommerce .woocommerce-breadcrumb,
   .woocommerce-page .woocommerce-breadcrumb {
@@ -297,6 +370,26 @@ h6 {
   .woocommerce-page .woocommerce-ordering select {
     width: 100%;
     min-width: 0;
+  }
+
+  .woocommerce nav.woocommerce-pagination,
+  .woocommerce-page nav.woocommerce-pagination {
+    margin-top: 24px;
+  }
+
+  .woocommerce nav.woocommerce-pagination ul,
+  .woocommerce-page nav.woocommerce-pagination ul {
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .woocommerce nav.woocommerce-pagination ul li .page-numbers,
+  .woocommerce-page nav.woocommerce-pagination ul li .page-numbers {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 12px;
+    font-size: 13px;
   }
 
   .header-shell,

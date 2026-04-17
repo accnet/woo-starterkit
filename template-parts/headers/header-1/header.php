@@ -10,7 +10,6 @@ $cart_url   = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_ur
 $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 ?>
 <header class="site-header site-header--preset-1" data-header-behavior="menu search">
-	<?php starterkit_render_slot( 'header_top' ); ?>
 	<button class="site-header__backdrop" type="button" data-header-close aria-label="<?php esc_attr_e( 'Close menu', 'starterkit' ); ?>"></button>
 	<div class="container header-shell header-shell--preset-1">
 		<div class="site-branding">
@@ -68,5 +67,4 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 			<?php get_search_form(); ?>
 		</div>
 	</div>
-	<?php starterkit_render_slot( 'header_bottom' ); ?>
 </header>

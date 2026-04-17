@@ -12,8 +12,6 @@ use StarterKit\Rules\PageContextResolver;
 use StarterKit\Settings\GlobalSettingsManager;
 use StarterKit\Layouts\LayoutRegistry;
 use StarterKit\Layouts\LayoutResolver;
-use StarterKit\Sections\SectionInstanceRepository;
-use StarterKit\Sections\SectionTypeRegistry;
 
 class AssetManager {
 	/**
@@ -29,20 +27,6 @@ class AssetManager {
 	 * @var LayoutRegistry
 	 */
 	protected $layout_registry;
-
-	/**
-	 * Section type registry.
-	 *
-	 * @var SectionTypeRegistry
-	 */
-	protected $section_type_registry;
-
-	/**
-	 * Section repository.
-	 *
-	 * @var SectionInstanceRepository
-	 */
-	protected $section_repository;
 
 	/**
 	 * Context resolver.
@@ -70,14 +54,12 @@ class AssetManager {
 	 *
 	 * @param GlobalSettingsManager $settings Settings manager.
 	 */
-	public function __construct( GlobalSettingsManager $settings, LayoutRegistry $layout_registry, SectionTypeRegistry $section_type_registry, SectionInstanceRepository $section_repository, PageContextResolver $context_resolver, DisplayRuleEvaluator $rule_evaluator, LayoutResolver $layout_resolver ) {
-		$this->settings              = $settings;
-		$this->layout_registry       = $layout_registry;
-		$this->section_type_registry = $section_type_registry;
-		$this->section_repository    = $section_repository;
-		$this->context_resolver      = $context_resolver;
-		$this->rule_evaluator        = $rule_evaluator;
-		$this->layout_resolver       = $layout_resolver;
+	public function __construct( GlobalSettingsManager $settings, LayoutRegistry $layout_registry, PageContextResolver $context_resolver, DisplayRuleEvaluator $rule_evaluator, LayoutResolver $layout_resolver ) {
+		$this->settings         = $settings;
+		$this->layout_registry  = $layout_registry;
+		$this->context_resolver = $context_resolver;
+		$this->rule_evaluator   = $rule_evaluator;
+		$this->layout_resolver  = $layout_resolver;
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue' ) );
 	}
@@ -109,7 +91,6 @@ class AssetManager {
 		);
 
 		$this->enqueue_active_layout_assets( $context );
-		$this->enqueue_active_section_assets( $context );
 		$this->enqueue_commerce_assets();
 	}
 
@@ -140,77 +121,6 @@ class AssetManager {
 
 			$this->enqueue_asset_bundle( 'starterkit-layout-', $layout_id, (string) $layout['asset_base'] );
 		}
-	}
-
-	/**
-	 * Enqueue assets only for section types that will actually render on this request.
-	 *
-	 * @param array<string, mixed> $context Request context.
-	 * @return void
-	 */
-	protected function enqueue_active_section_assets( array $context ) {
-		$type_ids = array();
-		$slots    = $this->resolve_request_slots( $context );
-
-		foreach ( $slots as $slot_name ) {
-			$sections = $this->section_repository->get_active_sections( $slot_name );
-
-			foreach ( $sections as $section ) {
-				if ( $slot_name !== $section['slot'] ) {
-					continue;
-				}
-
-				if ( ! $this->layout_resolver->is_slot_supported( $slot_name, $context ) ) {
-					continue;
-				}
-
-				if ( ! $this->rule_evaluator->matches( (array) $section['display_rules'], $context ) ) {
-					continue;
-				}
-
-				if ( ! empty( $section['type'] ) ) {
-					$type_ids[] = (string) $section['type'];
-				}
-			}
-		}
-
-		$type_ids = array_unique( array_filter( $type_ids ) );
-
-		foreach ( $type_ids as $type_id ) {
-			$type = $this->section_type_registry->get( $type_id );
-
-			if ( empty( $type['asset_base'] ) ) {
-				continue;
-			}
-
-			$this->enqueue_asset_bundle( 'starterkit-section-', $type_id, (string) $type['asset_base'] );
-		}
-	}
-
-	/**
-	 * Resolve all slots that can render on the current request.
-	 *
-	 * @param array<string, mixed> $context Request context.
-	 * @return array<int, string>
-	 */
-	protected function resolve_request_slots( array $context ) {
-		$slots = array( 'header_top', 'header_bottom', 'footer_top', 'footer_bottom' );
-
-		if ( ! empty( $context['is_homepage'] ) ) {
-			$slots = array_merge( $slots, array( 'home_after_header', 'home_before_content', 'home_after_content', 'home_before_footer' ) );
-		}
-
-		if ( ! empty( $context['is_product'] ) ) {
-			$product = $this->layout_registry->get( (string) $this->settings->get( 'product_layout', 'product-layout-1' ) );
-			$slots   = array_merge( $slots, isset( $product['slots'] ) && is_array( $product['slots'] ) ? $product['slots'] : array() );
-		}
-
-		if ( ! empty( $context['is_product_archive'] ) ) {
-			$archive = $this->layout_registry->get( (string) $this->settings->get( 'archive_layout', 'archive-layout-1' ) );
-			$slots   = array_merge( $slots, isset( $archive['slots'] ) && is_array( $archive['slots'] ) ? $archive['slots'] : array() );
-		}
-
-		return array_values( array_unique( array_filter( $slots ) ) );
 	}
 
 	/**

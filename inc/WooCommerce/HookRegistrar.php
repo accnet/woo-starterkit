@@ -35,120 +35,20 @@ class HookRegistrar {
 		add_filter( 'woocommerce_enqueue_styles', '__return_empty_array' );
 		add_filter( 'woocommerce_breadcrumb_defaults', array( $this, 'filter_breadcrumb_defaults' ) );
 		add_action( 'woocommerce_before_single_product_summary', array( $this->product_layout_manager, 'render_gallery_column_open' ), 2 );
-		add_action( 'woocommerce_before_single_product_summary', array( $this, 'product_before_gallery' ), 5 );
 		add_action( 'woocommerce_before_single_product_summary', array( $this->product_layout_manager, 'render_layout_open' ), 1 );
-		add_action( 'woocommerce_before_single_product_summary', array( $this, 'product_after_gallery' ), 25 );
 		add_action( 'woocommerce_before_single_product_summary', array( $this->product_layout_manager, 'render_gallery_column_close' ), 30 );
 		add_action( 'woocommerce_single_product_summary', array( $this->product_layout_manager, 'render_summary_column_open' ), 1 );
 		add_action( 'woocommerce_after_single_product', array( $this->product_layout_manager, 'render_layout_close' ), 99 );
-		add_action( 'woocommerce_single_product_summary', array( $this, 'product_before_summary' ), 4 );
-		add_action( 'woocommerce_single_product_summary', array( $this, 'product_after_summary' ), 35 );
 		add_action( 'woocommerce_single_product_summary', array( $this->product_layout_manager, 'render_summary_column_close' ), 36 );
-		add_action( 'woocommerce_after_single_product_summary', array( $this, 'product_before_tabs' ), 4 );
-		add_action( 'woocommerce_after_single_product_summary', array( $this, 'product_after_tabs' ), 15 );
-		add_action( 'woocommerce_after_single_product_summary', array( $this, 'product_before_related' ), 18 );
-		add_action( 'woocommerce_after_single_product_summary', array( $this, 'product_after_related' ), 30 );
 
 		add_action( 'woocommerce_before_main_content', array( $this->archive_layout_manager, 'render_layout_open' ), 5 );
 		add_action( 'woocommerce_after_main_content', array( $this->archive_layout_manager, 'render_layout_close' ), 50 );
-		add_action( 'woocommerce_before_shop_loop', array( $this, 'archive_before_loop' ), 5 );
-		add_action( 'woocommerce_after_shop_loop', array( $this, 'archive_after_loop' ), 50 );
 		add_filter( 'loop_shop_per_page', array( $this, 'filter_loop_shop_per_page' ), 20 );
 		add_filter( 'loop_shop_columns', array( $this, 'filter_loop_shop_columns' ), 20 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_woocommerce_styles' ), 100 );
 
 		add_action( 'wp_ajax_starterkit_apply_coupon', array( $this, 'ajax_apply_coupon' ) );
 		add_action( 'wp_ajax_nopriv_starterkit_apply_coupon', array( $this, 'ajax_apply_coupon' ) );
-	}
-
-	/**
-	 * Render single-product slot.
-	 *
-	 * @return void
-	 */
-	public function product_before_gallery() {
-		starterkit_render_slot( 'product_before_gallery' );
-	}
-
-	/**
-	 * Render single-product slot.
-	 *
-	 * @return void
-	 */
-	public function product_before_summary() {
-		starterkit_render_slot( 'product_before_summary' );
-	}
-
-	/**
-	 * Render single-product slot.
-	 *
-	 * @return void
-	 */
-	public function product_after_gallery() {
-		starterkit_render_slot( 'product_after_gallery' );
-	}
-
-	/**
-	 * Render single-product slot.
-	 *
-	 * @return void
-	 */
-	public function product_after_summary() {
-		starterkit_render_slot( 'product_after_summary' );
-	}
-
-	/**
-	 * Render single-product slot.
-	 *
-	 * @return void
-	 */
-	public function product_before_tabs() {
-		starterkit_render_slot( 'product_before_tabs' );
-	}
-
-	/**
-	 * Render single-product slot.
-	 *
-	 * @return void
-	 */
-	public function product_after_tabs() {
-		starterkit_render_slot( 'product_after_tabs' );
-	}
-
-	/**
-	 * Render single-product slot.
-	 *
-	 * @return void
-	 */
-	public function product_before_related() {
-		starterkit_render_slot( 'product_before_related' );
-	}
-
-	/**
-	 * Render single-product slot.
-	 *
-	 * @return void
-	 */
-	public function product_after_related() {
-		starterkit_render_slot( 'product_after_related' );
-	}
-
-	/**
-	 * Render archive slot.
-	 *
-	 * @return void
-	 */
-	public function archive_before_loop() {
-		starterkit_render_slot( 'archive_before_loop' );
-	}
-
-	/**
-	 * Render archive slot.
-	 *
-	 * @return void
-	 */
-	public function archive_after_loop() {
-		starterkit_render_slot( 'archive_after_loop' );
 	}
 
 	/**
