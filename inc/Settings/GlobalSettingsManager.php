@@ -24,11 +24,26 @@ class GlobalSettingsManager {
 			'favicon_id'         => 0,
 			'header_layout'      => 'header-1',
 			'footer_layout'      => 'footer-1',
-			'master_layout'      => 'master-default',
 			'product_layout'     => 'product-layout-1',
 			'archive_layout'     => 'archive-layout-1',
 			'heading_font'       => 'Poppins',
 			'body_font'          => 'Inter',
+			'body_font_size'     => '16px',
+			'body_font_weight'   => '400',
+			'body_line_height'   => '1.6',
+			'heading_font_weight' => '700',
+			'heading_text_transform' => 'none',
+			'heading_letter_spacing' => '0',
+			'nav_font_size'      => '16px',
+			'nav_font_weight'    => '500',
+			'nav_text_transform' => 'none',
+			'button_font_size'   => '16px',
+			'button_font_weight' => '600',
+			'button_text_transform' => 'none',
+			'eyebrow_font_size'  => '12px',
+			'eyebrow_font_weight' => '700',
+			'eyebrow_text_transform' => 'uppercase',
+			'eyebrow_letter_spacing' => '0.12em',
 			'color_primary'      => '#111827',
 			'color_secondary'    => '#334155',
 			'color_accent'       => '#f59e0b',
@@ -56,7 +71,6 @@ class GlobalSettingsManager {
 			'footer_scripts'     => '',
 			'body_scripts_top'   => '',
 			'body_scripts_bottom' => '',
-			'free_shipping_threshold' => '0',
 		);
 	}
 
@@ -136,6 +150,71 @@ class GlobalSettingsManager {
 				'id'          => '999px',
 				'label'       => __( 'Pill', 'starterkit' ),
 				'description' => __( 'Maximum rounding where components allow it.', 'starterkit' ),
+			),
+		);
+	}
+
+	/**
+	 * Preset font weight options.
+	 *
+	 * @return array<string, array<string, string>>
+	 */
+	public function font_weight_options() {
+		return array(
+			'400' => array(
+				'id'          => '400',
+				'label'       => __( '400 - Regular', 'starterkit' ),
+				'description' => __( 'Default body weight.', 'starterkit' ),
+			),
+			'500' => array(
+				'id'          => '500',
+				'label'       => __( '500 - Medium', 'starterkit' ),
+				'description' => __( 'A slightly stronger emphasis.', 'starterkit' ),
+			),
+			'600' => array(
+				'id'          => '600',
+				'label'       => __( '600 - Semibold', 'starterkit' ),
+				'description' => __( 'Common for navigation and buttons.', 'starterkit' ),
+			),
+			'700' => array(
+				'id'          => '700',
+				'label'       => __( '700 - Bold', 'starterkit' ),
+				'description' => __( 'Strong visual emphasis.', 'starterkit' ),
+			),
+			'800' => array(
+				'id'          => '800',
+				'label'       => __( '800 - Extra Bold', 'starterkit' ),
+				'description' => __( 'High-contrast display weight.', 'starterkit' ),
+			),
+		);
+	}
+
+	/**
+	 * Preset text transform options.
+	 *
+	 * @return array<string, array<string, string>>
+	 */
+	public function text_transform_options() {
+		return array(
+			'none' => array(
+				'id'          => 'none',
+				'label'       => __( 'None', 'starterkit' ),
+				'description' => __( 'Keep the original casing.', 'starterkit' ),
+			),
+			'uppercase' => array(
+				'id'          => 'uppercase',
+				'label'       => __( 'Uppercase', 'starterkit' ),
+				'description' => __( 'Convert all letters to uppercase.', 'starterkit' ),
+			),
+			'lowercase' => array(
+				'id'          => 'lowercase',
+				'label'       => __( 'Lowercase', 'starterkit' ),
+				'description' => __( 'Convert all letters to lowercase.', 'starterkit' ),
+			),
+			'capitalize' => array(
+				'id'          => 'capitalize',
+				'label'       => __( 'Capitalize', 'starterkit' ),
+				'description' => __( 'Uppercase the first letter of each word.', 'starterkit' ),
 			),
 		);
 	}
@@ -342,6 +421,28 @@ class GlobalSettingsManager {
 					$raw     = sanitize_text_field( (string) $raw );
 					$output[ $key ] = isset( $options[ $raw ] ) ? $raw : $value;
 					break;
+				case 'body_font_size':
+				case 'body_line_height':
+				case 'heading_letter_spacing':
+				case 'nav_font_size':
+				case 'button_font_size':
+				case 'eyebrow_font_size':
+				case 'eyebrow_letter_spacing':
+					$output[ $key ] = $this->sanitize_css_measurement( $raw, (string) $value );
+					break;
+				case 'body_font_weight':
+				case 'heading_font_weight':
+				case 'nav_font_weight':
+				case 'button_font_weight':
+				case 'eyebrow_font_weight':
+					$output[ $key ] = $this->sanitize_font_weight( $raw, (string) $value );
+					break;
+				case 'heading_text_transform':
+				case 'nav_text_transform':
+				case 'button_text_transform':
+				case 'eyebrow_text_transform':
+					$output[ $key ] = $this->sanitize_text_transform( $raw, (string) $value );
+					break;
 				case 'lazy_load_images':
 				case 'disable_emojis':
 				case 'disable_block_css':
@@ -360,12 +461,6 @@ class GlobalSettingsManager {
 				case 'body_scripts_top':
 				case 'body_scripts_bottom':
 					$output[ $key ] = $this->sanitize_code_snippet( $raw );
-					break;
-				case 'free_shipping_threshold':
-					$raw = is_scalar( $raw ) ? (string) $raw : '0';
-					$raw = preg_replace( '/[^0-9.,]/', '', $raw );
-					$raw = str_replace( ',', '.', (string) $raw );
-					$output[ $key ] = (string) max( 0, (float) $raw );
 					break;
 				default:
 					$output[ $key ] = sanitize_text_field( (string) $raw );
@@ -391,5 +486,50 @@ class GlobalSettingsManager {
 		}
 
 		return wp_kses_post( $value );
+	}
+
+	/**
+	 * Sanitize CSS measurement-like values used by design tokens.
+	 *
+	 * @param mixed  $value Raw value.
+	 * @param string $default Fallback value.
+	 * @return string
+	 */
+	protected function sanitize_css_measurement( $value, $default ) {
+		$value = sanitize_text_field( (string) $value );
+
+		if ( preg_match( '/^-?(?:\d+|\d*\.\d+)(?:px|rem|em|%|vh|vw)?$/', $value ) ) {
+			return $value;
+		}
+
+		return $default;
+	}
+
+	/**
+	 * Sanitize font-weight values.
+	 *
+	 * @param mixed  $value Raw value.
+	 * @param string $default Fallback value.
+	 * @return string
+	 */
+	protected function sanitize_font_weight( $value, $default ) {
+		$value   = sanitize_text_field( (string) $value );
+		$allowed = array( '100', '200', '300', '400', '500', '600', '700', '800', '900', 'normal', 'bold' );
+
+		return in_array( $value, $allowed, true ) ? $value : $default;
+	}
+
+	/**
+	 * Sanitize text-transform values.
+	 *
+	 * @param mixed  $value Raw value.
+	 * @param string $default Fallback value.
+	 * @return string
+	 */
+	protected function sanitize_text_transform( $value, $default ) {
+		$value   = sanitize_text_field( (string) $value );
+		$allowed = array( 'none', 'uppercase', 'lowercase', 'capitalize' );
+
+		return in_array( $value, $allowed, true ) ? $value : $default;
 	}
 }

@@ -9,7 +9,6 @@ namespace StarterKit\Core;
 
 use StarterKit\Rules\DisplayRuleEvaluator;
 use StarterKit\Rules\PageContextResolver;
-use StarterKit\Settings\FontEmbedManager;
 use StarterKit\Settings\GlobalSettingsManager;
 use StarterKit\Layouts\LayoutRegistry;
 use StarterKit\Layouts\LayoutResolver;
@@ -67,13 +66,6 @@ class AssetManager {
 	protected $layout_resolver;
 
 	/**
-	 * Local font embed manager.
-	 *
-	 * @var FontEmbedManager|null
-	 */
-	protected $font_embed_manager;
-
-	/**
 	 * Hook registration.
 	 *
 	 * @param GlobalSettingsManager $settings Settings manager.
@@ -87,10 +79,6 @@ class AssetManager {
 		$this->rule_evaluator        = $rule_evaluator;
 		$this->layout_resolver       = $layout_resolver;
 
-		if ( function_exists( 'starterkit' ) ) {
-			$this->font_embed_manager = starterkit()->font_embed_manager();
-		}
-
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue' ) );
 	}
 
@@ -102,11 +90,7 @@ class AssetManager {
 	public function enqueue() {
 		$version  = wp_get_theme()->get( 'Version' );
 		$context  = $this->context_resolver->resolve();
-		$font_url = $this->local_font_url();
-
-		if ( ! $font_url ) {
-			$font_url = $this->google_fonts_url();
-		}
+		$font_url = $this->google_fonts_url();
 
 		if ( $font_url ) {
 			wp_enqueue_style(
@@ -141,7 +125,6 @@ class AssetManager {
 				array(
 					(string) $this->settings->get( 'header_layout', 'header-1' ),
 					(string) $this->settings->get( 'footer_layout', 'footer-1' ),
-					! empty( $context['is_homepage'] ) ? (string) $this->settings->get( 'master_layout', 'master-default' ) : '',
 					! empty( $context['is_product'] ) ? (string) $this->settings->get( 'product_layout', 'product-layout-1' ) : '',
 					! empty( $context['is_product_archive'] ) ? (string) $this->settings->get( 'archive_layout', 'archive-layout-1' ) : '',
 				)
@@ -214,8 +197,7 @@ class AssetManager {
 		$slots = array( 'header_top', 'header_bottom', 'footer_top', 'footer_bottom' );
 
 		if ( ! empty( $context['is_homepage'] ) ) {
-			$master = $this->layout_registry->get( (string) $this->settings->get( 'master_layout', 'master-default' ) );
-			$slots  = array_merge( $slots, isset( $master['slots'] ) && is_array( $master['slots'] ) ? $master['slots'] : array() );
+			$slots = array_merge( $slots, array( 'home_after_header', 'home_before_content', 'home_after_content', 'home_before_footer' ) );
 		}
 
 		if ( ! empty( $context['is_product'] ) ) {
@@ -339,16 +321,4 @@ class AssetManager {
 		);
 	}
 
-	/**
-	 * Return local generated font CSS URL when available.
-	 *
-	 * @return string
-	 */
-	protected function local_font_url() {
-		if ( ! $this->font_embed_manager || ! $this->font_embed_manager->has_current_embed() ) {
-			return '';
-		}
-
-		return $this->font_embed_manager->local_css_url();
-	}
 }

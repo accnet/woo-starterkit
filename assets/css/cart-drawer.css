@@ -130,31 +130,11 @@ body.has-cart-drawer {
   background: #f8fafc;
 }
 
-.starterkit-cart-drawer__progress,
 .starterkit-cart-drawer__upsell {
   padding: 16px;
   border-radius: var(--radius-md);
   background: #fff;
   box-shadow: var(--shadow-preset);
-}
-
-.starterkit-cart-drawer__progress p {
-  margin: 0 0 10px;
-  font-size: 14px;
-}
-
-.starterkit-cart-drawer__progress-bar {
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(17, 24, 39, 0.08);
-  overflow: hidden;
-}
-
-.starterkit-cart-drawer__progress-bar span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--color-accent), #fbbf24);
 }
 
 .starterkit-cart-drawer__items {

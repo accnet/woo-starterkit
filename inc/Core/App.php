@@ -20,7 +20,6 @@ use StarterKit\Sections\SectionRenderer;
 use StarterKit\Sections\SectionTypeRegistry;
 use StarterKit\Sections\SlotRenderer;
 use StarterKit\Settings\CssVariableOutput;
-use StarterKit\Settings\FontEmbedManager;
 use StarterKit\Settings\GlobalSettingsManager;
 use StarterKit\WooCommerce\ArchiveLayoutManager;
 use StarterKit\WooCommerce\CartDrawerManager;
@@ -64,7 +63,6 @@ class App {
 	public function boot() {
 		$this->theme_setup();
 		$this->settings_manager();
-		$this->font_embed_manager();
 		$this->css_variable_output();
 		$this->layout_registry();
 		$this->layout_resolver();
@@ -176,20 +174,6 @@ class App {
 			'settings_manager',
 			function() {
 				return new GlobalSettingsManager();
-			}
-		);
-	}
-
-	/**
-	 * Local font embed manager.
-	 *
-	 * @return FontEmbedManager
-	 */
-	public function font_embed_manager() {
-		return $this->service(
-			'font_embed_manager',
-			function() {
-				return new FontEmbedManager( $this->settings_manager() );
 			}
 		);
 	}

@@ -20,22 +20,6 @@ class LayoutRegistry {
 	 */
 	public function __construct() {
 		$this->layouts = array(
-			'masters'  => array(
-				'master-default' => array(
-					'id'          => 'master-default',
-					'label'       => __( 'Default Master Layout', 'starterkit' ),
-					'description' => __( 'Balanced container with standard content rhythm.', 'starterkit' ),
-					'template'    => 'template-parts/archive/master-default.php',
-					'slots'       => array( 'home_after_header', 'home_before_content', 'home_after_content' ),
-				),
-				'master-wide'    => array(
-					'id'          => 'master-wide',
-					'label'       => __( 'Wide Story Layout', 'starterkit' ),
-					'description' => __( 'Wider canvas suited to editorial landing pages.', 'starterkit' ),
-					'template'    => 'template-parts/archive/master-wide.php',
-					'slots'       => array( 'home_after_header', 'home_before_content', 'home_after_content', 'home_before_footer' ),
-				),
-			),
 			'headers'  => array(
 				'header-1' => array(
 					'id'          => 'header-1',

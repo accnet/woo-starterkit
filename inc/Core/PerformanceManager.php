@@ -153,15 +153,9 @@ class PerformanceManager {
 			return;
 		}
 
-		$has_local_fonts = function_exists( 'starterkit' )
-			&& starterkit()->font_embed_manager()
-			&& starterkit()->font_embed_manager()->has_current_embed();
-
-		if ( ! $has_local_fonts ) {
-			echo '<link rel="dns-prefetch" href="//fonts.googleapis.com">' . "\n";
-			echo '<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>' . "\n";
-			echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
-		}
+		echo '<link rel="dns-prefetch" href="//fonts.googleapis.com">' . "\n";
+		echo '<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>' . "\n";
+		echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
 	}
 
 	/**
@@ -170,37 +164,7 @@ class PerformanceManager {
 	 * @return void
 	 */
 	public function output_font_preloads() {
-		if ( is_admin() || ! $this->is_enabled( 'preload_fonts' ) ) {
-			return;
-		}
-
-		if ( ! function_exists( 'starterkit' ) ) {
-			return;
-		}
-
-		$fem = starterkit()->font_embed_manager();
-
-		if ( ! $fem || ! $fem->has_current_embed() ) {
-			return;
-		}
-
-		$font_dir = get_template_directory() . '/assets/fonts/generated/';
-		$font_uri = get_template_directory_uri() . '/assets/fonts/generated/';
-
-		if ( ! is_dir( $font_dir ) ) {
-			return;
-		}
-
-		$files = glob( $font_dir . '*.woff2' );
-
-		if ( empty( $files ) ) {
-			return;
-		}
-
-		foreach ( $files as $file ) {
-			$filename = basename( $file );
-			echo '<link rel="preload" href="' . esc_url( $font_uri . $filename ) . '" as="font" type="font/woff2" crossorigin>' . "\n";
-		}
+		return;
 	}
 
 	/**

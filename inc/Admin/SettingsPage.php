@@ -152,7 +152,6 @@ class SettingsPage {
 					</table>
 				<?php elseif ( 'global' === $tab ) : ?>
 					<table class="form-table" role="presentation">
-						<?php $this->render_input_row( 'free_shipping_threshold', __( 'Free Shipping Threshold', 'starterkit' ), $settings['free_shipping_threshold'] ); ?>
 						<?php $this->render_textarea_row( 'header_scripts', __( 'Header Scripts', 'starterkit' ), $settings['header_scripts'], __( 'Injected inside <head>. Useful for verification tags, analytics bootstrap, or third-party head snippets.', 'starterkit' ) ); ?>
 						<?php $this->render_textarea_row( 'body_scripts_top', __( 'Body Scripts - Top', 'starterkit' ), $settings['body_scripts_top'], __( 'Injected immediately after <body>. Common for GTM noscript or tag manager body snippets.', 'starterkit' ) ); ?>
 						<?php $this->render_textarea_row( 'body_scripts_bottom', __( 'Body Scripts - Bottom', 'starterkit' ), $settings['body_scripts_bottom'], __( 'Injected before the site footer template. Useful for global widgets or deferred embeds.', 'starterkit' ) ); ?>
@@ -168,11 +167,27 @@ class SettingsPage {
 						<?php $this->render_select_row( 'component_gap', __( 'Component Gap', 'starterkit' ), $settings['component_gap'], $this->settings->spacing_options() ); ?>
 						<?php $this->render_select_row( 'content_gap', __( 'Content Gap', 'starterkit' ), $settings['content_gap'], $this->settings->spacing_options() ); ?>
 						<?php $this->render_select_row( 'spacing_scale', __( 'Section Gap', 'starterkit' ), $settings['spacing_scale'], $this->settings->spacing_options() ); ?>
+						<?php $this->render_section_label_row( __( 'Typography', 'starterkit' ) ); ?>
+						<?php $this->render_input_row( 'body_font_size', __( 'Body Font Size', 'starterkit' ), $settings['body_font_size'] ); ?>
+						<?php $this->render_select_row( 'body_font_weight', __( 'Body Font Weight', 'starterkit' ), $settings['body_font_weight'], $this->settings->font_weight_options() ); ?>
+						<?php $this->render_input_row( 'body_line_height', __( 'Body Line Height', 'starterkit' ), $settings['body_line_height'] ); ?>
+						<?php $this->render_select_row( 'heading_font_weight', __( 'Heading Font Weight', 'starterkit' ), $settings['heading_font_weight'], $this->settings->font_weight_options() ); ?>
+						<?php $this->render_select_row( 'heading_text_transform', __( 'Heading Text Transform', 'starterkit' ), $settings['heading_text_transform'], $this->settings->text_transform_options() ); ?>
+						<?php $this->render_input_row( 'heading_letter_spacing', __( 'Heading Letter Spacing', 'starterkit' ), $settings['heading_letter_spacing'] ); ?>
+						<?php $this->render_input_row( 'nav_font_size', __( 'Navigation Font Size', 'starterkit' ), $settings['nav_font_size'] ); ?>
+						<?php $this->render_select_row( 'nav_font_weight', __( 'Navigation Font Weight', 'starterkit' ), $settings['nav_font_weight'], $this->settings->font_weight_options() ); ?>
+						<?php $this->render_select_row( 'nav_text_transform', __( 'Navigation Text Transform', 'starterkit' ), $settings['nav_text_transform'], $this->settings->text_transform_options() ); ?>
+						<?php $this->render_input_row( 'button_font_size', __( 'Button Font Size', 'starterkit' ), $settings['button_font_size'] ); ?>
+						<?php $this->render_select_row( 'button_font_weight', __( 'Button Font Weight', 'starterkit' ), $settings['button_font_weight'], $this->settings->font_weight_options() ); ?>
+						<?php $this->render_select_row( 'button_text_transform', __( 'Button Text Transform', 'starterkit' ), $settings['button_text_transform'], $this->settings->text_transform_options() ); ?>
+						<?php $this->render_input_row( 'eyebrow_font_size', __( 'Eyebrow Font Size', 'starterkit' ), $settings['eyebrow_font_size'] ); ?>
+						<?php $this->render_select_row( 'eyebrow_font_weight', __( 'Eyebrow Font Weight', 'starterkit' ), $settings['eyebrow_font_weight'], $this->settings->font_weight_options() ); ?>
+						<?php $this->render_select_row( 'eyebrow_text_transform', __( 'Eyebrow Text Transform', 'starterkit' ), $settings['eyebrow_text_transform'], $this->settings->text_transform_options() ); ?>
+						<?php $this->render_input_row( 'eyebrow_letter_spacing', __( 'Eyebrow Letter Spacing', 'starterkit' ), $settings['eyebrow_letter_spacing'] ); ?>
 					</table>
 				<?php elseif ( 'layouts' === $tab ) : ?>
 					<table class="form-table" role="presentation">
 						<?php $this->render_select_row( 'container_width', __( 'Container Size', 'starterkit' ), $settings['container_width'], $this->settings->container_width_options() ); ?>
-						<?php $this->render_select_row( 'master_layout', __( 'Master Layout', 'starterkit' ), $settings['master_layout'], $layouts['masters'] ); ?>
 						<?php $this->render_select_row( 'header_layout', __( 'Header Layout', 'starterkit' ), $settings['header_layout'], $layouts['headers'] ); ?>
 						<?php $this->render_select_row( 'footer_layout', __( 'Footer Layout', 'starterkit' ), $settings['footer_layout'], $layouts['footers'] ); ?>
 						<?php $this->render_select_row( 'product_layout', __( 'Product Layout', 'starterkit' ), $settings['product_layout'], $layouts['products'] ); ?>
@@ -199,15 +214,6 @@ class SettingsPage {
 				<?php endif; ?>
 			</form>
 
-			<?php if ( 'branding' === $tab ) : ?>
-				<p class="description"><?php esc_html_e( 'After saving your font choices, you can embed them locally into the theme to avoid relying on Google Fonts at runtime.', 'starterkit' ); ?></p>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-					<?php wp_nonce_field( 'starterkit_embed_fonts', 'starterkit_embed_fonts_nonce' ); ?>
-					<input type="hidden" name="action" value="starterkit_embed_fonts">
-					<p><button type="submit" class="button"><?php esc_html_e( 'Embed Selected Fonts Locally', 'starterkit' ); ?></button></p>
-				</form>
-			<?php endif; ?>
-
 			<?php if ( 'tools' === $tab ) : ?>
 				<?php $this->render_tools_panel(); ?>
 			<?php endif; ?>
@@ -228,6 +234,22 @@ class SettingsPage {
 		<tr>
 			<th scope="row"><label for="<?php echo esc_attr( $name ); ?>"><?php echo esc_html( $label ); ?></label></th>
 			<td><input name="<?php echo esc_attr( GlobalSettingsManager::OPTION_KEY ); ?>[<?php echo esc_attr( $name ); ?>]" id="<?php echo esc_attr( $name ); ?>" class="regular-text" value="<?php echo esc_attr( $value ); ?>"></td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * Render a simple section label row inside a settings table.
+	 *
+	 * @param string $label Section label.
+	 * @return void
+	 */
+	protected function render_section_label_row( $label ) {
+		?>
+		<tr>
+			<th colspan="2" style="padding-top:24px;">
+				<h2 style="margin:0;font-size:22px;"><?php echo esc_html( $label ); ?></h2>
+			</th>
 		</tr>
 		<?php
 	}
@@ -272,11 +294,16 @@ class SettingsPage {
 	protected function render_media_row( $name, $label, $attachment_id ) {
 		$preview = $attachment_id ? wp_get_attachment_image_url( $attachment_id, 'medium' ) : '';
 		$field_name = GlobalSettingsManager::OPTION_KEY . '[' . $name . ']';
+		$field_class = 'starterkit-media-field';
+
+		if ( 'logo_id' === $name ) {
+			$field_class .= ' starterkit-media-field--logo';
+		}
 		?>
 		<tr>
 			<th scope="row"><?php echo esc_html( $label ); ?></th>
 			<td>
-				<div class="starterkit-media-field" id="starterkit-media-<?php echo esc_attr( $name ); ?>">
+				<div class="<?php echo esc_attr( $field_class ); ?>" id="starterkit-media-<?php echo esc_attr( $name ); ?>">
 					<div class="starterkit-media-preview">
 						<?php if ( $preview ) : ?>
 							<img src="<?php echo esc_url( $preview ); ?>" alt="">

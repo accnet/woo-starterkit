@@ -61,6 +61,10 @@
   height: auto;
 }
 
+.starterkit-media-field--logo .starterkit-media-preview img {
+  max-width: 165px;
+}
+
 .starterkit-field-note {
   color: #50575e;
   font-size: 12px;

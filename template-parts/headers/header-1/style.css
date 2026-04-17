@@ -51,6 +51,12 @@
   font-weight: 600;
 }
 
+.site-header--preset-1 .header-icon-button {
+  border: 0;
+  background: transparent;
+  padding: 10px 6px;
+}
+
 .site-header--preset-1 .header-icon-button svg {
   width: 20px;
   height: 20px;

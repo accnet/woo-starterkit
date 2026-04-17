@@ -18,6 +18,9 @@
 body {
   margin: 0;
   font-family: var(--site-font-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-body);
+  line-height: var(--line-height-body);
   color: var(--color-primary);
   background: var(--color-bg);
 }
@@ -51,7 +54,10 @@ h4,
 h5,
 h6 {
   font-family: var(--site-font-heading);
+  font-weight: var(--font-weight-heading);
   line-height: 1.1;
+  letter-spacing: var(--letter-spacing-heading);
+  text-transform: var(--text-transform-heading);
 }
 
 .container {
@@ -114,6 +120,9 @@ h6 {
 .site-navigation a {
   text-decoration: none;
   color: var(--color-primary);
+  font-size: var(--font-size-nav);
+  font-weight: var(--font-weight-nav);
+  text-transform: var(--text-transform-nav);
 }
 
 .slot {
@@ -126,11 +135,11 @@ h6 {
 }
 
 .section-eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+  text-transform: var(--text-transform-eyebrow);
+  letter-spacing: var(--letter-spacing-eyebrow);
   color: var(--color-accent);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: var(--font-size-eyebrow);
+  font-weight: var(--font-weight-eyebrow);
 }
 
 .button {
@@ -140,7 +149,9 @@ h6 {
   padding: 12px 18px;
   border-radius: 999px;
   text-decoration: none;
-  font-weight: 600;
+  font-size: var(--font-size-button);
+  font-weight: var(--font-weight-button);
+  text-transform: var(--text-transform-button);
 }
 
 .button-primary {

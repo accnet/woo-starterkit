@@ -258,7 +258,6 @@ class CartDrawerManager {
 			<div class="starterkit-cart-drawer__status" aria-live="polite">
 				<?php esc_html_e( 'Updating your cart...', 'starterkit' ); ?>
 			</div>
-			<?php echo $this->get_progress_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
 			<?php if ( WC()->cart->is_empty() ) : ?>
 				<div class="starterkit-cart-drawer__empty">
@@ -340,47 +339,6 @@ class CartDrawerManager {
 				<a class="button button-primary" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">
 					<?php esc_html_e( 'Checkout', 'starterkit' ); ?>
 				</a>
-			</div>
-		</div>
-		<?php
-
-		return (string) ob_get_clean();
-	}
-
-	/**
-	 * Build free-shipping progress HTML.
-	 *
-	 * @return string
-	 */
-	protected function get_progress_html() {
-		$threshold = (float) apply_filters( 'starterkit_cart_drawer_free_shipping_threshold', (float) $this->settings->get( 'free_shipping_threshold', '0' ) );
-
-		if ( $threshold <= 0 ) {
-			return '';
-		}
-
-		$subtotal   = (float) WC()->cart->get_subtotal();
-		$remaining  = max( 0, $threshold - $subtotal );
-		$percentage = min( 100, ( $subtotal / $threshold ) * 100 );
-
-		ob_start();
-		?>
-		<div class="starterkit-cart-drawer__progress">
-			<p>
-				<?php if ( $remaining > 0 ) : ?>
-					<?php
-					printf(
-						/* translators: %s: remaining amount */
-						esc_html__( 'Add %s more for free shipping', 'starterkit' ),
-						wp_kses_post( wc_price( $remaining ) )
-					);
-					?>
-				<?php else : ?>
-					<?php esc_html_e( 'You unlocked free shipping.', 'starterkit' ); ?>
-				<?php endif; ?>
-			</p>
-			<div class="starterkit-cart-drawer__progress-bar" aria-hidden="true">
-				<span style="width: <?php echo esc_attr( (string) $percentage ); ?>%"></span>
 			</div>
 		</div>
 		<?php

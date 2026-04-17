@@ -45,7 +45,6 @@ class LayoutResolver {
 		$map = array(
 			'header'  => 'header_layout',
 			'footer'  => 'footer_layout',
-			'master'  => 'master_layout',
 			'product' => 'product_layout',
 			'archive' => 'archive_layout',
 		);
@@ -65,7 +64,7 @@ class LayoutResolver {
 	 * @return bool
 	 */
 	public function is_slot_supported( $slot_name, array $context = array() ) {
-		$candidates = array( 'master' );
+		$candidates = array();
 
 		if ( 0 === strpos( $slot_name, 'header_' ) ) {
 			$candidates = array( 'header' );
