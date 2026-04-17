@@ -472,6 +472,12 @@
   line-height: 1.75;
 }
 
+.starterkit-product-layout.product-layout-1 .stock.in-stock,
+.starterkit-product-layout.product-layout-1 .stock.available-on-backorder,
+.starterkit-product-layout.product-layout-1 .woocommerce-variation-availability {
+  display: none !important;
+}
+
 .starterkit-product-layout.product-layout-1 form.cart {
   display: grid;
   gap: 18px;
