@@ -24,108 +24,7 @@ $gallery_items = array();
 
 if ( class_exists( '\WootifyCore\Services\ProductService' ) ) {
 	$wootify_service     = new \WootifyCore\Services\ProductService();
-	$wootify_gallery_map = $wootify_service->get_product_gallery_map( (int) $product->get_id() );
-
-	if ( ! empty( $wootify_gallery_map['items'] ) && is_array( $wootify_gallery_map['items'] ) ) {
-		foreach ( array_values( $wootify_gallery_map['items'] ) as $index => $gallery_item ) {
-			$src = trim( (string) ( $gallery_item['src'] ?? '' ) );
-
-			if ( '' === $src ) {
-				continue;
-			}
-
-			$alt_text = $product->get_name();
-
-			$gallery_items[] = array(
-				'id'                   => $index + 1,
-				'full'                 => $src,
-				'src'                  => $src,
-				'variant_ids'          => array_values( array_unique( array_map( 'intval', (array) ( $gallery_item['variant_ids'] ?? array() ) ) ) ),
-				'featured_variant_ids' => array_values( array_unique( array_map( 'intval', (array) ( $gallery_item['featured_variant_ids'] ?? array() ) ) ) ),
-				'main'                 => sprintf(
-					'<img class="starterkit-product-gallery__image-image" src="%1$s" alt="%2$s" loading="%3$s" fetchpriority="%4$s">',
-					esc_url( $src ),
-					esc_attr( $alt_text ),
-					0 === $index ? 'eager' : 'lazy',
-					0 === $index ? 'high' : 'auto'
-				),
-				'thumb'                => sprintf(
-					'<img class="starterkit-product-gallery__thumb-image" src="%1$s" alt="%2$s" loading="lazy">',
-					esc_url( $src ),
-					esc_attr( $alt_text )
-				),
-			);
-		}
-	}
-}
-
-if ( empty( $gallery_items ) ) {
-	$image_ids = array();
-
-	if ( $product->get_image_id() ) {
-		$image_ids[] = (int) $product->get_image_id();
-	}
-
-	$image_ids = array_values(
-		array_unique(
-			array_merge(
-				$image_ids,
-				array_map( 'intval', $product->get_gallery_image_ids() )
-			)
-		)
-	);
-
-	foreach ( $image_ids as $index => $image_id ) {
-		$full_url = wp_get_attachment_image_url( $image_id, 'full' );
-
-		if ( ! $full_url ) {
-			continue;
-		}
-
-		$alt_text = (string) get_post_meta( $image_id, '_wp_attachment_image_alt', true );
-		$alt_text = '' !== trim( $alt_text ) ? $alt_text : $product->get_name();
-
-		$gallery_items[] = array(
-			'id'                   => $image_id,
-			'full'                 => $full_url,
-			'src'                  => (string) wp_get_attachment_image_url( $image_id, 'woocommerce_single' ),
-			'variant_ids'          => array(),
-			'featured_variant_ids' => array(),
-			'main'                 => wp_get_attachment_image(
-				$image_id,
-				'woocommerce_single',
-				false,
-				array(
-					'class'         => 'starterkit-product-gallery__image-image',
-					'alt'           => $alt_text,
-					'loading'       => 0 === $index ? 'eager' : 'lazy',
-					'fetchpriority' => 0 === $index ? 'high' : 'auto',
-				)
-			),
-			'thumb'                => wp_get_attachment_image(
-				$image_id,
-				'woocommerce_gallery_thumbnail',
-				false,
-				array(
-					'class'   => 'starterkit-product-gallery__thumb-image',
-					'alt'     => $alt_text,
-					'loading' => 'lazy',
-				)
-			),
-		);
-	}
-}
-
-if ( empty( $gallery_items ) ) {
-	$gallery_items[] = array(
-		'id'                   => 0,
-		'full'                 => wc_placeholder_img_src( 'woocommerce_single' ),
-		'src'                  => wc_placeholder_img_src( 'woocommerce_single' ),
-		'variant_ids'          => array(),
-		'featured_variant_ids' => array(),
-		'main'                 => wc_placeholder_img( 'woocommerce_single', array( 'class' => 'starterkit-product-gallery__image-image' ) ),
-		'thumb'                => wc_placeholder_img( 'woocommerce_gallery_thumbnail', array( 'class' => 'starterkit-product-gallery__thumb-image' ) ),
-	);
+	$gallery_items        = $wootify_service->get_theme_gallery_items( (int) $product->get_id() );
 }
 ?>
 <div class="starterkit-product-layout product-layout-1">
@@ -150,7 +49,7 @@ if ( empty( $gallery_items ) ) {
 										type="button"
 										aria-label="<?php echo esc_attr( sprintf( __( 'View image %d', 'starterkit' ), $index + 1 ) ); ?>"
 									>
-										<?php echo wp_kses_post( $gallery_item['thumb'] ); ?>
+										<img class="starterkit-product-gallery__thumb-image" src="<?php echo esc_url( (string) $gallery_item['thumb_src'] ); ?>" alt="<?php echo esc_attr( (string) ( $gallery_item['alt'] ?? '' ) ); ?>" loading="lazy">
 									</button>
 								</div>
 							<?php endforeach; ?>
@@ -170,7 +69,7 @@ if ( empty( $gallery_items ) ) {
 									data-featured-variant-ids="<?php echo esc_attr( wp_json_encode( array_values( array_map( 'intval', (array) $gallery_item['featured_variant_ids'] ) ) ) ); ?>"
 								>
 									<a class="starterkit-product-gallery__image-link" href="<?php echo esc_url( $gallery_item['full'] ); ?>">
-										<?php echo wp_kses_post( $gallery_item['main'] ); ?>
+										<img class="starterkit-product-gallery__image-image" src="<?php echo esc_url( (string) $gallery_item['src'] ); ?>" alt="<?php echo esc_attr( (string) ( $gallery_item['alt'] ?? '' ) ); ?>" loading="<?php echo 0 === $index ? 'eager' : 'lazy'; ?>" fetchpriority="<?php echo 0 === $index ? 'high' : 'auto'; ?>">
 									</a>
 								</div>
 							<?php endforeach; ?>
