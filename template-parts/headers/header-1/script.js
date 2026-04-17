@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var menuToggle = header.querySelector('.site-header__toggle');
   var menuPanel = header.querySelector('.site-header__panel');
   var closeButton = header.querySelector('.site-header__close');
+  var backdrop = header.querySelector('.site-header__backdrop');
   var searchPanel = header.querySelector('.header-search-panel');
   var searchToggles = header.querySelectorAll('.header-search-toggle, .header-search-button');
 
@@ -18,6 +19,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     header.classList.toggle('is-menu-open', open);
+    document.documentElement.classList.toggle('has-mobile-menu-open', open);
+    document.body.classList.toggle('has-mobile-menu-open', open);
   };
 
   var setSearchState = function (open) {
@@ -41,6 +44,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (closeButton) {
     closeButton.addEventListener('click', function () {
+      setMenuState(false);
+    });
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener('click', function () {
       setMenuState(false);
     });
   }

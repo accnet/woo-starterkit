@@ -11,6 +11,7 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 ?>
 <header class="site-header site-header--preset-1" data-header-behavior="menu search">
 	<?php starterkit_render_slot( 'header_top' ); ?>
+	<button class="site-header__backdrop" type="button" data-header-close aria-label="<?php esc_attr_e( 'Close menu', 'starterkit' ); ?>"></button>
 	<div class="container header-shell header-shell--preset-1">
 		<div class="site-branding">
 			<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="site-title">
@@ -44,21 +45,21 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 		</div>
 
 		<div class="site-header__controls">
-			<button class="header-icon-button header-search-toggle" type="button" aria-expanded="false" aria-controls="site-header-search-1">
-				<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-					<circle cx="11" cy="11" r="6.5"></circle>
-					<path d="M16 16l5 5"></path>
-				</svg>
+			<button class="site-header__toggle" type="button" aria-expanded="false" aria-controls="site-header-panel-1">
+				<span class="site-header__toggle-icon" aria-hidden="true"></span>
+				<span class="screen-reader-text"><?php esc_html_e( 'Menu', 'starterkit' ); ?></span>
 			</button>
-			<a class="header-icon-button header-cart-link" href="<?php echo esc_url( $cart_url ); ?>">
+			<a class="header-icon-button header-cart-link" href="<?php echo esc_url( $cart_url ); ?>" aria-label="<?php esc_attr_e( 'Cart', 'starterkit' ); ?>">
 				<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
 					<path d="M19.77,4.71H17.3l-.07-.19C16.14,1.59,14.36,0,12.08,0S8,1.59,6.9,4.52c0,.06,0,.12-.07.19H4.39a3,3,0,0,0-3,2.94V21.06a3,3,0,0,0,3,2.94H19.77a3,3,0,0,0,3-2.94V7.65a3,3,0,0,0-3-2.94Zm-7.7-3.59c2.12,0,3.36,1.75,4.07,3.59H8c.73-1.84,2-3.59,4.1-3.59Zm9.59,19.94a1.88,1.88,0,0,1-1.88,1.87H4.39a1.88,1.88,0,0,1-1.88-1.87V7.65A1.88,1.88,0,0,1,4.39,5.78H6.49A18,18,0,0,0,6,8.12a1.13,1.13,0,1,0,1.08.09,17.14,17.14,0,0,1,.53-2.43h8.9A17.13,17.13,0,0,1,17,8.2a1.13,1.13,0,1,0,1.08-.07,18,18,0,0,0-.46-2.36h2.14a1.88,1.88,0,0,1,1.88,1.87Z"></path>
 				</svg>
 				<span class="header-cart-count"><?php echo esc_html( (string) $cart_count ); ?></span>
 			</a>
-			<button class="site-header__toggle" type="button" aria-expanded="false" aria-controls="site-header-panel-1">
-				<span class="site-header__toggle-icon" aria-hidden="true"></span>
-				<span><?php esc_html_e( 'Menu', 'starterkit' ); ?></span>
+			<button class="header-icon-button header-search-toggle" type="button" aria-expanded="false" aria-controls="site-header-search-1" aria-label="<?php esc_attr_e( 'Search', 'starterkit' ); ?>">
+				<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+					<circle cx="11" cy="11" r="6.5"></circle>
+					<path d="M16 16l5 5"></path>
+				</svg>
 			</button>
 		</div>
 	</div>
