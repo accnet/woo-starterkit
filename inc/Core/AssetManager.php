@@ -249,6 +249,20 @@ class AssetManager {
 				wp_enqueue_script( 'starterkit-checkout', $uri . '/assets/js/checkout.js', array( 'jquery', 'wc-checkout' ), (string) filemtime( $js ), true );
 			}
 		}
+
+		if ( function_exists( 'is_product' ) && is_product() ) {
+			$product_layout = (string) $this->settings->get( 'product_layout', 'product-layout-1' );
+
+			if ( 'product-layout-1' === $product_layout ) {
+				wp_enqueue_script(
+					'starterkit-swiper',
+					'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js',
+					array(),
+					'11.2.6',
+					true
+				);
+			}
+		}
 	}
 
 	/**
@@ -263,6 +277,11 @@ class AssetManager {
 		$asset_base  = trim( $asset_base, '/' );
 		$style_path  = get_template_directory() . '/' . $asset_base . '/style.css';
 		$script_path = get_template_directory() . '/' . $asset_base . '/script.js';
+		$script_deps = array();
+
+		if ( 'template-parts/product/product-layout-1' === $asset_base ) {
+			$script_deps[] = 'starterkit-swiper';
+		}
 
 		if ( file_exists( $style_path ) ) {
 			wp_enqueue_style(
@@ -277,7 +296,7 @@ class AssetManager {
 			wp_enqueue_script(
 				$handle_prefix . sanitize_key( $asset_id ),
 				get_template_directory_uri() . '/' . $asset_base . '/script.js',
-				array(),
+				$script_deps,
 				(string) filemtime( $script_path ),
 				true
 			);
