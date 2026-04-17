@@ -48,7 +48,7 @@ if ( class_exists( '\WootifyCore\Services\ProductService' ) ) {
 										type="button"
 										aria-label="<?php echo esc_attr( sprintf( __( 'View image %d', 'starterkit' ), $index + 1 ) ); ?>"
 									>
-										<img class="starterkit-product-gallery__thumb-image" src="<?php echo esc_url( (string) $gallery_item['thumb_src'] ); ?>" alt="<?php echo esc_attr( (string) ( $gallery_item['alt'] ?? '' ) ); ?>" loading="lazy">
+										<img class="starterkit-product-gallery__thumb-image" src="<?php echo esc_url( (string) $gallery_item['thumb_src'] ); ?>" alt="<?php echo esc_attr( (string) ( $gallery_item['alt'] ?? '' ) ); ?>" loading="lazy" decoding="async">
 									</button>
 								</div>
 							<?php endforeach; ?>
@@ -59,7 +59,7 @@ if ( class_exists( '\WootifyCore\Services\ProductService' ) ) {
 				<div class="starterkit-product-gallery__stage">
 					<div class="swiper starterkit-product-gallery__main">
 						<div class="swiper-wrapper">
-							<?php foreach ( $gallery_items as $gallery_item ) : ?>
+							<?php foreach ( $gallery_items as $index => $gallery_item ) : ?>
 								<div
 									class="swiper-slide"
 									data-image-id="<?php echo esc_attr( (string) $gallery_item['id'] ); ?>"
@@ -67,9 +67,9 @@ if ( class_exists( '\WootifyCore\Services\ProductService' ) ) {
 									data-variant-ids="<?php echo esc_attr( wp_json_encode( array_values( array_map( 'intval', (array) $gallery_item['variant_ids'] ) ) ) ); ?>"
 									data-featured-variant-ids="<?php echo esc_attr( wp_json_encode( array_values( array_map( 'intval', (array) $gallery_item['featured_variant_ids'] ) ) ) ); ?>"
 								>
-									<a class="starterkit-product-gallery__image-link" href="<?php echo esc_url( $gallery_item['full'] ); ?>">
-										<img class="starterkit-product-gallery__image-image" src="<?php echo esc_url( (string) $gallery_item['src'] ); ?>" alt="<?php echo esc_attr( (string) ( $gallery_item['alt'] ?? '' ) ); ?>" loading="<?php echo 0 === $index ? 'eager' : 'lazy'; ?>" fetchpriority="<?php echo 0 === $index ? 'high' : 'auto'; ?>">
-									</a>
+									<div class="starterkit-product-gallery__image-link">
+										<img class="starterkit-product-gallery__image-image" src="<?php echo esc_url( (string) $gallery_item['src'] ); ?>" alt="<?php echo esc_attr( (string) ( $gallery_item['alt'] ?? '' ) ); ?>" loading="<?php echo 0 === $index ? 'eager' : 'lazy'; ?>" decoding="async" fetchpriority="<?php echo 0 === $index ? 'high' : 'auto'; ?>">
+									</div>
 								</div>
 							<?php endforeach; ?>
 						</div>
