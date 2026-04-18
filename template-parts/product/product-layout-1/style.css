@@ -312,16 +312,20 @@
     height: auto;
     margin: 0;
     padding: 0 0 4px;
-    overflow: visible;
+    overflow-x: auto;
+    overflow-y: hidden;
     box-sizing: border-box;
   }
 
   .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__thumbs .swiper-wrapper {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
     gap: 14px;
   }
 
   .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__thumbs.is-static .swiper-wrapper {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav {
