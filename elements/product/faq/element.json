@@ -1,0 +1,12 @@
+{
+  "id": "faq",
+  "label": "FAQ",
+  "context": "product",
+  "contexts": ["product", "archive"],
+  "category": "content",
+  "allowed_zones": ["product_after_summary", "product_before_related", "product_after_related", "product_before_tabs", "product_after_tabs", "archive_after_loop", "archive_sidebar_bottom"],
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Frequently asked questions" },
+    "items": { "type": "textarea", "label": "FAQ Items", "default": "How fast is shipping?|Orders usually ship within 24 hours.\nCan I return it?|Yes, within 30 days in original condition." }
+  }
+}

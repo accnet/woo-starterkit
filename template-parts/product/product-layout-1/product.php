@@ -13,23 +13,18 @@ if ( ! $product instanceof \WC_Product ) {
 	return;
 }
 
-/**
- * wootify_variant_price_top_active is set by WootifyCore\Modules\Frontend\TemplateHook
- * during the woocommerce_single_product_summary hook (priority 6).
- * We suppress the plugin's built-in placeholder so the theme controls placement.
- */
-add_filter( 'wootify_suppress_variant_price_top_placeholder', '__return_true' );
-$show_variant_price_top = (bool) apply_filters( 'wootify_variant_price_top_active', false, (int) $product->get_id() );
 $gallery_items = array();
 
 if ( class_exists( '\WootifyCore\Services\ProductService' ) ) {
 	$wootify_service     = new \WootifyCore\Services\ProductService();
 	$gallery_items        = $wootify_service->get_theme_gallery_items( (int) $product->get_id() );
 }
+$zone_renderer = starterkit()->zone_renderer();
 ?>
 <div class="starterkit-product-layout product-layout-1">
 	<div class="starterkit-product-layout__product-shell">
 		<div class="starterkit-product-layout__gallery-column">
+			<?php $zone_renderer->render( 'product_before_gallery', array( 'context' => 'product' ) ); ?>
 			<?php woocommerce_show_product_sale_flash(); ?>
 			<div class="starterkit-product-gallery<?php echo count( $gallery_items ) > 1 ? ' starterkit-product-gallery--has-thumbs' : ''; ?>">
 				<?php if ( count( $gallery_items ) > 1 ) : ?>
@@ -85,16 +80,13 @@ if ( class_exists( '\WootifyCore\Services\ProductService' ) ) {
 					<?php endif; ?>
 				</div>
 			</div>
+			<?php $zone_renderer->render( 'product_after_gallery', array( 'context' => 'product' ) ); ?>
 		</div>
 
 		<div class="starterkit-product-layout__summary-column">
-			<div class="summary entry-summary<?php echo $show_variant_price_top ? ' has-wootify-variant-price-top' : ''; ?>">
+			<?php $zone_renderer->render( 'product_before_summary', array( 'context' => 'product' ) ); ?>
+			<div class="summary entry-summary">
 				<?php woocommerce_template_single_title(); ?>
-				<?php if ( $show_variant_price_top ) : ?>
-					<div id="wootify-variant-price-top" class="wootify-variant-price-top" style="display:none;">
-						<span class="wootify-variant-price-top__value"></span>
-					</div>
-				<?php endif; ?>
 				<?php woocommerce_template_single_rating(); ?>
 				<?php woocommerce_template_single_price(); ?>
 				<?php woocommerce_template_single_excerpt(); ?>
@@ -102,12 +94,15 @@ if ( class_exists( '\WootifyCore\Services\ProductService' ) ) {
 				<?php woocommerce_template_single_meta(); ?>
 				<?php woocommerce_template_single_sharing(); ?>
 			</div>
+			<?php $zone_renderer->render( 'product_after_summary', array( 'context' => 'product' ) ); ?>
 		</div>
 	</div>
 
 	<div class="starterkit-product-layout__supporting">
+		<?php $zone_renderer->render( 'product_before_related', array( 'context' => 'product' ) ); ?>
 		<?php woocommerce_output_product_data_tabs(); ?>
 		<?php woocommerce_upsell_display(); ?>
 		<?php woocommerce_output_related_products(); ?>
+		<?php $zone_renderer->render( 'product_after_related', array( 'context' => 'product' ) ); ?>
 	</div>
 </div>

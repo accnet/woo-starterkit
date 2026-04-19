@@ -1,0 +1,11 @@
+{
+  "id": "payment-icons",
+  "label": "Payment Icons",
+  "context": "header",
+  "category": "payment",
+  "allowed_zones": ["header_bottom", "footer_top", "footer_bottom"],
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Payment Icons" },
+    "items": { "type": "textarea", "label": "Items", "default": "Visa\nMastercard\nPayPal" }
+  }
+}

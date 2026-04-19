@@ -1,0 +1,1441 @@
+(function() {
+  var config = window.starterkitThemeBuilder || {};
+  var bootstrap = config.bootstrap || {};
+  var root = document.getElementById('starterkit-theme-builder-app');
+
+  if (!root) {
+    return;
+  }
+
+  var state = JSON.parse(JSON.stringify(bootstrap.state || {}));
+  var stateVersion = bootstrap.version || '';
+  var contexts = bootstrap.contexts || [];
+  var previewUrls = bootstrap.previewUrls || {};
+  var activeSchemas = bootstrap.activeSchemas || {};
+  var elements = bootstrap.elements || {};
+
+  var ui = {
+    context: contexts[0] ? contexts[0].id : 'master',
+    selectedContext: '',
+    selectedZone: '',
+    selectedElementId: '',
+    deviceMode: 'desktop',
+    search: '',
+    drag: null,
+    undoState: null,
+    previewReloadTimer: null,
+    loading: false,
+    dirty: false,
+    hasConflict: false,
+    error: ''
+  };
+
+  function request(action, payload) {
+    var formData = new window.FormData();
+    formData.append('action', action);
+    formData.append('nonce', config.nonce || '');
+
+    Object.keys(payload || {}).forEach(function(key) {
+      formData.append(key, payload[key]);
+    });
+
+    return window
+      .fetch(config.ajaxUrl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      })
+      .then(function(response) {
+        return response.json().then(function(data) {
+          if (!data || data.success !== true) {
+            var message = data && data.data && data.data.message ? data.data.message : 'Builder request failed.';
+            var error = new Error(message);
+            error.payload = data && data.data ? data.data : null;
+            throw error;
+          }
+
+          return data;
+        });
+      });
+  }
+
+  function requestZoneMarkup(zoneId, context) {
+    if (!zoneId) {
+      return Promise.resolve(null);
+    }
+
+    return request('starterkit_theme_builder_render_zone', {
+      state: JSON.stringify(state),
+      context: context || ui.context,
+      zoneId: zoneId
+    }).then(function(response) {
+      return response && response.data ? response.data : null;
+    });
+  }
+
+  function getContextSchemas(context) {
+    return activeSchemas[context] || {};
+  }
+
+  function getZoneIndex(context) {
+    var index = {};
+
+    Object.keys(getContextSchemas(context)).forEach(function(presetId) {
+      (getContextSchemas(context)[presetId].zones || []).forEach(function(zone) {
+        index[zone.id] = Object.assign({}, zone, { presetId: presetId });
+      });
+    });
+
+    return index;
+  }
+
+  function getSelectedContext() {
+    return ui.selectedContext || ui.context;
+  }
+
+  function getZoneSchema(zoneId, context) {
+    return getZoneIndex(context || ui.context)[zoneId] || null;
+  }
+
+  function getElementDefinition(elementId) {
+    return elements[elementId] || null;
+  }
+
+  function getElementLimitMessage(elementId) {
+    var definition = getElementDefinition(elementId);
+    var label = definition && definition.label ? definition.label : elementId;
+    var maxInstances = getElementMaxInstances(elementId);
+
+    if (maxInstances === 1) {
+      return label + ' can only be added once in this context.';
+    }
+
+    if (maxInstances > 1) {
+      return label + ' can only be added ' + maxInstances + ' times in this context.';
+    }
+
+    return 'This element has reached its allowed limit in the current context.';
+  }
+
+  function getElementIconLabel(elementId) {
+    var definition = getElementDefinition(elementId);
+    var label = definition && definition.label ? definition.label : elementId;
+    var parts = String(label)
+      .replace(/[^a-z0-9\s]/gi, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (!parts.length) {
+      return String(elementId || '?').slice(0, 2).toUpperCase();
+    }
+
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+
+    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+  }
+
+  function getPresetState(context, presetId) {
+    if (!state[context]) {
+      state[context] = {};
+    }
+
+    if (!state[context][presetId]) {
+      state[context][presetId] = {};
+    }
+
+    return state[context][presetId];
+  }
+
+  function getZoneItems(zoneId, context) {
+    context = context || ui.context;
+    var zone = getZoneSchema(zoneId, context);
+
+    if (!zone) {
+      return [];
+    }
+
+    var presetState = getPresetState(context, zone.presetId);
+
+    if (!Array.isArray(presetState[zoneId])) {
+      presetState[zoneId] = [];
+    }
+
+    return presetState[zoneId];
+  }
+
+  function getSelectedElement() {
+    if (!ui.selectedZone || !ui.selectedElementId) {
+      return null;
+    }
+
+    return getZoneItems(ui.selectedZone, getSelectedContext()).find(function(item) {
+      return item.id === ui.selectedElementId;
+    }) || null;
+  }
+
+  function getElementMaxInstances(elementId) {
+    var definition = getElementDefinition(elementId);
+    return definition && definition.max_instances ? Number(definition.max_instances) : 0;
+  }
+
+  function countElementInstances(elementId, excludeInstanceId, context) {
+    var count = 0;
+    context = context || ui.context;
+
+    Object.keys(getContextSchemas(context)).forEach(function(presetId) {
+      var presetState = getPresetState(context, presetId);
+
+      Object.keys(presetState).forEach(function(zoneId) {
+        (presetState[zoneId] || []).forEach(function(item) {
+          if (item.type !== elementId) {
+            return;
+          }
+
+          if (excludeInstanceId && item.id === excludeInstanceId) {
+            return;
+          }
+
+          count += 1;
+        });
+      });
+    });
+
+    return count;
+  }
+
+  function syncSelectionWithState() {
+    if (!ui.selectedZone) {
+      ui.selectedElementId = '';
+      return;
+    }
+
+    if (!getZoneSchema(ui.selectedZone, getSelectedContext())) {
+      ui.selectedZone = '';
+      ui.selectedElementId = '';
+      ui.selectedContext = '';
+      return;
+    }
+
+    if (!ui.selectedElementId) {
+      return;
+    }
+
+    var stillExists = getZoneItems(ui.selectedZone, getSelectedContext()).some(function(item) {
+      return item.id === ui.selectedElementId;
+    });
+
+    if (!stillExists) {
+      ui.selectedElementId = '';
+    }
+  }
+
+  function cloneValue(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function captureUndoState() {
+    ui.undoState = {
+      state: cloneValue(state),
+      selectedContext: ui.selectedContext,
+      selectedZone: ui.selectedZone,
+      selectedElementId: ui.selectedElementId
+    };
+  }
+
+  function restoreUndoState() {
+    if (!ui.undoState) {
+      return;
+    }
+
+    state = cloneValue(ui.undoState.state);
+    ui.selectedContext = ui.undoState.selectedContext || '';
+    ui.selectedZone = ui.undoState.selectedZone || '';
+    ui.selectedElementId = ui.undoState.selectedElementId || '';
+    ui.undoState = null;
+    ui.error = '';
+    markDirty();
+    render();
+  }
+
+  function reloadLatestState() {
+    ui.loading = true;
+    ui.error = '';
+    render();
+
+    request('starterkit_theme_builder_bootstrap', {}).then(function(response) {
+      if (!response || !response.data) {
+        return;
+      }
+
+      state = cloneValue(response.data.state || {});
+      stateVersion = response.data.version || '';
+      ui.undoState = null;
+      ui.dirty = false;
+      ui.hasConflict = false;
+
+      if (response.data.previewUrls) {
+        previewUrls = response.data.previewUrls;
+      }
+
+      if (response.data.activeSchemas) {
+        activeSchemas = response.data.activeSchemas;
+      }
+
+      if (response.data.elements) {
+        elements = response.data.elements;
+      }
+
+      syncSelectionWithState();
+      schedulePreviewReload();
+    }).catch(function(error) {
+      ui.error = error && error.message ? error.message : 'Failed to reload latest builder state.';
+    }).finally(function() {
+      ui.loading = false;
+      render();
+    });
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function makeInstance(elementId) {
+    var definition = elements[elementId];
+    return {
+      id: 'tb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      type: elementId,
+      enabled: true,
+      settings: cloneValue(definition.default_settings || {})
+    };
+  }
+
+  function getContextLabel(contextId) {
+    if (contextId === 'master') {
+      return 'Master';
+    }
+
+    if (contextId === 'product') {
+      return 'Product Page';
+    }
+
+    if (contextId === 'archive') {
+      return 'Archive / Shop';
+    }
+
+    var context = contexts.find(function(item) {
+      return item.id === contextId;
+    });
+
+    return context && context.label ? context.label : contextId;
+  }
+
+  function getIframeUrl() {
+    var url = new URL(previewUrls[ui.context] || previewUrls.master || window.location.origin);
+    url.searchParams.set('starterkit_builder_device', ui.deviceMode);
+    return url.toString();
+  }
+
+  function ensureShell() {
+    if (root.getAttribute('data-builder-mounted') === '1') {
+      return;
+    }
+
+    root.innerHTML =
+      '<div class="js-builder-navbar"></div>' +
+      '<div class="js-builder-sidebar"></div>' +
+      '<div class="starterkit-theme-builder__preview-area">' +
+      '<div class="starterkit-theme-builder__preview-toolbar js-builder-preview-toolbar"></div>' +
+      '<div class="starterkit-theme-builder__preview-stage">' +
+      '<div class="starterkit-theme-builder__preview-frame">' +
+      '<iframe class="starterkit-theme-builder__iframe" src=""></iframe>' +
+      '</div>' +
+      '<div class="starterkit-theme-builder__preview-drop-layer" data-preview-drop-layer></div>' +
+      '</div>' +
+      '</div>' +
+      '<div class="js-builder-inspector"></div>';
+
+    root.querySelector('.starterkit-theme-builder__iframe').src = getIframeUrl();
+    root.setAttribute('data-builder-mounted', '1');
+  }
+
+  function reloadPreview(forceReload) {
+    var iframe = root.querySelector('.starterkit-theme-builder__iframe');
+    var nextUrl = getIframeUrl();
+
+    if (!iframe) {
+      return;
+    }
+
+    if (iframe.src !== nextUrl) {
+      iframe.src = nextUrl;
+      return;
+    }
+
+    if (forceReload && iframe.contentWindow) {
+      iframe.contentWindow.location.reload();
+    }
+  }
+
+  function schedulePreviewReload() {
+    if (ui.previewReloadTimer) {
+      window.clearTimeout(ui.previewReloadTimer);
+    }
+
+    ui.previewReloadTimer = window.setTimeout(function() {
+      ui.previewReloadTimer = null;
+      reloadPreview(true);
+    }, 180);
+  }
+
+  function markDirty() {
+    ui.dirty = true;
+  }
+
+  function saveState() {
+    if (ui.loading || !ui.dirty) {
+      return;
+    }
+
+    ui.loading = true;
+    render();
+
+    request('starterkit_theme_builder_save_state', {
+      state: JSON.stringify(state),
+      version: stateVersion
+    }).then(function(response) {
+      if (response && response.data && response.data.state) {
+        state = response.data.state;
+        stateVersion = response.data.version || stateVersion;
+        ui.dirty = false;
+        ui.error = '';
+        ui.hasConflict = false;
+        syncSelectionWithState();
+        schedulePreviewReload();
+      }
+    }).catch(function(error) {
+      if (error && error.payload && error.payload.state) {
+        state = error.payload.state;
+      }
+
+      if (error && error.payload && error.payload.serverVersion) {
+        stateVersion = error.payload.serverVersion;
+      }
+
+      if (error && error.message && /another session/i.test(error.message)) {
+        ui.undoState = null;
+        ui.dirty = false;
+        ui.hasConflict = true;
+      }
+
+      syncSelectionWithState();
+
+      ui.error = error && error.message ? error.message : 'Failed to save builder state.';
+    }).finally(function() {
+      ui.loading = false;
+      render();
+    });
+  }
+
+  function selectZone(zoneId, context) {
+    ui.selectedContext = context || ui.context;
+    ui.selectedZone = zoneId || '';
+    if (!zoneId) {
+      ui.selectedElementId = '';
+      ui.selectedContext = '';
+    } else if (ui.selectedElementId) {
+      var selectedExists = getZoneItems(zoneId, getSelectedContext()).some(function(item) {
+        return item.id === ui.selectedElementId;
+      });
+
+      if (!selectedExists) {
+        ui.selectedElementId = '';
+      }
+    }
+
+    render();
+    notifyPreviewSelection();
+  }
+
+  function selectElement(zoneId, elementId, context) {
+    ui.selectedContext = context || ui.context;
+    ui.selectedZone = zoneId || '';
+    ui.selectedElementId = elementId || '';
+    render();
+    notifyPreviewSelection();
+  }
+
+  function notifyPreviewSelection() {
+    var iframe = root.querySelector('.starterkit-theme-builder__iframe');
+    if (!iframe || !iframe.contentWindow) {
+      return;
+    }
+
+    iframe.contentWindow.postMessage(
+      {
+        type: 'starterkit-builder-select',
+        zoneId: ui.selectedZone,
+        elementId: ui.selectedElementId
+      },
+      '*'
+    );
+  }
+
+  function notifyPreviewDragState() {
+    var iframe = root.querySelector('.starterkit-theme-builder__iframe');
+    if (!iframe || !iframe.contentWindow) {
+      return;
+    }
+
+    iframe.contentWindow.postMessage(
+      {
+        type: 'starterkit-builder-drag-state',
+        drag: getPreviewDragState()
+      },
+      '*'
+    );
+  }
+
+  function notifyPreviewElementRemoved(zoneId, elementId) {
+    var iframe = root.querySelector('.starterkit-theme-builder__iframe');
+    if (!iframe || !iframe.contentWindow || !zoneId || !elementId) {
+      return;
+    }
+
+    iframe.contentWindow.postMessage(
+      {
+        type: 'starterkit-builder-remove-element',
+        zoneId: zoneId,
+        elementId: elementId
+      },
+      '*'
+    );
+  }
+
+  function refreshPreviewZone(zoneId, context) {
+    requestZoneMarkup(zoneId, context || ui.context)
+      .then(function(payload) {
+        var iframe = root.querySelector('.starterkit-theme-builder__iframe');
+        if (!iframe || !iframe.contentWindow || !payload || !payload.html) {
+          return;
+        }
+
+        iframe.contentWindow.postMessage(
+          {
+            type: 'starterkit-builder-replace-zone',
+            zoneId: payload.zoneId || zoneId,
+            context: payload.context || context || ui.context,
+            html: payload.html
+          },
+          '*'
+        );
+      })
+      .catch(function(error) {
+        ui.error = error && error.message ? error.message : 'Failed to refresh preview zone.';
+        render();
+      });
+  }
+
+  function getPreviewDragState() {
+    if (!ui.drag) {
+      return null;
+    }
+
+    return Object.assign({}, ui.drag, {
+      allowedZones: getDroppableZoneIds()
+    });
+  }
+
+  function getDroppableZoneIds() {
+    var zoneIndex = getZoneIndex(ui.context);
+
+    return Object.keys(zoneIndex).filter(function(zoneId) {
+      return canDropOnZone(zoneId);
+    });
+  }
+
+  function availableElements() {
+    var available = [];
+
+    if (!ui.selectedZone) {
+      available = Object.keys(elements).filter(function(elementId) {
+        return (elements[elementId].contexts || []).indexOf(ui.context) !== -1;
+      });
+    } else {
+      var zone = getZoneSchema(ui.selectedZone, getSelectedContext());
+      if (!zone) {
+        return [];
+      }
+
+      available = zone.allowed_elements || [];
+    }
+
+    return available.filter(function(elementId) {
+      if (!ui.search) {
+        return true;
+      }
+
+      var definition = elements[elementId] || {};
+      var haystack = [elementId, definition.label || ''].join(' ').toLowerCase();
+      return haystack.indexOf(ui.search.toLowerCase()) !== -1;
+    });
+  }
+
+  function moveSelected(offset) {
+    var items = getZoneItems(ui.selectedZone, getSelectedContext());
+    var index = items.findIndex(function(item) {
+      return item.id === ui.selectedElementId;
+    });
+
+    if (index < 0) {
+      return;
+    }
+
+    var target = index + offset;
+    if (target < 0 || target >= items.length) {
+      return;
+    }
+
+    captureUndoState();
+    var moved = items.splice(index, 1)[0];
+    items.splice(target, 0, moved);
+    markDirty();
+    render();
+  }
+
+  function moveSelectedToEdge(edge) {
+    var items = getZoneItems(ui.selectedZone, getSelectedContext());
+    var index = items.findIndex(function(item) {
+      return item.id === ui.selectedElementId;
+    });
+
+    if (index < 0) {
+      return;
+    }
+
+    captureUndoState();
+    var moved = items.splice(index, 1)[0];
+    if (edge === 'top') {
+      items.unshift(moved);
+    } else {
+      items.push(moved);
+    }
+
+    markDirty();
+    render();
+  }
+
+  function getZoneCapacity(zoneId, context) {
+    var zone = getZoneSchema(zoneId, context);
+    if (!zone || !zone.constraints) {
+      return 999;
+    }
+
+    return Number(zone.constraints.max_items || 999);
+  }
+
+  function canAddElementToZone(elementId, zoneId, ignoreCurrentCount, excludeInstanceId, context) {
+    context = context || ui.context;
+    var zone = getZoneSchema(zoneId, context);
+    if (!zone) {
+      return false;
+    }
+
+    if ((zone.allowed_elements || []).indexOf(elementId) === -1) {
+      return false;
+    }
+
+    var maxInstances = getElementMaxInstances(elementId);
+    if (maxInstances > 0 && countElementInstances(elementId, excludeInstanceId, context) >= maxInstances) {
+      return false;
+    }
+
+    var currentCount = getZoneItems(zoneId, context).length;
+    var maxItems = getZoneCapacity(zoneId, context);
+    if (ignoreCurrentCount) {
+      return currentCount <= maxItems;
+    }
+
+    return currentCount < maxItems;
+  }
+
+  function findInstance(zoneId, instanceId) {
+    var items = getZoneItems(zoneId);
+    var index = items.findIndex(function(item) {
+      return item.id === instanceId;
+    });
+
+    if (index < 0) {
+      return null;
+    }
+
+    return {
+      items: items,
+      index: index,
+      item: items[index]
+    };
+  }
+
+  function clearDragState() {
+    ui.drag = null;
+    root.classList.remove('is-builder-dragging');
+    root.classList.remove('is-builder-library-dragging');
+    root.classList.remove('is-builder-instance-dragging');
+    notifyPreviewDragState();
+  }
+
+  function startLibraryDrag(elementId) {
+    ui.drag = {
+      type: 'library',
+      elementId: elementId
+    };
+    root.classList.add('is-builder-dragging');
+    root.classList.add('is-builder-library-dragging');
+    root.classList.remove('is-builder-instance-dragging');
+    notifyPreviewDragState();
+  }
+
+  function startInstanceDrag(zoneId, instanceId) {
+    var located = findInstance(zoneId, instanceId);
+    if (!located) {
+      return;
+    }
+
+    ui.drag = {
+      type: 'instance',
+      elementId: located.item.type,
+      instanceId: instanceId,
+      sourceZoneId: zoneId
+    };
+    root.classList.add('is-builder-dragging');
+    root.classList.add('is-builder-instance-dragging');
+    root.classList.remove('is-builder-library-dragging');
+    notifyPreviewDragState();
+  }
+
+  function canDropOnZone(zoneId) {
+    if (!ui.drag) {
+      return false;
+    }
+
+    if (ui.drag.type === 'library') {
+      return canAddElementToZone(ui.drag.elementId, zoneId, false);
+    }
+
+    if (ui.drag.type === 'instance') {
+      if (ui.drag.sourceZoneId === zoneId) {
+        return true;
+      }
+
+      return canAddElementToZone(ui.drag.elementId, zoneId, false, ui.drag.instanceId);
+    }
+
+    return false;
+  }
+
+  function clearPreviewDropState() {
+    var iframe = root.querySelector('.starterkit-theme-builder__iframe');
+    if (!iframe || !iframe.contentDocument) {
+      return;
+    }
+
+    iframe.contentDocument
+      .querySelectorAll('.starterkit-builder-zone.is-builder-droppable, .starterkit-builder-zone.is-builder-drop-invalid, .starterkit-builder-element.is-drop-before, .starterkit-builder-element.is-drop-after')
+      .forEach(function(node) {
+        node.classList.remove('is-builder-droppable', 'is-builder-drop-invalid', 'is-drop-before', 'is-drop-after');
+      });
+  }
+
+  function getPreviewDropTarget(event) {
+    var iframe = root.querySelector('.starterkit-theme-builder__iframe');
+    if (!iframe || !iframe.contentDocument) {
+      return null;
+    }
+
+    var rect = iframe.getBoundingClientRect();
+    var x = event.clientX - rect.left;
+    var y = event.clientY - rect.top;
+
+    if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+      return null;
+    }
+
+    var node = iframe.contentDocument.elementFromPoint(x, y);
+    if (!node || !node.closest) {
+      return null;
+    }
+
+    var zone = node.closest('[data-builder-zone]');
+    if (!zone) {
+      return null;
+    }
+
+    if ((zone.getAttribute('data-builder-zone-context') || 'master') !== ui.context) {
+      return null;
+    }
+
+    var element = node.closest('[data-builder-element-id]');
+    var targetElementId = '';
+    var position = 'after';
+
+    if (element && zone.contains(element)) {
+      var elementRect = element.getBoundingClientRect();
+      targetElementId = element.getAttribute('data-builder-element-id') || '';
+      position = y < elementRect.top + elementRect.height / 2 ? 'before' : 'after';
+    }
+
+    return {
+      zone: zone,
+      zoneId: zone.getAttribute('data-builder-zone') || '',
+      element: element,
+      targetElementId: targetElementId,
+      position: position
+    };
+  }
+
+  function updatePreviewDropFeedback(event) {
+    var target = getPreviewDropTarget(event);
+    clearPreviewDropState();
+
+    if (!target) {
+      return null;
+    }
+
+    if (!canDropOnZone(target.zoneId)) {
+      target.zone.classList.add('is-builder-drop-invalid');
+      return target;
+    }
+
+    target.zone.classList.add('is-builder-droppable');
+
+    if (target.element) {
+      target.element.classList.add(target.position === 'before' ? 'is-drop-before' : 'is-drop-after');
+    }
+
+    return target;
+  }
+
+  function insertIntoZone(zoneId, item, targetElementId, position) {
+    var items = getZoneItems(zoneId);
+
+    if (!targetElementId) {
+      items.push(item);
+      return;
+    }
+
+    var targetIndex = items.findIndex(function(existing) {
+      return existing.id === targetElementId;
+    });
+
+    if (targetIndex < 0) {
+      items.push(item);
+      return;
+    }
+
+    var insertIndex = position === 'before' ? targetIndex : targetIndex + 1;
+    items.splice(insertIndex, 0, item);
+  }
+
+  function dropOnZone(zoneId, targetElementId, position) {
+    if (!ui.drag || !canDropOnZone(zoneId)) {
+      clearDragState();
+      render();
+      return;
+    }
+
+    if (ui.drag.type === 'library') {
+      captureUndoState();
+      var instance = makeInstance(ui.drag.elementId);
+      insertIntoZone(zoneId, instance, targetElementId, position);
+      ui.selectedZone = zoneId;
+      ui.selectedElementId = instance.id;
+      clearDragState();
+      markDirty();
+      refreshPreviewZone(zoneId, ui.context);
+      render();
+      return;
+    }
+
+    if (ui.drag.type === 'instance') {
+      var located = findInstance(ui.drag.sourceZoneId, ui.drag.instanceId);
+      if (!located) {
+        clearDragState();
+        render();
+        return;
+      }
+
+      if (ui.drag.sourceZoneId === zoneId && targetElementId === ui.drag.instanceId) {
+        clearDragState();
+        render();
+        return;
+      }
+
+      captureUndoState();
+      var moved = located.items.splice(located.index, 1)[0];
+      var sourceZoneId = ui.drag.sourceZoneId;
+      insertIntoZone(zoneId, moved, targetElementId, position);
+      ui.selectedZone = zoneId;
+      ui.selectedElementId = moved.id;
+      clearDragState();
+      markDirty();
+      refreshPreviewZone(zoneId, ui.context);
+      if (sourceZoneId && sourceZoneId !== zoneId) {
+        refreshPreviewZone(sourceZoneId, ui.context);
+      }
+      render();
+    }
+  }
+
+  function deleteSelected() {
+    var zoneId = ui.selectedZone;
+    var context = getSelectedContext();
+    var elementId = ui.selectedElementId;
+    var items = getZoneItems(ui.selectedZone, getSelectedContext());
+    var index = items.findIndex(function(item) {
+      return item.id === ui.selectedElementId;
+    });
+
+    if (index < 0) {
+      return;
+    }
+
+    captureUndoState();
+    items.splice(index, 1);
+    ui.selectedElementId = '';
+    markDirty();
+    refreshPreviewZone(zoneId, context);
+    render();
+  }
+
+  function duplicateSelected() {
+    var item = getSelectedElement();
+    if (!item) {
+      return;
+    }
+
+    if (!canAddElementToZone(item.type, ui.selectedZone, false, '', getSelectedContext())) {
+      ui.error = getElementLimitMessage(item.type);
+      render();
+      return;
+    }
+
+    captureUndoState();
+    var items = getZoneItems(ui.selectedZone, getSelectedContext());
+    var copy = cloneValue(item);
+    copy.id = 'tb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    items.push(copy);
+    ui.selectedElementId = copy.id;
+    markDirty();
+    refreshPreviewZone(ui.selectedZone, getSelectedContext());
+    render();
+  }
+
+  function toggleSelected() {
+    var item = getSelectedElement();
+    if (!item) {
+      return;
+    }
+
+    captureUndoState();
+    item.enabled = !item.enabled;
+    markDirty();
+    refreshPreviewZone(ui.selectedZone, getSelectedContext());
+    render();
+  }
+
+  function buildLibraryHtml() {
+    var items = availableElements()
+      .map(function(elementId) {
+        var definition = elements[elementId];
+        var maxInstances = getElementMaxInstances(elementId);
+        var isLimited = maxInstances > 0 && countElementInstances(elementId) >= maxInstances;
+        if (!definition) {
+          return '';
+        }
+
+        return (
+          '<button type="button" class="starterkit-theme-builder__library-item' + (isLimited ? ' is-disabled' : '') + '" ' + (isLimited ? 'disabled ' : 'draggable="true" data-drag-type="library" ') + 'data-element-id="' +
+          escapeHtml(elementId) +
+          '">' +
+          '<span class="starterkit-theme-builder__library-icon" aria-hidden="true">' +
+          escapeHtml(getElementIconLabel(elementId)) +
+          '</span>' +
+          '<strong class="starterkit-theme-builder__library-label">' +
+          escapeHtml(definition.label) +
+          '</strong>' +
+          (isLimited ? '<span class="starterkit-theme-builder__library-status">Limit reached</span>' : '') +
+          '</button>'
+        );
+      })
+      .join('');
+
+    return items || '<p class="starterkit-theme-builder__empty">No matching elements for this context or zone.</p>';
+  }
+
+  function buildZoneListHtml() {
+    var zoneIndex = getZoneIndex(ui.context);
+
+    return Object.keys(zoneIndex)
+      .map(function(zoneId) {
+        var zone = zoneIndex[zoneId];
+        var isActive = zoneId === ui.selectedZone ? ' is-active' : '';
+        var isDroppable = canDropOnZone(zoneId) ? ' is-droppable' : '';
+        var count = getZoneItems(zoneId).length;
+
+        return (
+          '<button class="starterkit-theme-builder__zone-item' +
+          isActive +
+          isDroppable +
+          '" data-action="select-zone" data-zone-id="' +
+          escapeHtml(zoneId) +
+          '" data-drop-zone-id="' +
+          escapeHtml(zoneId) +
+          '">' +
+          '<strong>' +
+          escapeHtml(zone.label) +
+          '</strong>' +
+          '<span>' +
+          escapeHtml(zone.presetId) + ' • ' + escapeHtml(count + ' items') +
+          '</span>' +
+          '</button>'
+        );
+      })
+      .join('');
+  }
+
+  function buildNavbarHtml() {
+    return (
+      '<div class="starterkit-theme-builder__navbar">' +
+      '<div class="starterkit-theme-builder__brand">' +
+      '<span class="starterkit-theme-builder__brand-mark">TB</span>' +
+      '<strong>Theme Builder</strong>' +
+      '</div>' +
+      '<nav class="starterkit-theme-builder__nav" aria-label="Builder layout context">' +
+      contexts.map(function(context) {
+        return (
+          '<button type="button" class="starterkit-theme-builder__nav-item' +
+          (context.id === ui.context ? ' is-active' : '') +
+          '" data-action="change-context-button" data-context="' +
+          escapeHtml(context.id) +
+          '">' +
+          escapeHtml(getContextLabel(context.id)) +
+          '</button>'
+        );
+      }).join('') +
+      '</nav>' +
+      '<div class="starterkit-theme-builder__navbar-actions">' +
+      '<button class="button button-primary" data-action="save-publish"' + (ui.loading || !ui.dirty ? ' disabled' : '') + '>' + (ui.loading ? 'Publishing...' : 'Save &amp; Publish') + '</button>' +
+      (ui.hasConflict ? '<button class="button" data-action="reload-latest">Reload Latest State</button>' : '') +
+      (ui.undoState ? '<button class="button" data-action="undo">Undo Last Change</button>' : '') +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  function buildInspectorHtml() {
+    var zone = getZoneSchema(ui.selectedZone, getSelectedContext());
+    var element = getSelectedElement();
+
+    if (!zone) {
+      return '<p class="starterkit-theme-builder__empty">Select an element that has already been added to a preview zone.</p>';
+    }
+
+    if (!element) {
+      return '<p class="starterkit-theme-builder__empty">Zone selected: ' + escapeHtml(zone.label) + '. Drop an element into this zone, then click the added element to edit its settings.</p>';
+    }
+
+    var definition = elements[element.type];
+    var controlsHtml = (definition.settings_schema || []).map(function(control) {
+      var value = element.settings[control.id] || '';
+      if (control.type === 'textarea') {
+        return (
+          '<label class="starterkit-theme-builder__control">' +
+          '<span>' + escapeHtml(control.label) + '</span>' +
+          '<textarea data-setting-id="' + escapeHtml(control.id) + '">' + escapeHtml(value) + '</textarea>' +
+          '</label>'
+        );
+      }
+
+      if (control.type === 'select') {
+        return (
+          '<label class="starterkit-theme-builder__control">' +
+          '<span>' + escapeHtml(control.label) + '</span>' +
+          '<select data-setting-id="' + escapeHtml(control.id) + '">' +
+          (control.options || []).map(function(option) {
+            var selected = option.value === value ? ' selected' : '';
+            return '<option value="' + escapeHtml(option.value) + '"' + selected + '>' + escapeHtml(option.label) + '</option>';
+          }).join('') +
+          '</select>' +
+          '</label>'
+        );
+      }
+
+      return (
+        '<label class="starterkit-theme-builder__control">' +
+        '<span>' + escapeHtml(control.label) + '</span>' +
+        '<input type="' + escapeHtml(control.type || 'text') + '" value="' + escapeHtml(value) + '" data-setting-id="' + escapeHtml(control.id) + '">' +
+        '</label>'
+      );
+    }).join('');
+
+    return (
+      '<div class="starterkit-theme-builder__panel-section">' +
+      '<h3>' + escapeHtml(definition.label) + '</h3>' +
+      '<p class="starterkit-theme-builder__meta">' + escapeHtml(zone.label) + '</p>' +
+      controlsHtml +
+      '</div>'
+    );
+  }
+
+  function render() {
+    ensureShell();
+    root.setAttribute('data-device-mode', ui.deviceMode);
+
+    root.querySelector('.js-builder-navbar').innerHTML = buildNavbarHtml();
+
+    root.querySelector('.js-builder-sidebar').innerHTML =
+      '<div class="starterkit-theme-builder__sidebar">' +
+      '<div class="starterkit-theme-builder__panel-section">' +
+      '<h3>Element Library</h3>' +
+      '<p class="starterkit-theme-builder__meta">Drag elements into highlighted preview zones. Click does not add elements.</p>' +
+      '<label class="starterkit-theme-builder__control">' +
+      '<span>Search Elements</span>' +
+      '<input type="search" value="' + escapeHtml(ui.search) + '" data-action="search-elements" placeholder="Search by name or id">' +
+      '</label>' +
+      '<div class="starterkit-theme-builder__stack">' + buildLibraryHtml() + '</div>' +
+      '</div>' +
+      '</div>';
+
+    root.querySelector('.js-builder-preview-toolbar').innerHTML =
+      '<div class="starterkit-theme-builder__preview-status">' +
+      '<strong>Preview</strong>' +
+      '<span>' + (ui.loading ? 'Publishing...' : (ui.hasConflict ? 'Conflict detected' : (ui.dirty ? 'Unsaved changes' : 'Published'))) + '</span>' +
+      '</div>' +
+      '<div class="starterkit-theme-builder__preview-actions">' +
+      ['desktop', 'tablet', 'mobile'].map(function(mode) {
+        return '<button class="button' + (mode === ui.deviceMode ? ' button-primary' : '') + '" data-action="change-device" data-device="' + mode + '">' + mode + '</button>';
+      }).join('') +
+      '<button class="button" data-action="refresh-preview">Refresh Preview</button>' +
+      '</div>' +
+      (ui.error ? '<span class="starterkit-theme-builder__error">' + escapeHtml(ui.error) + '</span>' : '');
+
+    root.querySelector('.js-builder-inspector').innerHTML =
+      '<div class="starterkit-theme-builder__inspector">' +
+      '<div class="starterkit-theme-builder__panel-section">' +
+      '<h3>Inspector</h3>' +
+      buildInspectorHtml() +
+      '</div>' +
+      '</div>';
+
+    notifyPreviewSelection();
+    notifyPreviewDragState();
+  }
+
+  root.addEventListener('change', function(event) {
+    if (event.target.matches('[data-action="change-context"]')) {
+      ui.context = event.target.value;
+      ui.selectedContext = '';
+      ui.selectedZone = '';
+      ui.selectedElementId = '';
+      reloadPreview();
+      render();
+      return;
+    }
+
+    if (event.target.matches('[data-action="search-elements"]')) {
+      ui.search = event.target.value || '';
+      render();
+      return;
+    }
+
+    if (event.target.matches('[data-setting-id]')) {
+      var element = getSelectedElement();
+      if (!element) {
+        return;
+      }
+
+      element.settings[event.target.getAttribute('data-setting-id')] = event.target.value;
+      markDirty();
+      refreshPreviewZone(ui.selectedZone, getSelectedContext());
+      render();
+    }
+  });
+
+  root.addEventListener('click', function(event) {
+    var button = event.target.closest('[data-action]');
+    if (!button) {
+      return;
+    }
+
+    var action = button.getAttribute('data-action');
+
+    if (action === 'change-context-button') {
+      ui.context = button.getAttribute('data-context') || ui.context;
+      ui.selectedContext = '';
+      ui.selectedZone = '';
+      ui.selectedElementId = '';
+      reloadPreview();
+      render();
+      return;
+    }
+
+    if (action === 'change-device') {
+      ui.deviceMode = button.getAttribute('data-device');
+      reloadPreview();
+      render();
+      return;
+    }
+
+    if (action === 'select-zone') {
+      selectZone(button.getAttribute('data-zone-id'));
+      return;
+    }
+
+    if (action === 'select-element') {
+      selectElement(button.getAttribute('data-zone-id'), button.getAttribute('data-element-instance-id'));
+      return;
+    }
+
+    if (action === 'move-up') {
+      moveSelected(-1);
+      return;
+    }
+
+    if (action === 'move-top') {
+      moveSelectedToEdge('top');
+      return;
+    }
+
+    if (action === 'move-down') {
+      moveSelected(1);
+      return;
+    }
+
+    if (action === 'move-bottom') {
+      moveSelectedToEdge('bottom');
+      return;
+    }
+
+    if (action === 'duplicate') {
+      duplicateSelected();
+      return;
+    }
+
+    if (action === 'toggle') {
+      toggleSelected();
+      return;
+    }
+
+    if (action === 'undo') {
+      restoreUndoState();
+      return;
+    }
+
+    if (action === 'reload-latest') {
+      reloadLatestState();
+      return;
+    }
+
+    if (action === 'save-publish') {
+      saveState();
+      return;
+    }
+
+    if (action === 'refresh-preview') {
+      reloadPreview(true);
+      return;
+    }
+
+    if (action === 'delete') {
+      if (!window.confirm('Delete this element instance?')) {
+        return;
+      }
+      deleteSelected();
+    }
+  });
+
+  root.addEventListener('dragstart', function(event) {
+    var libraryItem = event.target.closest('[data-drag-type="library"]');
+    var instanceItem = event.target.closest('[data-drag-type="instance"]');
+
+    if (libraryItem) {
+      var libraryElementId = libraryItem.getAttribute('data-element-id');
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'copy';
+        event.dataTransfer.setData('text/plain', libraryElementId);
+      }
+      startLibraryDrag(libraryElementId);
+      return;
+    }
+
+    if (instanceItem) {
+      var instanceId = instanceItem.getAttribute('data-drag-instance-id');
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', instanceId);
+      }
+      startInstanceDrag(instanceItem.getAttribute('data-drag-zone-id'), instanceId);
+    }
+  });
+
+  root.addEventListener('dragend', function() {
+    clearDragState();
+    render();
+  });
+
+  root.addEventListener('dragover', function(event) {
+    var dropTarget = event.target.closest('[data-drop-zone-id]');
+    if (!dropTarget) {
+      return;
+    }
+
+    if (!canDropOnZone(dropTarget.getAttribute('data-drop-zone-id'))) {
+      return;
+    }
+
+    event.preventDefault();
+
+    root
+      .querySelectorAll('.starterkit-theme-builder__element-item.is-drop-before, .starterkit-theme-builder__element-item.is-drop-after')
+      .forEach(function(node) {
+        node.classList.remove('is-drop-before', 'is-drop-after');
+      });
+
+    if (dropTarget.matches('.starterkit-theme-builder__element-item')) {
+      var rect = dropTarget.getBoundingClientRect();
+      var position = event.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+      dropTarget.classList.add(position === 'before' ? 'is-drop-before' : 'is-drop-after');
+      dropTarget.setAttribute('data-drop-position', position);
+    }
+  });
+
+  root.addEventListener('drop', function(event) {
+    var dropTarget = event.target.closest('[data-drop-zone-id]');
+    if (!dropTarget) {
+      return;
+    }
+
+    event.preventDefault();
+    dropOnZone(
+      dropTarget.getAttribute('data-drop-zone-id'),
+      dropTarget.getAttribute('data-drop-target-element-id') || '',
+      dropTarget.getAttribute('data-drop-position') || 'after'
+    );
+    root
+      .querySelectorAll('.starterkit-theme-builder__element-item.is-drop-before, .starterkit-theme-builder__element-item.is-drop-after')
+      .forEach(function(node) {
+        node.classList.remove('is-drop-before', 'is-drop-after');
+      });
+  });
+
+  root.addEventListener('dragover', function(event) {
+    if (!ui.drag || !event.target.closest('[data-preview-drop-layer]')) {
+      return;
+    }
+
+    var target = updatePreviewDropFeedback(event);
+
+    if (!target || !canDropOnZone(target.zoneId)) {
+      return;
+    }
+
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = ui.drag.type === 'library' ? 'copy' : 'move';
+    }
+  });
+
+  root.addEventListener('dragleave', function(event) {
+    if (!event.target.closest('[data-preview-drop-layer]')) {
+      return;
+    }
+
+    clearPreviewDropState();
+  });
+
+  root.addEventListener('drop', function(event) {
+    if (!ui.drag || !event.target.closest('[data-preview-drop-layer]')) {
+      return;
+    }
+
+    var target = updatePreviewDropFeedback(event);
+
+    if (!target || !canDropOnZone(target.zoneId)) {
+      clearPreviewDropState();
+      clearDragState();
+      render();
+      return;
+    }
+
+    event.preventDefault();
+    dropOnZone(target.zoneId, target.targetElementId, target.position);
+    clearPreviewDropState();
+  });
+
+  window.addEventListener('message', function(event) {
+    if (!event.data) {
+      return;
+    }
+
+    if (event.data.type === 'starterkit-builder-select') {
+      if (event.data.elementId) {
+        selectElement(event.data.zoneId, event.data.elementId, event.data.context || '');
+      } else {
+        selectZone(event.data.zoneId, event.data.context || '');
+      }
+    }
+
+    if (event.data.type === 'starterkit-builder-ready') {
+      notifyPreviewSelection();
+      notifyPreviewDragState();
+    }
+
+    if (event.data.type === 'starterkit-builder-drop') {
+      dropOnZone(event.data.zoneId || '', event.data.targetElementId || '', event.data.position || 'after');
+      return;
+    }
+
+    if (event.data.type === 'starterkit-builder-start-instance-drag') {
+      if ((event.data.context || ui.context) !== ui.context) {
+        return;
+      }
+
+      startInstanceDrag(event.data.zoneId || '', event.data.elementId || '');
+      return;
+    }
+
+    if (event.data.type === 'starterkit-builder-end-drag') {
+      clearPreviewDropState();
+      clearDragState();
+      render();
+      return;
+    }
+
+    if (event.data.type === 'starterkit-builder-delete-element') {
+      selectElement(event.data.zoneId || '', event.data.elementId || '', event.data.context || '');
+      deleteSelected();
+      return;
+    }
+
+    if (event.data.type === 'starterkit-builder-hover-zone') {
+      return;
+    }
+  });
+
+  window.addEventListener('beforeunload', function(event) {
+    if (!ui.dirty && !ui.loading) {
+      return;
+    }
+
+    event.preventDefault();
+    event.returnValue = '';
+  });
+
+  render();
+})();

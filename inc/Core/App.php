@@ -8,12 +8,24 @@
 namespace StarterKit\Core;
 
 use StarterKit\Admin\SettingsPage;
+use StarterKit\Admin\ThemeBuilderPage;
 use StarterKit\Layouts\LayoutRegistry;
 use StarterKit\Layouts\LayoutResolver;
 use StarterKit\Rules\DisplayRuleEvaluator;
 use StarterKit\Rules\PageContextResolver;
 use StarterKit\Settings\CssVariableOutput;
 use StarterKit\Settings\GlobalSettingsManager;
+use StarterKit\ThemeBuilder\ApiController;
+use StarterKit\ThemeBuilder\BuilderContext;
+use StarterKit\ThemeBuilder\BuilderMode;
+use StarterKit\ThemeBuilder\BuilderStateRepository;
+use StarterKit\ThemeBuilder\ElementAssetManager;
+use StarterKit\ThemeBuilder\ElementRegistry;
+use StarterKit\ThemeBuilder\ElementRenderer;
+use StarterKit\ThemeBuilder\PresetSchemaRegistry;
+use StarterKit\ThemeBuilder\PreviewAssetManager;
+use StarterKit\ThemeBuilder\PreviewContextResolver;
+use StarterKit\ThemeBuilder\ZoneRenderer;
 use StarterKit\WooCommerce\ArchiveLayoutManager;
 use StarterKit\WooCommerce\CartDrawerManager;
 use StarterKit\WooCommerce\HookRegistrar;
@@ -58,11 +70,23 @@ class App {
 		$this->settings_manager();
 		$this->css_variable_output();
 		$this->layout_registry();
-		$this->layout_resolver();
-		$this->settings_page();
-		$this->context_resolver();
-		$this->display_rule_evaluator();
-		$this->asset_manager();
+			$this->layout_resolver();
+			$this->settings_page();
+			$this->builder_context();
+			$this->builder_mode();
+			$this->preset_schema_registry();
+			$this->element_registry();
+			$this->builder_state_repository();
+			$this->preview_context_resolver();
+			$this->element_renderer();
+			$this->theme_builder_element_asset_manager();
+			$this->zone_renderer();
+			$this->theme_builder_api_controller();
+			$this->theme_builder_page();
+			$this->theme_builder_preview_asset_manager();
+			$this->context_resolver();
+			$this->display_rule_evaluator();
+			$this->asset_manager();
 		$this->performance_manager();
 		$this->script_injection_manager();
 		$this->product_layout_manager();
@@ -214,6 +238,181 @@ class App {
 			'settings_page',
 			function() {
 				return new SettingsPage( $this->settings_manager(), $this->layout_registry() );
+			}
+		);
+	}
+
+	/**
+	 * Builder context service.
+	 *
+	 * @return BuilderContext
+	 */
+	public function builder_context() {
+		return $this->service(
+			'builder_context',
+			function() {
+				return new BuilderContext();
+			}
+		);
+	}
+
+	/**
+	 * Builder mode service.
+	 *
+	 * @return BuilderMode
+	 */
+	public function builder_mode() {
+		return $this->service(
+			'builder_mode',
+			function() {
+				return new BuilderMode( $this->builder_context() );
+			}
+		);
+	}
+
+	/**
+	 * Preset schema registry service.
+	 *
+	 * @return PresetSchemaRegistry
+	 */
+	public function preset_schema_registry() {
+		return $this->service(
+			'preset_schema_registry',
+			function() {
+				return new PresetSchemaRegistry( $this->layout_resolver() );
+			}
+		);
+	}
+
+	/**
+	 * Element registry service.
+	 *
+	 * @return ElementRegistry
+	 */
+	public function element_registry() {
+		return $this->service(
+			'element_registry',
+			function() {
+				return new ElementRegistry( get_template_directory() . '/elements', get_template_directory_uri() . '/elements' );
+			}
+		);
+	}
+
+	/**
+	 * Element module asset manager.
+	 *
+	 * @return ElementAssetManager
+	 */
+	public function theme_builder_element_asset_manager() {
+		return $this->service(
+			'theme_builder_element_asset_manager',
+			function() {
+				return new ElementAssetManager( $this->element_registry(), $this->builder_state_repository() );
+			}
+		);
+	}
+
+	/**
+	 * Builder state repository service.
+	 *
+	 * @return BuilderStateRepository
+	 */
+	public function builder_state_repository() {
+		return $this->service(
+			'builder_state_repository',
+			function() {
+				return new BuilderStateRepository( $this->preset_schema_registry(), $this->element_registry() );
+			}
+		);
+	}
+
+	/**
+	 * Preview context resolver service.
+	 *
+	 * @return PreviewContextResolver
+	 */
+	public function preview_context_resolver() {
+		return $this->service(
+			'preview_context_resolver',
+			function() {
+				return new PreviewContextResolver( $this->builder_mode() );
+			}
+		);
+	}
+
+	/**
+	 * Element renderer service.
+	 *
+	 * @return ElementRenderer
+	 */
+	public function element_renderer() {
+		return $this->service(
+			'element_renderer',
+			function() {
+				return new ElementRenderer( $this->element_registry(), $this->builder_mode() );
+			}
+		);
+	}
+
+	/**
+	 * Zone renderer service.
+	 *
+	 * @return ZoneRenderer
+	 */
+	public function zone_renderer() {
+		return $this->service(
+			'zone_renderer',
+			function() {
+				return new ZoneRenderer( $this->preset_schema_registry(), $this->builder_state_repository(), $this->element_renderer(), $this->builder_mode() );
+			}
+		);
+	}
+
+	/**
+	 * Theme builder API controller.
+	 *
+	 * @return ApiController
+	 */
+	public function theme_builder_api_controller() {
+		return $this->service(
+			'theme_builder_api_controller',
+			function() {
+				return new ApiController(
+					$this->builder_context(),
+					$this->preset_schema_registry(),
+					$this->element_registry(),
+					$this->builder_state_repository(),
+					$this->preview_context_resolver(),
+					$this->zone_renderer()
+				);
+			}
+		);
+	}
+
+	/**
+	 * Theme builder page.
+	 *
+	 * @return ThemeBuilderPage
+	 */
+	public function theme_builder_page() {
+		return $this->service(
+			'theme_builder_page',
+			function() {
+				return new ThemeBuilderPage( $this->theme_builder_api_controller() );
+			}
+		);
+	}
+
+	/**
+	 * Preview asset manager service.
+	 *
+	 * @return PreviewAssetManager
+	 */
+	public function theme_builder_preview_asset_manager() {
+		return $this->service(
+			'theme_builder_preview_asset_manager',
+			function() {
+				return new PreviewAssetManager( $this->builder_mode() );
 			}
 		);
 	}

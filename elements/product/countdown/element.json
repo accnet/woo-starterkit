@@ -1,0 +1,14 @@
+{
+  "id": "countdown",
+  "label": "Countdown",
+  "context": "product",
+  "category": "urgency",
+  "allowed_zones": ["product_before_gallery", "product_after_gallery", "product_before_summary", "product_after_summary"],
+  "assets": {
+    "css": "style.css"
+  },
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Flash sale ends in" },
+    "end_time": { "type": "datetime-local", "label": "End Time", "default": "" }
+  }
+}

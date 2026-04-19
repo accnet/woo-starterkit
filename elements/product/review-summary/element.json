@@ -1,0 +1,20 @@
+{
+  "id": "review-summary",
+  "label": "Review Summary",
+  "context": "product",
+  "category": "social-proof",
+  "allowed_zones": ["product_before_gallery", "product_after_gallery", "product_before_summary", "product_after_summary"],
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Review Summary" },
+    "content": { "type": "textarea", "label": "Content", "default": "Rated 4.9/5 by 1,240 customers" },
+    "style": {
+      "type": "select",
+      "label": "Style",
+      "default": "default",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "accent", "label": "Accent" }
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "trust-strip",
+  "label": "Trust Strip",
+  "context": "archive",
+  "category": "trust",
+  "allowed_zones": ["archive_after_title", "archive_before_loop", "archive_after_loop", "archive_sidebar_top", "archive_sidebar_bottom"],
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Trust Strip" },
+    "items": { "type": "textarea", "label": "Items", "default": "Free returns\nExpress shipping\nSecure payment" }
+  }
+}

@@ -6,6 +6,7 @@
  */
 ?>
 <footer class="site-footer site-footer--preset-2">
+	<?php starterkit()->zone_renderer()->render( 'footer_top', array( 'context' => 'master' ) ); ?>
 	<div class="container footer-banner footer-banner--preset-2">
 		<div>
 			<h3><?php esc_html_e( 'Join the newsletter', 'starterkit' ); ?></h3>
@@ -24,4 +25,5 @@
 	<div class="container footer-bottom footer-bottom--preset-2">
 		<p><?php echo esc_html( gmdate( 'Y' ) ); ?> <?php bloginfo( 'description' ); ?></p>
 	</div>
+	<?php starterkit()->zone_renderer()->render( 'footer_bottom', array( 'context' => 'master' ) ); ?>
 </footer>

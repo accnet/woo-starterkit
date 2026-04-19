@@ -6,6 +6,7 @@
  */
 ?>
 <footer class="site-footer site-footer--preset-1">
+	<?php starterkit()->zone_renderer()->render( 'footer_top', array( 'context' => 'master' ) ); ?>
 	<div class="container footer-grid footer-grid--preset-1">
 		<div class="footer-col">
 			<?php if ( is_active_sidebar( 'footer-1' ) ) : ?>
@@ -41,4 +42,5 @@
 	<div class="container footer-bottom footer-bottom--preset-1">
 		<p>&copy; <?php echo esc_html( gmdate( 'Y' ) ); ?> <?php bloginfo( 'name' ); ?></p>
 	</div>
+	<?php starterkit()->zone_renderer()->render( 'footer_bottom', array( 'context' => 'master' ) ); ?>
 </footer>

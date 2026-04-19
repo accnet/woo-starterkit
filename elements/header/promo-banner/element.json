@@ -1,0 +1,24 @@
+{
+  "id": "promo-banner",
+  "label": "Promo Banner",
+  "context": "header",
+  "contexts": ["master", "archive"],
+  "category": "banner",
+  "allowed_zones": ["header_top", "header_bottom", "home_after_header", "archive_before_title", "archive_after_title", "archive_before_loop", "footer_bottom", "footer_top"],
+  "assets": {
+    "css": "style.css"
+  },
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Promo Banner" },
+    "content": { "type": "textarea", "label": "Content", "default": "Weekend drop: 20% off selected products" },
+    "style": {
+      "type": "select",
+      "label": "Style",
+      "default": "accent",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "accent", "label": "Accent" }
+      ]
+    }
+  }
+}

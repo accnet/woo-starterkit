@@ -19,9 +19,9 @@ if ( post_password_required() ) {
 }
 ?>
 <div id="product-<?php the_ID(); ?>" <?php wc_product_class( '', $product ); ?>>
-	<?php if ( ! empty( $layout['id'] ) && 'product-layout-1' === $layout['id'] ) : ?>
+	<?php if ( ! empty( $layout['template'] ) ) : ?>
 		<?php
-		$template = get_template_directory() . '/template-parts/product/product-layout-1/product.php';
+		$template = get_template_directory() . '/' . $layout['template'];
 
 		if ( file_exists( $template ) ) {
 			include $template;

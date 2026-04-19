@@ -1,0 +1,20 @@
+{
+  "id": "category-banner",
+  "label": "Category Banner",
+  "context": "archive",
+  "category": "banner",
+  "allowed_zones": ["archive_before_title", "archive_after_title"],
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Category Banner" },
+    "content": { "type": "textarea", "label": "Content", "default": "Curated picks for this collection" },
+    "style": {
+      "type": "select",
+      "label": "Style",
+      "default": "default",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "accent", "label": "Accent" }
+      ]
+    }
+  }
+}

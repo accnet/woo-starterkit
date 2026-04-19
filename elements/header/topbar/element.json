@@ -1,0 +1,24 @@
+{
+  "id": "topbar",
+  "label": "Topbar",
+  "context": "header",
+  "category": "topbar",
+  "allowed_zones": ["header_top"],
+  "max_instances": 1,
+  "assets": {
+    "css": "style.css"
+  },
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Topbar" },
+    "content": { "type": "textarea", "label": "Content", "default": "Free shipping on orders over $75" },
+    "style": {
+      "type": "select",
+      "label": "Style",
+      "default": "default",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "accent", "label": "Accent" }
+      ]
+    }
+  }
+}

@@ -8,8 +8,10 @@
 $cart_count = function_exists( 'WC' ) && WC()->cart ? (int) WC()->cart->get_cart_contents_count() : 0;
 $cart_url   = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
 $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
+$zone_renderer = starterkit()->zone_renderer();
 ?>
 <header class="site-header site-header--preset-2" data-header-behavior="sticky menu">
+	<?php $zone_renderer->render( 'header_top', array( 'context' => 'master' ) ); ?>
 	<div class="header-topbar">
 		<div class="container header-topbar__inner">
 			<span><?php esc_html_e( 'Preset-driven commerce theme', 'starterkit' ); ?></span>
@@ -56,4 +58,5 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 			</div>
 		</div>
 	</div>
+	<?php $zone_renderer->render( 'header_bottom', array( 'context' => 'master' ) ); ?>
 </header>

@@ -8,8 +8,10 @@
 $cart_count = function_exists( 'WC' ) && WC()->cart ? (int) WC()->cart->get_cart_contents_count() : 0;
 $cart_url   = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
 $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
+$zone_renderer = starterkit()->zone_renderer();
 ?>
 <header class="site-header site-header--preset-1" data-header-behavior="menu search">
+	<?php $zone_renderer->render( 'header_top', array( 'context' => 'master' ) ); ?>
 	<button class="site-header__backdrop" type="button" data-header-close aria-label="<?php esc_attr_e( 'Close menu', 'starterkit' ); ?>"></button>
 	<div class="container header-shell header-shell--preset-1">
 		<div class="site-branding">
@@ -67,4 +69,5 @@ $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 			<?php get_search_form(); ?>
 		</div>
 	</div>
+	<?php $zone_renderer->render( 'header_bottom', array( 'context' => 'master' ) ); ?>
 </header>

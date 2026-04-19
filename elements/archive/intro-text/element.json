@@ -1,0 +1,21 @@
+{
+  "id": "intro-text",
+  "label": "Intro Text",
+  "context": "archive",
+  "contexts": ["archive", "master"],
+  "category": "content",
+  "allowed_zones": ["archive_before_title", "archive_after_title", "footer_top"],
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Intro Text" },
+    "content": { "type": "textarea", "label": "Content", "default": "Discover products selected to fit the current campaign." },
+    "style": {
+      "type": "select",
+      "label": "Style",
+      "default": "default",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "accent", "label": "Accent" }
+      ]
+    }
+  }
+}
