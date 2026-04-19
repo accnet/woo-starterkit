@@ -192,6 +192,9 @@ class SettingsPage {
 						<?php $this->render_select_row( 'footer_layout', __( 'Footer Layout', 'starterkit' ), $settings['footer_layout'], $layouts['footers'] ); ?>
 						<?php $this->render_select_row( 'product_layout', __( 'Product Layout', 'starterkit' ), $settings['product_layout'], $layouts['products'] ); ?>
 						<?php $this->render_select_row( 'archive_layout', __( 'Archive Layout', 'starterkit' ), $settings['archive_layout'], $layouts['archives'] ); ?>
+						<?php $this->render_section_label_row( __( 'Commerce Shell', 'starterkit' ) ); ?>
+						<?php $this->render_checkbox_row( 'custom_cart_page', __( 'Custom Cart Page', 'starterkit' ), $settings['custom_cart_page'], __( 'When enabled, the theme takes over the /cart route, ignores page editor content, and renders the cart inside the theme shell. Disable to fall back to WooCommerce default cart output.', 'starterkit' ) ); ?>
+						<?php $this->render_checkbox_row( 'custom_checkout_page', __( 'Custom Checkout Page', 'starterkit' ), $settings['custom_checkout_page'], __( 'When enabled, the theme takes over /checkout and /checkout/order-received, ignores page editor content, and renders checkout inside the theme shell. Disable to fall back to WooCommerce default checkout output.', 'starterkit' ) ); ?>
 					</table>
 				<?php elseif ( 'performance' === $tab ) : ?>
 					<table class="form-table" role="presentation">

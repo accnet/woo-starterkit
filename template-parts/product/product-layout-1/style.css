@@ -12,7 +12,7 @@
 .starterkit-product-layout.product-layout-1 .starterkit-product-layout__product-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(20px, 4vw, 30px);
+  gap: clamp(20px, 4vw, 50px);
   align-items: start;
 }
 
@@ -33,7 +33,7 @@
 
 .starterkit-product-layout.product-layout-1 .starterkit-product-layout__summary-column .summary {
   position: static;
-  padding: clamp(20px, 2.5vw, 28px);
+  padding: clamp(0px, 2.5vw, 0px);
   border: 0;
   border-radius: 0;
   background: #fff;
@@ -449,8 +449,8 @@
 }
 
 .starterkit-product-layout.product-layout-1 .price {
-  margin: 0 0 24px;
-  font-size: clamp(1.4rem, 2vw, 1.9rem);
+  margin: 0;
+  font-size: clamp(1rem, 1.4vw, 1.8rem);
   font-weight: 700;
   color: var(--color-primary);
 }

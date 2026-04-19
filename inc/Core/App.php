@@ -28,6 +28,9 @@ use StarterKit\ThemeBuilder\PreviewContextResolver;
 use StarterKit\ThemeBuilder\ZoneRenderer;
 use StarterKit\WooCommerce\ArchiveLayoutManager;
 use StarterKit\WooCommerce\CartDrawerManager;
+use StarterKit\WooCommerce\CheckoutLayoutManager;
+use StarterKit\WooCommerce\CheckoutRuntimeManager;
+use StarterKit\WooCommerce\CommerceTemplateManager;
 use StarterKit\WooCommerce\HookRegistrar;
 use StarterKit\WooCommerce\ProductLayoutManager;
 use StarterKit\Core\PerformanceManager;
@@ -91,6 +94,9 @@ class App {
 		$this->script_injection_manager();
 		$this->product_layout_manager();
 		$this->archive_layout_manager();
+		$this->commerce_template_manager();
+		$this->checkout_layout_manager();
+		$this->checkout_runtime_manager();
 		$this->hook_registrar();
 		$this->cart_drawer_manager();
 	}
@@ -483,6 +489,48 @@ class App {
 			'hook_registrar',
 			function() {
 				return new HookRegistrar( $this->product_layout_manager(), $this->archive_layout_manager() );
+			}
+		);
+	}
+
+	/**
+	 * WooCommerce cart/checkout template manager.
+	 *
+	 * @return CommerceTemplateManager
+	 */
+	public function commerce_template_manager() {
+		return $this->service(
+			'commerce_template_manager',
+			function() {
+				return new CommerceTemplateManager( $this->settings_manager() );
+			}
+		);
+	}
+
+	/**
+	 * WooCommerce checkout layout manager.
+	 *
+	 * @return CheckoutLayoutManager
+	 */
+	public function checkout_layout_manager() {
+		return $this->service(
+			'checkout_layout_manager',
+			function() {
+				return new CheckoutLayoutManager( $this->settings_manager() );
+			}
+		);
+	}
+
+	/**
+	 * WooCommerce checkout runtime manager.
+	 *
+	 * @return CheckoutRuntimeManager
+	 */
+	public function checkout_runtime_manager() {
+		return $this->service(
+			'checkout_runtime_manager',
+			function() {
+				return new CheckoutRuntimeManager( $this->settings_manager() );
 			}
 		);
 	}

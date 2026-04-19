@@ -26,6 +26,8 @@ class GlobalSettingsManager {
 			'footer_layout'      => 'footer-1',
 			'product_layout'     => 'product-layout-1',
 			'archive_layout'     => 'archive-layout-1',
+			'custom_cart_page'   => '1',
+			'custom_checkout_page' => '1',
 			'heading_font'       => 'Poppins',
 			'body_font'          => 'Inter',
 			'body_font_size'     => '16px',
@@ -451,6 +453,8 @@ class GlobalSettingsManager {
 				case 'preconnect_hints':
 				case 'preload_fonts':
 				case 'async_images':
+				case 'custom_cart_page':
+				case 'custom_checkout_page':
 				case 'disable_cart_fragments':
 				case 'disable_wc_block_css':
 				case 'disable_oembed':

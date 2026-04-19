@@ -128,6 +128,16 @@ class HookRegistrar {
 	 * @return void
 	 */
 	public function dequeue_woocommerce_styles() {
+		$settings                = get_option( 'starterkit_global_settings', array() );
+		$custom_cart_page        = isset( $settings['custom_cart_page'] ) ? (string) $settings['custom_cart_page'] : '1';
+		$custom_checkout_page    = isset( $settings['custom_checkout_page'] ) ? (string) $settings['custom_checkout_page'] : '1';
+		$preserve_cart_styles    = function_exists( 'is_cart' ) && is_cart() && '1' !== $custom_cart_page;
+		$preserve_checkout_styles = function_exists( 'is_checkout' ) && is_checkout() && '1' !== $custom_checkout_page;
+
+		if ( $preserve_cart_styles || $preserve_checkout_styles ) {
+			return;
+		}
+
 		wp_dequeue_style( 'woocommerce-general' );
 		wp_deregister_style( 'woocommerce-general' );
 		wp_dequeue_style( 'woocommerce-layout' );

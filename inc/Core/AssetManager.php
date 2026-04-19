@@ -136,7 +136,7 @@ class AssetManager {
 		$base = get_template_directory();
 		$uri  = get_template_directory_uri();
 
-		if ( is_cart() ) {
+		if ( is_cart() && '1' === (string) $this->settings->get( 'custom_cart_page', '1' ) ) {
 			$css = $base . '/assets/css/cart.css';
 			$js  = $base . '/assets/js/cart.js';
 
@@ -148,7 +148,7 @@ class AssetManager {
 			}
 		}
 
-		if ( is_checkout() ) {
+		if ( is_checkout() && '1' === (string) $this->settings->get( 'custom_checkout_page', '1' ) ) {
 			$css = $base . '/assets/css/checkout.css';
 			$js  = $base . '/assets/js/checkout.js';
 
