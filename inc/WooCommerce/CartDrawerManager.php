@@ -92,8 +92,13 @@ class CartDrawerManager {
 				'checkoutUrl'  => function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : home_url( '/checkout/' ),
 				'wcAjaxUrl'    => class_exists( 'WC_AJAX' ) ? \WC_AJAX::get_endpoint( '%%endpoint%%' ) : '',
 				'i18n'         => array(
-					'updating' => __( 'Updating your cart...', 'starterkit' ),
-					'error'    => __( 'We could not update your cart. Please try again.', 'starterkit' ),
+					'updating'             => __( 'Updating your cart...', 'starterkit' ),
+					'error'                => __( 'We could not update your cart. Please try again.', 'starterkit' ),
+					'chooseOptions'        => __( 'Choose options', 'starterkit' ),
+					'chooseAllOptions'     => __( 'Please choose product options before adding to cart.', 'starterkit' ),
+					'unavailableVariation' => __( 'This combination is currently unavailable.', 'starterkit' ),
+					'back'                 => __( 'Back', 'starterkit' ),
+					'confirmAdd'           => __( 'Add to cart', 'starterkit' ),
 				),
 			)
 		);
@@ -115,6 +120,12 @@ class CartDrawerManager {
 		echo '<aside class="starterkit-cart-drawer__panel" aria-label="' . esc_attr__( 'Shopping cart', 'starterkit' ) . '">';
 		echo '<div class="starterkit-cart-drawer__inner">';
 		echo $this->get_drawer_inner_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '</div>';
+		echo '<div class="starterkit-cart-drawer__sheet" aria-hidden="true">';
+		echo '<button type="button" class="starterkit-cart-drawer__sheet-overlay" data-cart-drawer-sheet-close aria-label="' . esc_attr__( 'Close product options', 'starterkit' ) . '"></button>';
+		echo '<div class="starterkit-cart-drawer__sheet-panel">';
+		echo '<div class="starterkit-cart-drawer__sheet-content"></div>';
+		echo '</div>';
 		echo '</div>';
 		echo '</aside>';
 		echo '</div>';
@@ -393,6 +404,23 @@ class CartDrawerManager {
 	 * @return string
 	 */
 	protected function get_upsell_button_html( $product ) {
+		if ( $this->product_requires_variant_selection( $product ) && $product->is_purchasable() && $product->is_in_stock() ) {
+			$config = $this->get_upsell_selector_config( $product );
+
+			if ( ! empty( $config ) ) {
+				$config_id = 'starterkit-cart-drawer-upsell-config-' . (int) $product->get_id();
+
+				return sprintf(
+					'<button type="button" data-product_id="%1$s" data-product_url="%2$s" data-quantity="1" data-config-selector="#%3$s" class="button button-secondary starterkit-cart-drawer__upsell-add starterkit-cart-drawer__upsell-add--selector">%4$s</button><script type="application/json" id="%3$s">%5$s</script>',
+					esc_attr( (string) $product->get_id() ),
+					esc_url( $product->get_permalink() ),
+					esc_attr( $config_id ),
+					esc_html( $product->add_to_cart_text() ),
+					wp_json_encode( $config )
+				);
+			}
+		}
+
 		if ( $product->is_purchasable() && $product->is_in_stock() && $product->supports( 'ajax_add_to_cart' ) ) {
 			return sprintf(
 				'<a href="%1$s" data-product_id="%2$s" data-product_sku="%3$s" data-quantity="1" class="button button-secondary starterkit-cart-drawer__upsell-add product_type_%4$s">%5$s</a>',
@@ -409,6 +437,259 @@ class CartDrawerManager {
 			esc_url( $product->get_permalink() ),
 			esc_html__( 'View Product', 'starterkit' )
 		);
+	}
+
+	/**
+	 * Determine if an upsell requires a variant picker before add-to-cart.
+	 *
+	 * @param \WC_Product $product Product object.
+	 * @return bool
+	 */
+	protected function product_requires_variant_selection( $product ) {
+		$requires_selection = $product->is_type( 'variable' );
+
+		return (bool) apply_filters( 'starterkit_cart_drawer_product_requires_options', $requires_selection, $product );
+	}
+
+	/**
+	 * Build the normalized selector payload consumed by the drawer sub-sheet.
+	 *
+	 * @param \WC_Product $product Product object.
+	 * @return array<string, mixed>
+	 */
+	protected function get_upsell_selector_config( $product ) {
+		if ( ! method_exists( $product, 'get_available_variations' ) || ! method_exists( $product, 'get_variation_attributes' ) ) {
+			return (array) apply_filters( 'starterkit_cart_drawer_selector_config', array(), $product, $this );
+		}
+
+		$available_variations = $product->get_available_variations();
+		$attributes           = $this->get_upsell_selector_attributes( $product );
+
+		if ( empty( $available_variations ) || empty( $attributes ) ) {
+			return (array) apply_filters( 'starterkit_cart_drawer_selector_config', array(), $product, $this );
+		}
+
+		$default_attributes = array();
+
+		if ( method_exists( $product, 'get_default_attributes' ) ) {
+			foreach ( (array) $product->get_default_attributes() as $attribute_name => $value ) {
+				$normalized_name                         = 0 === strpos( (string) $attribute_name, 'attribute_' ) ? (string) $attribute_name : 'attribute_' . $attribute_name;
+				$default_attributes[ $normalized_name ] = (string) $value;
+			}
+		}
+
+		$variations = array();
+
+		foreach ( $available_variations as $variation ) {
+			if ( ! is_array( $variation ) ) {
+				continue;
+			}
+
+			$variation_id = isset( $variation['variation_id'] ) ? (int) $variation['variation_id'] : 0;
+
+			if ( $variation_id <= 0 ) {
+				continue;
+			}
+
+			$variation_attributes = array();
+
+			foreach ( (array) ( $variation['attributes'] ?? array() ) as $attribute_name => $value ) {
+				$variation_attributes[ (string) $attribute_name ] = (string) $value;
+			}
+
+			$variation_image = isset( $variation['image'] ) && is_array( $variation['image'] ) ? $variation['image'] : array();
+
+			$variations[] = array(
+				'variationId'       => $variation_id,
+				'attributes'        => $variation_attributes,
+				'priceHtml'         => (string) ( $variation['price_html'] ?? '' ),
+				'availabilityHtml'  => (string) ( $variation['availability_html'] ?? '' ),
+				'isInStock'         => ! empty( $variation['is_in_stock'] ),
+				'isPurchasable'     => ! empty( $variation['is_purchasable'] ),
+				'variationIsActive' => ! empty( $variation['variation_is_active'] ),
+				'minQty'            => isset( $variation['min_qty'] ) ? max( 1, (int) $variation['min_qty'] ) : 1,
+				'maxQty'            => isset( $variation['max_qty'] ) && '' !== (string) $variation['max_qty'] ? max( 0, (int) $variation['max_qty'] ) : 0,
+				'image'             => array(
+					'src' => isset( $variation_image['src'] ) ? (string) $variation_image['src'] : '',
+					'alt' => isset( $variation_image['alt'] ) ? (string) $variation_image['alt'] : $product->get_name(),
+				),
+			);
+		}
+
+		if ( empty( $variations ) ) {
+			return array();
+		}
+
+		$config = array(
+			'productId'         => (int) $product->get_id(),
+			'name'              => (string) $product->get_name(),
+			'permalink'         => (string) $product->get_permalink(),
+			'priceHtml'         => (string) $product->get_price_html(),
+			'buttonText'        => (string) $product->add_to_cart_text(),
+			'isWootify'         => false,
+			'defaultAttributes' => $default_attributes,
+			'image'             => $this->get_upsell_selector_product_image( $product ),
+			'attributes'        => $attributes,
+			'variations'        => $variations,
+		);
+
+		return (array) apply_filters( 'starterkit_cart_drawer_selector_config', $config, $product, $this );
+	}
+
+	/**
+	 * Build selector attribute metadata.
+	 *
+	 * @param \WC_Product $product Product object.
+	 * @return array<int, array<string, mixed>>
+	 */
+	protected function get_upsell_selector_attributes( $product ) {
+		$variation_attributes = method_exists( $product, 'get_variation_attributes' ) ? (array) $product->get_variation_attributes() : array();
+
+		if ( empty( $variation_attributes ) ) {
+			return array();
+		}
+
+		$attribute_meta = $this->get_upsell_selector_attribute_meta( $product );
+		$attributes     = array();
+
+		foreach ( $variation_attributes as $attribute_name => $values ) {
+			if ( empty( $values ) || ! is_array( $values ) ) {
+				continue;
+			}
+
+			$options = array();
+
+			foreach ( $values as $value ) {
+				$value = (string) $value;
+
+				if ( '' === $value ) {
+					continue;
+				}
+
+				$options[] = array(
+					'value' => $value,
+					'label' => isset( $attribute_meta['optionLabels'][ $attribute_name ][ $value ] )
+						? (string) $attribute_meta['optionLabels'][ $attribute_name ][ $value ]
+						: $this->humanize_upsell_selector_option( $value ),
+				);
+			}
+
+			if ( empty( $options ) ) {
+				continue;
+			}
+
+			$attributes[] = array(
+				'name'    => (string) $attribute_name,
+				'label'   => ! empty( $attribute_meta['labels'][ $attribute_name ] )
+					? (string) $attribute_meta['labels'][ $attribute_name ]
+					: wc_attribute_label( $this->normalize_upsell_selector_attribute_name( $attribute_name ), $product ),
+				'options' => $options,
+			);
+		}
+
+		return $attributes;
+	}
+
+	/**
+	 * Build labels and option labels for selector attributes.
+	 *
+	 * @param \WC_Product $product Product object.
+	 * @return array<string, array<string, mixed>>
+	 */
+	protected function get_upsell_selector_attribute_meta( $product ) {
+		$labels        = array();
+		$option_labels = array();
+
+		$product_attributes = method_exists( $product, 'get_attributes' ) ? (array) $product->get_attributes() : array();
+
+		foreach ( $product_attributes as $taxonomy => $attribute ) {
+			if ( ! $attribute instanceof \WC_Product_Attribute ) {
+				continue;
+			}
+
+			$variation_name = 'attribute_' . $taxonomy;
+			$labels[ $variation_name ] = wc_attribute_label( $taxonomy, $product );
+			$option_labels[ $variation_name ] = array();
+
+			if ( $attribute->is_taxonomy() && taxonomy_exists( $taxonomy ) ) {
+				$terms = wc_get_product_terms( $product->get_id(), $taxonomy, array( 'fields' => 'all' ) );
+
+				foreach ( $terms as $term ) {
+					if ( ! $term instanceof \WP_Term ) {
+						continue;
+					}
+
+					$option_labels[ $variation_name ][ $term->slug ] = $term->name;
+				}
+
+				continue;
+			}
+
+			foreach ( (array) $attribute->get_options() as $option_value ) {
+				$option_value = (string) $option_value;
+
+				if ( '' === $option_value ) {
+					continue;
+				}
+
+				$normalized_value = sanitize_title( wp_strip_all_tags( $option_value ) );
+				$option_labels[ $variation_name ][ $option_value ] = $option_value;
+
+				if ( '' !== $normalized_value && ! isset( $option_labels[ $variation_name ][ $normalized_value ] ) ) {
+					$option_labels[ $variation_name ][ $normalized_value ] = $option_value;
+				}
+			}
+		}
+
+		return array(
+			'labels'       => $labels,
+			'optionLabels' => $option_labels,
+		);
+	}
+
+	/**
+	 * Normalize a selector attribute name by removing the WC prefix.
+	 *
+	 * @param string $attribute_name Attribute name.
+	 * @return string
+	 */
+	protected function normalize_upsell_selector_attribute_name( $attribute_name ) {
+		return 0 === strpos( $attribute_name, 'attribute_' ) ? substr( $attribute_name, 10 ) : $attribute_name;
+	}
+
+	/**
+	 * Humanize a selector option fallback label.
+	 *
+	 * @param string $value Attribute value.
+	 * @return string
+	 */
+	protected function humanize_upsell_selector_option( $value ) {
+		return ucwords( trim( str_replace( array( '-', '_' ), ' ', wp_strip_all_tags( $value ) ) ) );
+	}
+
+	/**
+	 * Build a normalized product image payload for the selector sheet.
+	 *
+	 * @param \WC_Product $product Product object.
+	 * @return array<string, string>
+	 */
+	protected function get_upsell_selector_product_image( $product ) {
+		$image_id = $product->get_image_id();
+		$image    = array(
+			'src' => function_exists( 'wc_placeholder_img_src' ) ? (string) wc_placeholder_img_src( 'woocommerce_thumbnail' ) : '',
+			'alt' => (string) $product->get_name(),
+		);
+
+		if ( $image_id ) {
+			$image['src'] = (string) wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' );
+			$image['alt'] = (string) get_post_meta( $image_id, '_wp_attachment_image_alt', true );
+		}
+
+		if ( '' === $image['alt'] ) {
+			$image['alt'] = (string) $product->get_name();
+		}
+
+		return $image;
 	}
 
 	/**

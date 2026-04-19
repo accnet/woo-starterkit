@@ -91,6 +91,15 @@
     }
   }
 
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   function collectBaseSlides(gallery) {
     var mainSlides = Array.prototype.slice.call(
       gallery.querySelectorAll('.starterkit-product-gallery__main .swiper-slide')
@@ -145,6 +154,53 @@
 
     var stageHeight = Math.round(stage.getBoundingClientRect().height);
     thumbs.style.height = stageHeight > 0 ? stageHeight + 'px' : '';
+  }
+
+  function syncActiveThumbState(gallery, index) {
+    var thumbs = gallery ? gallery.querySelector('.starterkit-product-gallery__thumbs') : null;
+
+    if (!thumbs) {
+      return;
+    }
+
+    var thumbSlides = thumbs.querySelectorAll('.swiper-slide');
+    var activeSlide = null;
+
+    thumbSlides.forEach(function (slide, slideIndex) {
+      var isActive = slideIndex === index;
+      slide.classList.toggle('swiper-slide-thumb-active', isActive);
+
+      if (isActive) {
+        activeSlide = slide;
+      }
+    });
+
+    if (!activeSlide) {
+      return;
+    }
+
+    if (gallery.starterkitThumbsSwiper) {
+      gallery.starterkitThumbsSwiper.slideTo(index);
+      return;
+    }
+
+    activeSlide.scrollIntoView({
+      block: 'nearest',
+      inline: 'nearest',
+      behavior: 'smooth'
+    });
+  }
+
+  function goToGallerySlide(gallery, index) {
+    if (!gallery || !gallery.starterkitMainSwiper) {
+      return;
+    }
+
+    var slideCount = gallery.starterkitMainSwiper.slides ? gallery.starterkitMainSwiper.slides.length : 0;
+    var nextIndex = Math.max(0, Math.min(Number(index) || 0, Math.max(slideCount - 1, 0)));
+
+    gallery.starterkitMainSwiper.slideTo(nextIndex);
+    syncActiveThumbState(gallery, nextIndex);
   }
 
   function mountSlides(gallery, slides) {
@@ -221,17 +277,6 @@
       return wrapper.scrollWidth - thumbs.clientWidth > 2;
     }
 
-    function syncActiveThumb(index) {
-      if (!thumbs) {
-        return;
-      }
-
-      var thumbSlides = thumbs.querySelectorAll('.swiper-slide');
-      thumbSlides.forEach(function (slide, slideIndex) {
-        slide.classList.toggle('swiper-slide-thumb-active', slideIndex === index);
-      });
-    }
-
     function bindThumbClicks() {
       if (!thumbs) {
         return;
@@ -262,12 +307,7 @@
         }
 
         event.preventDefault();
-        gallery.starterkitMainSwiper.slideTo(index);
-        syncActiveThumb(index);
-
-        if (gallery.starterkitThumbsSwiper) {
-          gallery.starterkitThumbsSwiper.slideTo(index);
-        }
+        goToGallerySlide(gallery, index);
       };
 
       thumbs.addEventListener('click', gallery.starterkitThumbClickHandler);
@@ -317,10 +357,10 @@
       thumbs: thumbsSwiper ? { swiper: thumbsSwiper } : undefined,
       on: {
         init: function (swiper) {
-          syncActiveThumb(swiper.activeIndex || 0);
+          syncActiveThumbState(gallery, swiper.activeIndex || 0);
         },
         slideChange: function (swiper) {
-          syncActiveThumb(swiper.activeIndex || 0);
+          syncActiveThumbState(gallery, swiper.activeIndex || 0);
         }
       }
     });
@@ -345,89 +385,143 @@
     initializeSwipers(gallery);
   }
 
-  function prioritizeSlides(slides, featuredSrc) {
-    if (!featuredSrc) {
-      return slides;
-    }
+  function buildDynamicSlide(imageUrl, variantId, isFeatured) {
+    var src = String(imageUrl || '');
+    var safeSrc = escapeHtml(src);
+    var variantIds = variantId ? [Number(variantId) || 0].filter(Boolean) : [];
+    var featuredVariantIds = isFeatured ? variantIds.slice() : [];
+    var variantIdsJson = escapeHtml(JSON.stringify(variantIds));
+    var featuredVariantIdsJson = escapeHtml(JSON.stringify(featuredVariantIds));
 
-    return slides.slice().sort(function (left, right) {
-      if (left.normalizedImageSrc === featuredSrc) {
-        return -1;
+    return {
+      imageId: 0,
+      imageSrc: src,
+      normalizedImageSrc: normalizeUrl(src),
+      variantIds: variantIds,
+      featuredVariantIds: featuredVariantIds,
+      mainHtml:
+        '<div class="swiper-slide" data-image-id="0" data-image-src="' + safeSrc + '" data-variant-ids="' + variantIdsJson + '" data-featured-variant-ids="' + featuredVariantIdsJson + '">' +
+          '<div class="starterkit-product-gallery__image-link">' +
+            '<img class="starterkit-product-gallery__image-image" src="' + safeSrc + '" alt="" loading="lazy" decoding="async" fetchpriority="auto">' +
+          '</div>' +
+        '</div>',
+      thumbHtml:
+        '<div class="swiper-slide" data-image-id="0" data-image-src="' + safeSrc + '" data-variant-ids="' + variantIdsJson + '" data-featured-variant-ids="' + featuredVariantIdsJson + '">' +
+          '<button class="starterkit-product-gallery__thumb-button" type="button" aria-label="">' +
+            '<img class="starterkit-product-gallery__thumb-image" src="' + safeSrc + '" alt="" loading="lazy" decoding="async">' +
+          '</button>' +
+        '</div>'
+    };
+  }
+
+  function buildVariantSlides(gallery, imageUrls, variantId, featuredSrc) {
+    var baseSlides = gallery.starterkitBaseSlides || [];
+    var featuredNormalizedSrc = normalizeUrl(featuredSrc || '');
+    var uniqueUrls = Array.isArray(imageUrls)
+      ? imageUrls.map(function (url) {
+        return String(url || '').trim();
+      }).filter(Boolean).filter(function (url, index, list) {
+        return list.indexOf(url) === index;
+      })
+      : [];
+
+    return uniqueUrls.map(function (url, index) {
+      var normalizedSrc = normalizeUrl(url);
+      var matchedSlide = baseSlides.find(function (slide) {
+        return slide.normalizedImageSrc === normalizedSrc;
+      });
+
+      if (matchedSlide) {
+        return {
+          imageId: matchedSlide.imageId,
+          imageSrc: matchedSlide.imageSrc,
+          normalizedImageSrc: matchedSlide.normalizedImageSrc,
+          variantIds: variantId ? [variantId] : matchedSlide.variantIds,
+          featuredVariantIds: (featuredNormalizedSrc && normalizedSrc === featuredNormalizedSrc && variantId) ? [variantId] : matchedSlide.featuredVariantIds,
+          mainHtml: matchedSlide.mainHtml,
+          thumbHtml: matchedSlide.thumbHtml
+        };
       }
 
-      if (right.normalizedImageSrc === featuredSrc) {
-        return 1;
-      }
-
-      return 0;
+      return buildDynamicSlide(url, variantId, (featuredNormalizedSrc && normalizedSrc === featuredNormalizedSrc) || (!featuredNormalizedSrc && index === 0));
     });
   }
 
-  function normalizeSlideSet(gallery, slides, featuredSrc) {
-    var baseSlides = gallery.starterkitBaseSlides || [];
-    var nextSlides = Array.isArray(slides) && slides.length ? slides : baseSlides;
-
-    if (nextSlides.length <= 1 && baseSlides.length > 1) {
-      nextSlides = baseSlides;
+  function restoreBaseGallery(gallery, index) {
+    if (!gallery || !gallery.starterkitBaseSlides || !gallery.starterkitBaseSlides.length) {
+      return;
     }
 
-    return prioritizeSlides(nextSlides, featuredSrc);
+    if (gallery.dataset.starterkitVariantGalleryActive === 'true') {
+      setSlidesForGallery(gallery, gallery.starterkitBaseSlides);
+      gallery.dataset.starterkitVariantGalleryActive = 'false';
+    }
+
+    goToGallerySlide(gallery, index || 0);
   }
 
-  function getSlidesForVariation(gallery, variation) {
+  function replaceWithVariantGallery(gallery, slides) {
+    if (!gallery || !Array.isArray(slides) || slides.length <= 1) {
+      return false;
+    }
+
+    setSlidesForGallery(gallery, slides);
+    gallery.dataset.starterkitVariantGalleryActive = 'true';
+    goToGallerySlide(gallery, 0);
+
+    return true;
+  }
+
+  function findSlideIndex(gallery, variation) {
     var baseSlides = gallery.starterkitBaseSlides || [];
     var variationId = getVariationId(variation);
     var variationImageId = getVariationImageId(variation);
     var variationImageSrc = getVariationImageSrc(variation);
     var normalizedVariationImageSrc = normalizeUrl(variationImageSrc);
 
-    if (!variationId) {
-      return baseSlides;
+    if (!baseSlides.length) {
+      return 0;
     }
 
-    var featuredSlides = baseSlides.filter(function (slide) {
-      return slide.featuredVariantIds.indexOf(variationId) !== -1;
-    });
+    if (variationId) {
+      var featuredIndex = baseSlides.findIndex(function (slide) {
+        return slide.featuredVariantIds.indexOf(variationId) !== -1;
+      });
 
-    var variantSlides = baseSlides.filter(function (slide) {
-      return slide.variantIds.indexOf(variationId) !== -1;
-    });
+      if (featuredIndex >= 0) {
+        return featuredIndex;
+      }
 
-    if (featuredSlides.length && variantSlides.length) {
-      return featuredSlides.concat(variantSlides.filter(function (slide) {
-        return featuredSlides.indexOf(slide) === -1;
-      }));
-    }
+      var variantIndex = baseSlides.findIndex(function (slide) {
+        return slide.variantIds.indexOf(variationId) !== -1;
+      });
 
-    if (featuredSlides.length > 1) {
-      return featuredSlides;
-    }
-
-    if (variantSlides.length > 1) {
-      return variantSlides;
+      if (variantIndex >= 0) {
+        return variantIndex;
+      }
     }
 
     if (variationImageId) {
-      var imageSlides = baseSlides.filter(function (slide) {
+      var imageIndex = baseSlides.findIndex(function (slide) {
         return slide.imageId === variationImageId;
       });
 
-      if (imageSlides.length > 1) {
-        return imageSlides;
+      if (imageIndex >= 0) {
+        return imageIndex;
       }
     }
 
     if (normalizedVariationImageSrc) {
-      var imageSrcSlides = baseSlides.filter(function (slide) {
+      var imageSrcIndex = baseSlides.findIndex(function (slide) {
         return slide.normalizedImageSrc === normalizedVariationImageSrc;
       });
 
-      if (imageSrcSlides.length > 1) {
-        return imageSrcSlides;
+      if (imageSrcIndex >= 0) {
+        return imageSrcIndex;
       }
     }
 
-    return baseSlides;
+    return 0;
   }
 
   function syncGalleryToVariation(variation) {
@@ -436,8 +530,7 @@
       return;
     }
 
-    var slides = getSlidesForVariation(gallery, variation);
-    setSlidesForGallery(gallery, normalizeSlideSet(gallery, slides, normalizeUrl(getVariationImageSrc(variation))));
+    restoreBaseGallery(gallery, findSlideIndex(gallery, variation));
   }
 
   function syncGalleryToWootifyVariant(detail) {
@@ -447,45 +540,32 @@
     }
 
     if (!detail || typeof detail !== 'object') {
-      setSlidesForGallery(gallery, gallery.starterkitBaseSlides);
+      restoreBaseGallery(gallery, 0);
       return;
     }
 
     var payload = detail.theme_gallery && typeof detail.theme_gallery === 'object' ? detail.theme_gallery : detail;
     var variantId = Number(payload.variant_id || detail.id || detail.variant_id || 0);
-    var featuredSrc = normalizeUrl(
-      payload.featured_image ||
-      detail.selected_image_url ||
-      detail.image_url ||
-      (detail.featured_image && detail.featured_image.src) ||
-      ''
-    );
-    var gallerySrcs = Array.isArray(payload.gallery_images)
-      ? payload.gallery_images.map(normalizeUrl).filter(Boolean)
-      : (Array.isArray(detail.selected_gallery_images)
-        ? detail.selected_gallery_images.map(normalizeUrl).filter(Boolean)
-        : []);
-    var mode = String(payload.mode || '').toLowerCase();
+    var featuredImage = payload.featured_image || detail.selected_image_url || detail.image_url || (detail.featured_image && detail.featured_image.src) || '';
+    var galleryImages = Array.isArray(payload.gallery_images)
+      ? payload.gallery_images.filter(Boolean)
+      : (Array.isArray(detail.selected_gallery_images) ? detail.selected_gallery_images.filter(Boolean) : []);
 
-    var slides = [];
+    if (galleryImages.length > 1) {
+      var variantSlides = buildVariantSlides(gallery, galleryImages, variantId, featuredImage);
 
-    if (mode === 'replace' && gallerySrcs.length > 1) {
-      slides = gallery.starterkitBaseSlides.filter(function (slide) {
-        return gallerySrcs.indexOf(slide.normalizedImageSrc) !== -1;
-      });
+      if (replaceWithVariantGallery(gallery, variantSlides)) {
+        return;
+      }
     }
 
-    if (!slides.length && variantId && mode !== 'prioritize') {
-      slides = gallery.starterkitBaseSlides.filter(function (slide) {
-        return slide.featuredVariantIds.indexOf(variantId) !== -1 || slide.variantIds.indexOf(variantId) !== -1;
-      });
-    }
-
-    if (!slides.length) {
-      slides = gallery.starterkitBaseSlides;
-    }
-
-    setSlidesForGallery(gallery, normalizeSlideSet(gallery, slides, featuredSrc));
+    restoreBaseGallery(gallery, findSlideIndex(gallery, {
+      variation_id: variantId,
+      image_id: Number(payload.featured_image_id || detail.image_id || 0),
+      image: {
+        src: featuredImage
+      }
+    }));
   }
 
   function initProductGallery(gallery) {

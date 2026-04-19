@@ -13,12 +13,7 @@ if ( ! $product instanceof \WC_Product ) {
 	return;
 }
 
-$gallery_items = array();
-
-if ( class_exists( '\WootifyCore\Services\ProductService' ) ) {
-	$wootify_service     = new \WootifyCore\Services\ProductService();
-	$gallery_items        = $wootify_service->get_theme_gallery_items( (int) $product->get_id() );
-}
+$gallery_items = \StarterKit\Helpers\ProductGallery::get_items( $product );
 $zone_renderer = starterkit()->zone_renderer();
 ?>
 <div class="starterkit-product-layout product-layout-1">
