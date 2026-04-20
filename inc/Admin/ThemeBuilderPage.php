@@ -57,28 +57,58 @@ class ThemeBuilderPage {
 			return;
 		}
 
+		wp_enqueue_media();
+
+		$coloris_path = get_template_directory() . '/assets/vendor/coloris/';
+		$coloris_uri  = get_template_directory_uri() . '/assets/vendor/coloris/';
+		$coloris_css  = $coloris_path . 'coloris.min.css';
+		$coloris_js   = $coloris_path . 'coloris.min.js';
+
+		wp_enqueue_style(
+			'starterkit-coloris',
+			$coloris_uri . 'coloris.min.css',
+			array(),
+			file_exists( $coloris_css ) ? filemtime( $coloris_css ) : '0.25.0'
+		);
+
 		wp_enqueue_style(
 			'starterkit-theme-builder',
 			get_template_directory_uri() . '/assets/css/theme-builder.css',
-			array(),
+			array( 'starterkit-coloris' ),
 			filemtime( get_template_directory() . '/assets/css/theme-builder.css' )
+		);
+
+		wp_enqueue_script(
+			'starterkit-coloris',
+			$coloris_uri . 'coloris.min.js',
+			array(),
+			file_exists( $coloris_js ) ? filemtime( $coloris_js ) : '0.25.0',
+			true
 		);
 
 		wp_enqueue_script(
 			'starterkit-theme-builder-app',
 			get_template_directory_uri() . '/assets/js/theme-builder-app.js',
-			array(),
+			array( 'starterkit-coloris' ),
 			filemtime( get_template_directory() . '/assets/js/theme-builder-app.js' ),
 			true
 		);
+
+		$admin_url_parts = wp_parse_url( admin_url() );
+		$admin_origin    = isset( $admin_url_parts['scheme'], $admin_url_parts['host'] ) ? $admin_url_parts['scheme'] . '://' . $admin_url_parts['host'] : '';
+
+		if ( $admin_origin && ! empty( $admin_url_parts['port'] ) ) {
+			$admin_origin .= ':' . (int) $admin_url_parts['port'];
+		}
 
 		wp_localize_script(
 			'starterkit-theme-builder-app',
 			'starterkitThemeBuilder',
 			array(
-				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
-				'nonce'     => wp_create_nonce( 'starterkit_theme_builder' ),
-				'bootstrap' => $this->api_controller->get_bootstrap_payload(),
+				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+				'nonce'       => wp_create_nonce( 'starterkit_theme_builder' ),
+				'adminOrigin' => $admin_origin,
+				'bootstrap'   => $this->api_controller->get_bootstrap_payload(),
 			)
 		);
 	}

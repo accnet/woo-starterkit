@@ -9,6 +9,7 @@ namespace StarterKit\Admin;
 
 use StarterKit\Layouts\LayoutRegistry;
 use StarterKit\Settings\GlobalSettingsManager;
+use StarterKit\ThemeBuilder\BuilderStateRepository;
 
 class SettingsPage {
 	/**
@@ -26,14 +27,23 @@ class SettingsPage {
 	protected $layout_registry;
 
 	/**
+	 * Builder state repository.
+	 *
+	 * @var BuilderStateRepository
+	 */
+	protected $builder_state_repository;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param GlobalSettingsManager $settings Settings manager.
-	 * @param LayoutRegistry        $layout_registry Layout registry.
+	 * @param GlobalSettingsManager  $settings Settings manager.
+	 * @param LayoutRegistry         $layout_registry Layout registry.
+	 * @param BuilderStateRepository $builder_state_repository Builder state repository.
 	 */
-	public function __construct( GlobalSettingsManager $settings, LayoutRegistry $layout_registry ) {
-		$this->settings        = $settings;
-		$this->layout_registry = $layout_registry;
+	public function __construct( GlobalSettingsManager $settings, LayoutRegistry $layout_registry, BuilderStateRepository $builder_state_repository ) {
+		$this->settings                 = $settings;
+		$this->layout_registry          = $layout_registry;
+		$this->builder_state_repository = $builder_state_repository;
 
 		add_action( 'admin_menu', array( $this, 'register_page' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
@@ -424,6 +434,7 @@ class SettingsPage {
 		$payload = wp_json_encode( $this->build_export_payload(), JSON_PRETTY_PRINT );
 		?>
 		<h2><?php esc_html_e( 'Export', 'starterkit' ); ?></h2>
+		<p><?php esc_html_e( 'Export global settings and the current theme builder state.', 'starterkit' ); ?></p>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'starterkit_export_config', 'starterkit_export_nonce' ); ?>
 			<input type="hidden" name="action" value="starterkit_export_config">
@@ -432,6 +443,7 @@ class SettingsPage {
 		<p><textarea readonly rows="14" class="large-text code"><?php echo esc_textarea( (string) $payload ); ?></textarea></p>
 
 		<h2><?php esc_html_e( 'Import', 'starterkit' ); ?></h2>
+		<p><?php esc_html_e( 'Import a configuration exported from this theme builder.', 'starterkit' ); ?></p>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'starterkit_import_config', 'starterkit_import_nonce' ); ?>
 			<input type="hidden" name="action" value="starterkit_import_config">
@@ -447,33 +459,11 @@ class SettingsPage {
 	 * @return array<string, mixed>
 	 */
 	protected function build_export_payload() {
-		$sections = get_posts(
-			array(
-				'post_type'      => 'theme_section',
-				'post_status'    => array( 'publish', 'draft' ),
-				'posts_per_page' => -1,
-			)
-		);
-
 		return array(
-			'version'  => '1.0',
-			'settings' => $this->settings->all(),
-			'sections' => array_map(
-				function( $post ) {
-					$meta = array();
-
-					foreach ( get_post_meta( $post->ID ) as $key => $values ) {
-						$meta[ $key ] = count( $values ) > 1 ? array_map( 'maybe_unserialize', $values ) : maybe_unserialize( $values[0] );
-					}
-
-					return array(
-						'title'  => $post->post_title,
-						'status' => $post->post_status,
-						'meta'   => $meta,
-					);
-				},
-				$sections
-			),
+			'version'               => '2.0',
+			'settings'              => $this->settings->all(),
+			'builder_state'         => $this->builder_state_repository->all(),
+			'builder_state_version' => $this->builder_state_repository->version(),
 		);
 	}
 
@@ -517,28 +507,8 @@ class SettingsPage {
 			update_option( GlobalSettingsManager::OPTION_KEY, $this->settings->sanitize( $data['settings'] ) );
 		}
 
-		if ( isset( $data['sections'] ) && is_array( $data['sections'] ) ) {
-			foreach ( $data['sections'] as $section ) {
-				if ( empty( $section['title'] ) ) {
-					continue;
-				}
-
-				$post_id = wp_insert_post(
-					array(
-						'post_type'   => 'theme_section',
-						'post_status' => isset( $section['status'] ) ? sanitize_key( (string) $section['status'] ) : 'draft',
-						'post_title'  => sanitize_text_field( (string) $section['title'] ),
-					)
-				);
-
-				if ( ! $post_id || is_wp_error( $post_id ) || empty( $section['meta'] ) || ! is_array( $section['meta'] ) ) {
-					continue;
-				}
-
-				foreach ( $section['meta'] as $key => $value ) {
-					update_post_meta( $post_id, sanitize_key( (string) $key ), is_array( $value ) ? wp_json_encode( $value ) : maybe_serialize( $value ) );
-				}
-			}
+		if ( isset( $data['builder_state'] ) && is_array( $data['builder_state'] ) ) {
+			$this->builder_state_repository->save_state( $data['builder_state'] );
 		}
 
 		wp_safe_redirect( admin_url( 'admin.php?page=starterkit-theme-builder&tab=tools&starterkit_notice=import_success' ) );

@@ -5,8 +5,109 @@
   "category": "banner",
   "allowed_zones": ["archive_before_title", "archive_after_title"],
   "settings": {
-    "title": { "type": "text", "label": "Title", "default": "Category Banner" },
-    "content": { "type": "textarea", "label": "Content", "default": "Curated picks for this collection" },
+    "title_source": {
+      "type": "select",
+      "label": "Title Source",
+      "default": "dynamic",
+      "help": "Use the current archive title or provide custom text.",
+      "options": [
+        { "value": "dynamic", "label": "Current Archive Title" },
+        { "value": "custom", "label": "Custom Title" },
+        { "value": "hidden", "label": "Hidden" }
+      ]
+    },
+    "title": {
+      "type": "text",
+      "label": "Custom Title",
+      "default": "",
+      "placeholder": "Seasonal picks, best sellers, or campaign title"
+    },
+    "content_source": {
+      "type": "select",
+      "label": "Content Source",
+      "default": "dynamic",
+      "options": [
+        { "value": "dynamic", "label": "Archive Description" },
+        { "value": "custom", "label": "Custom Content" },
+        { "value": "hidden", "label": "Hidden" }
+      ]
+    },
+    "content": {
+      "type": "textarea",
+      "label": "Custom Content",
+      "default": "",
+      "placeholder": "Short merchandising copy for this archive.",
+      "rows": 4
+    },
+    "show_image": {
+      "type": "toggle",
+      "label": "Show Image",
+      "default": "1",
+      "help": "For product categories, the term thumbnail is used first."
+    },
+    "image_source": {
+      "type": "select",
+      "label": "Image Source",
+      "default": "term",
+      "options": [
+        { "value": "term", "label": "Category Thumbnail" },
+        { "value": "custom", "label": "Custom Image" },
+        { "value": "none", "label": "No Image" }
+      ]
+    },
+    "fallback_image_id": {
+      "type": "image",
+      "label": "Custom / Fallback Image",
+      "default": "",
+      "help": "Used when the archive has no category thumbnail, or when Image Source is Custom Image."
+    },
+    "highlights": {
+      "type": "repeater",
+      "label": "Highlights",
+      "item_label": "Highlight",
+      "default": [
+        { "text": "Curated selection" },
+        { "text": "Fast shipping" }
+      ],
+      "fields": [
+        {
+          "id": "text",
+          "type": "text",
+          "label": "Text",
+          "default": "",
+          "placeholder": "Free returns"
+        }
+      ]
+    },
+    "button_label": {
+      "type": "text",
+      "label": "Button Label",
+      "default": "",
+      "placeholder": "Shop now"
+    },
+    "button_url": {
+      "type": "url",
+      "label": "Button URL",
+      "default": "",
+      "placeholder": "https://example.com/collection"
+    },
+    "max_width": {
+      "type": "range",
+      "label": "Content Width",
+      "default": "960",
+      "min": "640",
+      "max": "1280",
+      "step": "20"
+    },
+    "alignment": {
+      "type": "select",
+      "label": "Alignment",
+      "default": "left",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" }
+      ]
+    },
     "style": {
       "type": "select",
       "label": "Style",

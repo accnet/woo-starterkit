@@ -80,22 +80,37 @@ class ZoneRenderer {
 		$preset_id = isset( $zone['preset_id'] ) ? (string) $zone['preset_id'] : '';
 		$items     = isset( $args['items'] ) && is_array( $args['items'] ) ? array_values( $args['items'] ) : $this->state_repository->get_zone_items( $context, $preset_id, $zone_id );
 		$is_builder_mode = array_key_exists( 'builder_mode', $args ) ? (bool) $args['builder_mode'] : $this->builder_mode->is_builder_mode();
-		$classes   = array( 'slot', 'starterkit-builder-zone', 'starterkit-builder-zone--' . sanitize_html_class( $zone_id ) );
+		$classes   = array( 'slot', 'starterkit-element-zone', 'starterkit-element-zone--' . sanitize_html_class( $zone_id ) );
+
+		if ( empty( $items ) && ! $is_builder_mode ) {
+			return '';
+		}
+
+		if ( $is_builder_mode ) {
+			$classes[] = 'starterkit-builder-zone';
+			$classes[] = 'starterkit-builder-zone--' . sanitize_html_class( $zone_id );
+		}
 
 		if ( empty( $items ) ) {
-			$classes[] = 'starterkit-builder-zone--empty';
+			$classes[] = 'starterkit-element-zone--empty';
+
+			if ( $is_builder_mode ) {
+				$classes[] = 'starterkit-builder-zone--empty';
+			}
 		}
 
 		ob_start();
 		?>
 		<div
 			class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
-			data-builder-zone="<?php echo esc_attr( $zone_id ); ?>"
-			data-builder-zone-label="<?php echo esc_attr( isset( $zone['label'] ) ? (string) $zone['label'] : $zone_id ); ?>"
-			data-builder-zone-context="<?php echo esc_attr( $context ); ?>"
-			data-builder-zone-preset="<?php echo esc_attr( $preset_id ); ?>"
-			data-builder-zone-droppable="<?php echo ! empty( $zone['droppable'] ) ? '1' : '0'; ?>"
-			data-builder-zone-sortable="<?php echo ! empty( $zone['sortable'] ) ? '1' : '0'; ?>"
+			<?php if ( $is_builder_mode ) : ?>
+				data-builder-zone="<?php echo esc_attr( $zone_id ); ?>"
+				data-builder-zone-label="<?php echo esc_attr( isset( $zone['label'] ) ? (string) $zone['label'] : $zone_id ); ?>"
+				data-builder-zone-context="<?php echo esc_attr( $context ); ?>"
+				data-builder-zone-preset="<?php echo esc_attr( $preset_id ); ?>"
+				data-builder-zone-droppable="<?php echo ! empty( $zone['droppable'] ) ? '1' : '0'; ?>"
+				data-builder-zone-sortable="<?php echo ! empty( $zone['sortable'] ) ? '1' : '0'; ?>"
+			<?php endif; ?>
 		>
 			<?php foreach ( $items as $item ) : ?>
 				<?php echo $this->element_renderer->render( $item, $zone_id, $context, $is_builder_mode ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>

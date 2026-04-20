@@ -13,6 +13,8 @@
   var previewUrls = bootstrap.previewUrls || {};
   var activeSchemas = bootstrap.activeSchemas || {};
   var elements = bootstrap.elements || {};
+  var allowedMessageOrigins = getAllowedMessageOrigins();
+  var colorPickerInitialized = false;
 
   var ui = {
     context: contexts[0] ? contexts[0].id : 'master',
@@ -29,6 +31,46 @@
     hasConflict: false,
     error: ''
   };
+
+  function getOriginFromUrl(url) {
+    try {
+      return new URL(url, window.location.href).origin;
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function getAllowedMessageOrigins() {
+    var origins = [window.location.origin, config.adminOrigin || ''];
+
+    Object.keys(previewUrls).forEach(function(context) {
+      origins.push(getOriginFromUrl(previewUrls[context]));
+    });
+
+    return origins.filter(function(origin, index, list) {
+      return origin && list.indexOf(origin) === index;
+    });
+  }
+
+  function getPreviewIframe() {
+    return root.querySelector('.starterkit-theme-builder__iframe');
+  }
+
+  function getPreviewTargetOrigin() {
+    var iframe = getPreviewIframe();
+    var src = iframe && iframe.src ? iframe.src : getIframeUrl();
+    return getOriginFromUrl(src) || window.location.origin;
+  }
+
+  function isPreviewMessage(event) {
+    var iframe = getPreviewIframe();
+
+    if (!iframe || event.source !== iframe.contentWindow) {
+      return false;
+    }
+
+    return allowedMessageOrigins.indexOf(event.origin) !== -1;
+  }
 
   function request(action, payload) {
     var formData = new window.FormData();
@@ -278,6 +320,7 @@
 
       if (response.data.previewUrls) {
         previewUrls = response.data.previewUrls;
+        allowedMessageOrigins = getAllowedMessageOrigins();
       }
 
       if (response.data.activeSchemas) {
@@ -472,7 +515,7 @@
   }
 
   function notifyPreviewSelection() {
-    var iframe = root.querySelector('.starterkit-theme-builder__iframe');
+    var iframe = getPreviewIframe();
     if (!iframe || !iframe.contentWindow) {
       return;
     }
@@ -483,12 +526,12 @@
         zoneId: ui.selectedZone,
         elementId: ui.selectedElementId
       },
-      '*'
+      getPreviewTargetOrigin()
     );
   }
 
   function notifyPreviewDragState() {
-    var iframe = root.querySelector('.starterkit-theme-builder__iframe');
+    var iframe = getPreviewIframe();
     if (!iframe || !iframe.contentWindow) {
       return;
     }
@@ -498,12 +541,12 @@
         type: 'starterkit-builder-drag-state',
         drag: getPreviewDragState()
       },
-      '*'
+      getPreviewTargetOrigin()
     );
   }
 
   function notifyPreviewElementRemoved(zoneId, elementId) {
-    var iframe = root.querySelector('.starterkit-theme-builder__iframe');
+    var iframe = getPreviewIframe();
     if (!iframe || !iframe.contentWindow || !zoneId || !elementId) {
       return;
     }
@@ -514,14 +557,14 @@
         zoneId: zoneId,
         elementId: elementId
       },
-      '*'
+      getPreviewTargetOrigin()
     );
   }
 
   function refreshPreviewZone(zoneId, context) {
     requestZoneMarkup(zoneId, context || ui.context)
       .then(function(payload) {
-        var iframe = root.querySelector('.starterkit-theme-builder__iframe');
+        var iframe = getPreviewIframe();
         if (!iframe || !iframe.contentWindow || !payload || !payload.html) {
           return;
         }
@@ -533,7 +576,7 @@
             context: payload.context || context || ui.context,
             html: payload.html
           },
-          '*'
+          getPreviewTargetOrigin()
         );
       })
       .catch(function(error) {
@@ -606,6 +649,7 @@
     var moved = items.splice(index, 1)[0];
     items.splice(target, 0, moved);
     markDirty();
+    refreshPreviewZone(ui.selectedZone, getSelectedContext());
     render();
   }
 
@@ -628,6 +672,7 @@
     }
 
     markDirty();
+    refreshPreviewZone(ui.selectedZone, getSelectedContext());
     render();
   }
 
@@ -821,8 +866,8 @@
     return target;
   }
 
-  function insertIntoZone(zoneId, item, targetElementId, position) {
-    var items = getZoneItems(zoneId);
+  function insertIntoZone(zoneId, item, targetElementId, position, context) {
+    var items = getZoneItems(zoneId, context || ui.context);
 
     if (!targetElementId) {
       items.push(item);
@@ -842,6 +887,36 @@
     items.splice(insertIndex, 0, item);
   }
 
+  function addLibraryElementToSelectedZone(elementId) {
+    var zoneId = ui.selectedZone;
+    var context = getSelectedContext();
+
+    if (!zoneId || !getZoneSchema(zoneId, context)) {
+      ui.error = 'Select a zone before adding an element.';
+      render();
+      return;
+    }
+
+    if (!canAddElementToZone(elementId, zoneId, false, '', context)) {
+      ui.error = getElementLimitMessage(elementId);
+      render();
+      return;
+    }
+
+    captureUndoState();
+
+    var instance = makeInstance(elementId);
+    insertIntoZone(zoneId, instance, '', 'after', context);
+
+    ui.selectedContext = context;
+    ui.selectedZone = zoneId;
+    ui.selectedElementId = instance.id;
+    ui.error = '';
+    markDirty();
+    refreshPreviewZone(zoneId, context);
+    render();
+  }
+
   function dropOnZone(zoneId, targetElementId, position) {
     if (!ui.drag || !canDropOnZone(zoneId)) {
       clearDragState();
@@ -852,7 +927,7 @@
     if (ui.drag.type === 'library') {
       captureUndoState();
       var instance = makeInstance(ui.drag.elementId);
-      insertIntoZone(zoneId, instance, targetElementId, position);
+      insertIntoZone(zoneId, instance, targetElementId, position, ui.context);
       ui.selectedZone = zoneId;
       ui.selectedElementId = instance.id;
       clearDragState();
@@ -879,7 +954,7 @@
       captureUndoState();
       var moved = located.items.splice(located.index, 1)[0];
       var sourceZoneId = ui.drag.sourceZoneId;
-      insertIntoZone(zoneId, moved, targetElementId, position);
+      insertIntoZone(zoneId, moved, targetElementId, position, ui.context);
       ui.selectedZone = zoneId;
       ui.selectedElementId = moved.id;
       clearDragState();
@@ -960,7 +1035,7 @@
         }
 
         return (
-          '<button type="button" class="starterkit-theme-builder__library-item' + (isLimited ? ' is-disabled' : '') + '" ' + (isLimited ? 'disabled ' : 'draggable="true" data-drag-type="library" ') + 'data-element-id="' +
+          '<button type="button" class="starterkit-theme-builder__library-item' + (isLimited ? ' is-disabled' : '') + '" ' + (isLimited ? 'disabled ' : 'draggable="true" data-drag-type="library" data-action="add-library-element" ') + 'data-element-id="' +
           escapeHtml(elementId) +
           '">' +
           '<span class="starterkit-theme-builder__library-icon" aria-hidden="true">' +
@@ -1038,6 +1113,333 @@
     );
   }
 
+  function buildHelpHtml(control) {
+    return control.help ? '<span class="starterkit-theme-builder__control-help">' + escapeHtml(control.help) + '</span>' : '';
+  }
+
+  function buildCommonInputAttributes(control) {
+    var attrs = '';
+
+    if (control.placeholder) {
+      attrs += ' placeholder="' + escapeHtml(control.placeholder) + '"';
+    }
+
+    ['min', 'max', 'step', 'rows', 'accept'].forEach(function(key) {
+      if (control[key] !== undefined && control[key] !== '') {
+        attrs += ' ' + key + '="' + escapeHtml(control[key]) + '"';
+      }
+    });
+
+    return attrs;
+  }
+
+  function getControlById(definition, controlId) {
+    return (definition.settings_schema || []).find(function(control) {
+      return control.id === controlId;
+    }) || null;
+  }
+
+  function getInputValue(input) {
+    if (input.type === 'checkbox') {
+      return input.checked ? '1' : '0';
+    }
+
+    return input.value;
+  }
+
+  function updateSelectedElementSetting(settingId, value, options) {
+    var element = getSelectedElement();
+    if (!element) {
+      return;
+    }
+
+    options = options || {};
+    element.settings[settingId] = value;
+    ui.error = '';
+    markDirty();
+    refreshPreviewZone(ui.selectedZone, getSelectedContext());
+
+    if (options.render !== false) {
+      render();
+    }
+  }
+
+  function getRepeaterRowDefaults(control) {
+    var row = {};
+
+    (control.fields || []).forEach(function(field) {
+      row[field.id] = field.default !== undefined ? cloneValue(field.default) : '';
+    });
+
+    return row;
+  }
+
+  function updateRepeaterField(settingId, rowIndex, fieldId, value, options) {
+    var element = getSelectedElement();
+    if (!element) {
+      return;
+    }
+
+    options = options || {};
+
+    if (!Array.isArray(element.settings[settingId])) {
+      element.settings[settingId] = [];
+    }
+
+    if (!element.settings[settingId][rowIndex]) {
+      element.settings[settingId][rowIndex] = {};
+    }
+
+    element.settings[settingId][rowIndex][fieldId] = value;
+    ui.error = '';
+    markDirty();
+    refreshPreviewZone(ui.selectedZone, getSelectedContext());
+
+    if (options.render !== false) {
+      render();
+    }
+  }
+
+  function buildColorInputHtml(label, value, dataAttrs, commonAttrs, helpHtml) {
+    return (
+      '<label class="starterkit-theme-builder__control starterkit-theme-builder__control--color">' +
+      '<span>' + escapeHtml(label) + '</span>' +
+      '<input type="text" class="starterkit-theme-builder__color-input" value="' + escapeHtml(value) + '"' + dataAttrs + commonAttrs + ' data-coloris>' +
+      helpHtml +
+      '</label>'
+    );
+  }
+
+  function buildRepeaterFieldHtml(control, row, rowIndex, field) {
+    var value = row && row[field.id] !== undefined ? row[field.id] : (field.default !== undefined ? field.default : '');
+    var commonAttrs = buildCommonInputAttributes(field);
+    var dataAttrs = ' data-setting-id="' + escapeHtml(control.id) + '" data-repeater-index="' + rowIndex + '" data-repeater-field-id="' + escapeHtml(field.id) + '"';
+
+    if (field.type === 'textarea') {
+      return (
+        '<label class="starterkit-theme-builder__control">' +
+        '<span>' + escapeHtml(field.label) + '</span>' +
+        '<textarea' + dataAttrs + commonAttrs + '>' + escapeHtml(value) + '</textarea>' +
+        buildHelpHtml(field) +
+        '</label>'
+      );
+    }
+
+    if (field.type === 'select') {
+      return (
+        '<label class="starterkit-theme-builder__control">' +
+        '<span>' + escapeHtml(field.label) + '</span>' +
+        '<select' + dataAttrs + '>' +
+        (field.options || []).map(function(option) {
+          var selected = option.value === value ? ' selected' : '';
+          return '<option value="' + escapeHtml(option.value) + '"' + selected + '>' + escapeHtml(option.label) + '</option>';
+        }).join('') +
+        '</select>' +
+        buildHelpHtml(field) +
+        '</label>'
+      );
+    }
+
+    if (field.type === 'toggle' || field.type === 'checkbox') {
+      return (
+        '<label class="starterkit-theme-builder__control starterkit-theme-builder__control--toggle">' +
+        '<input type="checkbox"' + dataAttrs + (value === true || value === '1' ? ' checked' : '') + '>' +
+        '<span>' + escapeHtml(field.label) + '</span>' +
+        buildHelpHtml(field) +
+        '</label>'
+      );
+    }
+
+    if (field.type === 'color') {
+      return buildColorInputHtml(field.label, value, dataAttrs, commonAttrs, buildHelpHtml(field));
+    }
+
+    var inputType = field.type === 'url' ? 'url' : (field.type === 'number' || field.type === 'range' ? field.type : 'text');
+
+    return (
+      '<label class="starterkit-theme-builder__control">' +
+      '<span>' + escapeHtml(field.label) + '</span>' +
+      '<input type="' + escapeHtml(inputType) + '" value="' + escapeHtml(value) + '"' + dataAttrs + commonAttrs + '>' +
+      buildHelpHtml(field) +
+      '</label>'
+    );
+  }
+
+  function buildControlHtml(control, value) {
+    var commonAttrs = buildCommonInputAttributes(control);
+
+    if (control.type === 'textarea') {
+      return (
+        '<label class="starterkit-theme-builder__control">' +
+        '<span>' + escapeHtml(control.label) + '</span>' +
+        '<textarea data-setting-id="' + escapeHtml(control.id) + '"' + commonAttrs + '>' + escapeHtml(value) + '</textarea>' +
+        buildHelpHtml(control) +
+        '</label>'
+      );
+    }
+
+    if (control.type === 'select') {
+      return (
+        '<label class="starterkit-theme-builder__control">' +
+        '<span>' + escapeHtml(control.label) + '</span>' +
+        '<select data-setting-id="' + escapeHtml(control.id) + '">' +
+        (control.options || []).map(function(option) {
+          var selected = option.value === value ? ' selected' : '';
+          return '<option value="' + escapeHtml(option.value) + '"' + selected + '>' + escapeHtml(option.label) + '</option>';
+        }).join('') +
+        '</select>' +
+        buildHelpHtml(control) +
+        '</label>'
+      );
+    }
+
+    if (control.type === 'toggle' || control.type === 'checkbox') {
+      return (
+        '<label class="starterkit-theme-builder__control starterkit-theme-builder__control--toggle">' +
+        '<input type="checkbox" data-setting-id="' + escapeHtml(control.id) + '"' + (value === true || value === '1' ? ' checked' : '') + '>' +
+        '<span>' + escapeHtml(control.label) + '</span>' +
+        buildHelpHtml(control) +
+        '</label>'
+      );
+    }
+
+    if (control.type === 'range') {
+      return (
+        '<label class="starterkit-theme-builder__control">' +
+        '<span>' + escapeHtml(control.label) + '</span>' +
+        '<div class="starterkit-theme-builder__range-control">' +
+        '<input type="range" value="' + escapeHtml(value) + '" data-setting-id="' + escapeHtml(control.id) + '"' + commonAttrs + '>' +
+        '<input type="number" value="' + escapeHtml(value) + '" data-setting-id="' + escapeHtml(control.id) + '"' + commonAttrs + '>' +
+        '</div>' +
+        buildHelpHtml(control) +
+        '</label>'
+      );
+    }
+
+    if (control.type === 'color') {
+      return buildColorInputHtml(
+        control.label,
+        value,
+        ' data-setting-id="' + escapeHtml(control.id) + '"',
+        commonAttrs,
+        buildHelpHtml(control)
+      );
+    }
+
+    if (control.type === 'image') {
+      return (
+        '<div class="starterkit-theme-builder__control">' +
+        '<span>' + escapeHtml(control.label) + '</span>' +
+        '<input type="hidden" value="' + escapeHtml(value) + '" data-setting-id="' + escapeHtml(control.id) + '">' +
+        '<div class="starterkit-theme-builder__image-control">' +
+        '<span>' + (value ? 'Attachment #' + escapeHtml(value) : 'No image selected') + '</span>' +
+        '<button type="button" class="button" data-action="choose-image" data-setting-id="' + escapeHtml(control.id) + '">Choose</button>' +
+        '<button type="button" class="button" data-action="clear-image" data-setting-id="' + escapeHtml(control.id) + '"' + (value ? '' : ' disabled') + '>Clear</button>' +
+        '</div>' +
+        buildHelpHtml(control) +
+        '</div>'
+      );
+    }
+
+    if (control.type === 'repeater') {
+      var rows = Array.isArray(value) ? value : [];
+      var rowLabel = control.item_label || 'Item';
+
+      return (
+        '<div class="starterkit-theme-builder__control starterkit-theme-builder__repeater">' +
+        '<span>' + escapeHtml(control.label) + '</span>' +
+        rows.map(function(row, rowIndex) {
+          return (
+            '<div class="starterkit-theme-builder__repeater-row">' +
+            '<div class="starterkit-theme-builder__repeater-row-header">' +
+            '<strong>' + escapeHtml(rowLabel) + ' ' + (rowIndex + 1) + '</strong>' +
+            '<button type="button" class="button" data-action="remove-repeater-row" data-setting-id="' + escapeHtml(control.id) + '" data-repeater-index="' + rowIndex + '">Remove</button>' +
+            '</div>' +
+            (control.fields || []).map(function(field) {
+              return buildRepeaterFieldHtml(control, row, rowIndex, field);
+            }).join('') +
+            '</div>'
+          );
+        }).join('') +
+        '<button type="button" class="button" data-action="add-repeater-row" data-setting-id="' + escapeHtml(control.id) + '">Add ' + escapeHtml(rowLabel) + '</button>' +
+        buildHelpHtml(control) +
+        '</div>'
+      );
+    }
+
+    var inputType = control.type === 'url' ? 'url' : (control.type === 'number' || control.type === 'datetime-local' ? control.type : 'text');
+
+    return (
+      '<label class="starterkit-theme-builder__control">' +
+      '<span>' + escapeHtml(control.label) + '</span>' +
+      '<input type="' + escapeHtml(inputType) + '" value="' + escapeHtml(value) + '" data-setting-id="' + escapeHtml(control.id) + '"' + commonAttrs + '>' +
+      buildHelpHtml(control) +
+      '</label>'
+    );
+  }
+
+  function initColorPicker() {
+    if (!window.Coloris) {
+      return;
+    }
+
+    if (colorPickerInitialized) {
+      if (typeof window.Coloris.wrap === 'function') {
+        window.Coloris.wrap('.starterkit-theme-builder__color-input');
+      }
+
+      return;
+    }
+
+    window.Coloris({
+      el: '.starterkit-theme-builder__color-input',
+      theme: 'polaroid',
+      themeMode: 'light',
+      format: 'hex',
+      alpha: false,
+      clearButton: true,
+      swatches: [
+        '#111827',
+        '#334155',
+        '#f59e0b',
+        '#2563eb',
+        '#16a34a',
+        '#dc2626',
+        '#ffffff',
+        '#000000'
+      ]
+    });
+
+    colorPickerInitialized = true;
+  }
+
+  function chooseImage(settingId) {
+    if (!window.wp || !window.wp.media) {
+      ui.error = 'Media library is unavailable on this screen.';
+      render();
+      return;
+    }
+
+    var frame = window.wp.media({
+      title: 'Choose Image',
+      button: {
+        text: 'Use Image'
+      },
+      multiple: false
+    });
+
+    frame.on('select', function() {
+      var selected = frame.state().get('selection').first();
+      var attachment = selected ? selected.toJSON() : null;
+
+      if (attachment && attachment.id) {
+        updateSelectedElementSetting(settingId, String(attachment.id));
+      }
+    });
+
+    frame.open();
+  }
+
   function buildInspectorHtml() {
     var zone = getZoneSchema(ui.selectedZone, getSelectedContext());
     var element = getSelectedElement();
@@ -1051,43 +1453,28 @@
     }
 
     var definition = elements[element.type];
+    var actionsHtml =
+      '<div class="starterkit-theme-builder__inspector-actions">' +
+      '<button type="button" class="button" data-action="move-up">Move Up</button>' +
+      '<button type="button" class="button" data-action="move-down">Move Down</button>' +
+      '<button type="button" class="button" data-action="duplicate">Duplicate</button>' +
+      '<button type="button" class="button" data-action="toggle">' + (element.enabled ? 'Disable' : 'Enable') + '</button>' +
+      '<button type="button" class="button starterkit-theme-builder__danger-button" data-action="delete">Delete</button>' +
+      '</div>';
     var controlsHtml = (definition.settings_schema || []).map(function(control) {
-      var value = element.settings[control.id] || '';
-      if (control.type === 'textarea') {
-        return (
-          '<label class="starterkit-theme-builder__control">' +
-          '<span>' + escapeHtml(control.label) + '</span>' +
-          '<textarea data-setting-id="' + escapeHtml(control.id) + '">' + escapeHtml(value) + '</textarea>' +
-          '</label>'
-        );
+      var value = element.settings[control.id];
+      if (value === undefined) {
+        value = control.default !== undefined ? cloneValue(control.default) : '';
       }
 
-      if (control.type === 'select') {
-        return (
-          '<label class="starterkit-theme-builder__control">' +
-          '<span>' + escapeHtml(control.label) + '</span>' +
-          '<select data-setting-id="' + escapeHtml(control.id) + '">' +
-          (control.options || []).map(function(option) {
-            var selected = option.value === value ? ' selected' : '';
-            return '<option value="' + escapeHtml(option.value) + '"' + selected + '>' + escapeHtml(option.label) + '</option>';
-          }).join('') +
-          '</select>' +
-          '</label>'
-        );
-      }
-
-      return (
-        '<label class="starterkit-theme-builder__control">' +
-        '<span>' + escapeHtml(control.label) + '</span>' +
-        '<input type="' + escapeHtml(control.type || 'text') + '" value="' + escapeHtml(value) + '" data-setting-id="' + escapeHtml(control.id) + '">' +
-        '</label>'
-      );
+      return buildControlHtml(control, value);
     }).join('');
 
     return (
       '<div class="starterkit-theme-builder__panel-section">' +
       '<h3>' + escapeHtml(definition.label) + '</h3>' +
-      '<p class="starterkit-theme-builder__meta">' + escapeHtml(zone.label) + '</p>' +
+      '<p class="starterkit-theme-builder__meta">' + escapeHtml(zone.label) + ' • ' + (element.enabled ? 'Enabled' : 'Disabled') + '</p>' +
+      actionsHtml +
       controlsHtml +
       '</div>'
     );
@@ -1102,8 +1489,12 @@
     root.querySelector('.js-builder-sidebar').innerHTML =
       '<div class="starterkit-theme-builder__sidebar">' +
       '<div class="starterkit-theme-builder__panel-section">' +
+      '<h3>Zones</h3>' +
+      '<div class="starterkit-theme-builder__zone-list">' + buildZoneListHtml() + '</div>' +
+      '</div>' +
+      '<div class="starterkit-theme-builder__panel-section">' +
       '<h3>Element Library</h3>' +
-      '<p class="starterkit-theme-builder__meta">Drag elements into highlighted preview zones. Click does not add elements.</p>' +
+      '<p class="starterkit-theme-builder__meta">Select a zone, then click or drag an element into the preview.</p>' +
       '<label class="starterkit-theme-builder__control">' +
       '<span>Search Elements</span>' +
       '<input type="search" value="' + escapeHtml(ui.search) + '" data-action="search-elements" placeholder="Search by name or id">' +
@@ -1135,7 +1526,30 @@
 
     notifyPreviewSelection();
     notifyPreviewDragState();
+    initColorPicker();
   }
+
+  root.addEventListener('input', function(event) {
+    if (!event.target.matches('.starterkit-theme-builder__color-input[data-setting-id]')) {
+      return;
+    }
+
+    var settingId = event.target.getAttribute('data-setting-id');
+    var repeaterFieldId = event.target.getAttribute('data-repeater-field-id');
+
+    if (repeaterFieldId) {
+      updateRepeaterField(
+        settingId,
+        Number(event.target.getAttribute('data-repeater-index') || 0),
+        repeaterFieldId,
+        event.target.value,
+        { render: false }
+      );
+      return;
+    }
+
+    updateSelectedElementSetting(settingId, event.target.value, { render: false });
+  });
 
   root.addEventListener('change', function(event) {
     if (event.target.matches('[data-action="change-context"]')) {
@@ -1155,15 +1569,24 @@
     }
 
     if (event.target.matches('[data-setting-id]')) {
-      var element = getSelectedElement();
-      if (!element) {
+      var settingId = event.target.getAttribute('data-setting-id');
+      var repeaterFieldId = event.target.getAttribute('data-repeater-field-id');
+
+      if (repeaterFieldId) {
+        updateRepeaterField(
+          settingId,
+          Number(event.target.getAttribute('data-repeater-index') || 0),
+          repeaterFieldId,
+          getInputValue(event.target)
+        );
         return;
       }
 
-      element.settings[event.target.getAttribute('data-setting-id')] = event.target.value;
-      markDirty();
-      refreshPreviewZone(ui.selectedZone, getSelectedContext());
-      render();
+      if (event.target.type === 'hidden') {
+        return;
+      }
+
+      updateSelectedElementSetting(settingId, getInputValue(event.target));
     }
   });
 
@@ -1199,6 +1622,60 @@
 
     if (action === 'select-element') {
       selectElement(button.getAttribute('data-zone-id'), button.getAttribute('data-element-instance-id'));
+      return;
+    }
+
+    if (action === 'add-library-element') {
+      addLibraryElementToSelectedZone(button.getAttribute('data-element-id') || '');
+      return;
+    }
+
+    if (action === 'choose-image') {
+      chooseImage(button.getAttribute('data-setting-id') || '');
+      return;
+    }
+
+    if (action === 'clear-image') {
+      updateSelectedElementSetting(button.getAttribute('data-setting-id') || '', '');
+      return;
+    }
+
+    if (action === 'add-repeater-row') {
+      var addElement = getSelectedElement();
+      var addDefinition = addElement ? elements[addElement.type] : null;
+      var addSettingId = button.getAttribute('data-setting-id') || '';
+      var addControl = addDefinition ? getControlById(addDefinition, addSettingId) : null;
+
+      if (!addElement || !addControl) {
+        return;
+      }
+
+      if (!Array.isArray(addElement.settings[addSettingId])) {
+        addElement.settings[addSettingId] = [];
+      }
+
+      captureUndoState();
+      addElement.settings[addSettingId].push(getRepeaterRowDefaults(addControl));
+      markDirty();
+      refreshPreviewZone(ui.selectedZone, getSelectedContext());
+      render();
+      return;
+    }
+
+    if (action === 'remove-repeater-row') {
+      var removeElement = getSelectedElement();
+      var removeSettingId = button.getAttribute('data-setting-id') || '';
+      var removeIndex = Number(button.getAttribute('data-repeater-index') || 0);
+
+      if (!removeElement || !Array.isArray(removeElement.settings[removeSettingId])) {
+        return;
+      }
+
+      captureUndoState();
+      removeElement.settings[removeSettingId].splice(removeIndex, 1);
+      markDirty();
+      refreshPreviewZone(ui.selectedZone, getSelectedContext());
+      render();
       return;
     }
 
@@ -1379,7 +1856,7 @@
   });
 
   window.addEventListener('message', function(event) {
-    if (!event.data) {
+    if (!event.data || !isPreviewMessage(event)) {
       return;
     }
 

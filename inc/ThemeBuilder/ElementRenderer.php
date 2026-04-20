@@ -60,13 +60,23 @@ class ElementRenderer {
 		}
 
 		$is_builder_mode = is_bool( $is_builder_mode ) ? $is_builder_mode : $this->builder_mode->is_builder_mode();
+		$classes         = array(
+			'starterkit-element-wrapper',
+			'starterkit-element-wrapper--' . sanitize_html_class( (string) $instance['type'] ),
+		);
+
+		if ( $is_builder_mode ) {
+			$classes[] = 'starterkit-builder-element';
+		}
 
 		ob_start();
 		?>
 		<div
-			class="starterkit-builder-element"
-			data-builder-element-id="<?php echo esc_attr( (string) $instance['id'] ); ?>"
-			data-builder-element-type="<?php echo esc_attr( (string) $instance['type'] ); ?>"
+			class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
+			<?php if ( $is_builder_mode ) : ?>
+				data-builder-element-id="<?php echo esc_attr( (string) $instance['id'] ); ?>"
+				data-builder-element-type="<?php echo esc_attr( (string) $instance['type'] ); ?>"
+			<?php endif; ?>
 		>
 			<?php if ( $is_builder_mode ) : ?>
 				<div class="starterkit-builder-element__toolbar" aria-hidden="false">

@@ -30,7 +30,17 @@ class BuilderMode {
 	 * @return bool
 	 */
 	public function is_builder_mode() {
-		return isset( $_GET['starterkit_builder'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['starterkit_builder'] ) );
+		if ( ! isset( $_GET['starterkit_builder'] ) || '1' !== sanitize_text_field( wp_unslash( $_GET['starterkit_builder'] ) ) ) {
+			return false;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return false;
+		}
+
+		$token = isset( $_GET['starterkit_builder_token'] ) ? sanitize_text_field( wp_unslash( $_GET['starterkit_builder_token'] ) ) : '';
+
+		return '' !== $token && false !== wp_verify_nonce( $token, 'starterkit_theme_builder_preview' );
 	}
 
 	/**

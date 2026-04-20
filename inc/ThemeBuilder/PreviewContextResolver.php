@@ -62,6 +62,7 @@ class PreviewContextResolver {
 				'starterkit_builder'         => '1',
 				'starterkit_builder_context' => $context,
 				'starterkit_builder_device'  => $this->builder_mode->get_device_mode(),
+				'starterkit_builder_token'   => wp_create_nonce( 'starterkit_theme_builder_preview' ),
 			),
 			$base_url
 		);

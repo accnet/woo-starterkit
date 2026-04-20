@@ -243,7 +243,7 @@ class App {
 		return $this->service(
 			'settings_page',
 			function() {
-				return new SettingsPage( $this->settings_manager(), $this->layout_registry() );
+				return new SettingsPage( $this->settings_manager(), $this->layout_registry(), $this->builder_state_repository() );
 			}
 		);
 	}

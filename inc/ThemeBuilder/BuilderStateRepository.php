@@ -126,7 +126,7 @@ class BuilderStateRepository {
 				$zone_items = array();
 
 				foreach ( $raw_items as $item ) {
-					$normalized_item = $this->normalize_item( $item, $context, $zone_id );
+					$normalized_item = $this->normalize_item( $item, $context, $zone_id, $zone );
 
 					if ( $normalized_item ) {
 						$type          = isset( $normalized_item['type'] ) ? (string) $normalized_item['type'] : '';
@@ -160,12 +160,13 @@ class BuilderStateRepository {
 	/**
 	 * Normalize a single element instance.
 	 *
-	 * @param mixed  $item Raw item.
-	 * @param string $context Builder context.
-	 * @param string $zone_id Zone id.
+	 * @param mixed                $item Raw item.
+	 * @param string               $context Builder context.
+	 * @param string               $zone_id Zone id.
+	 * @param array<string, mixed> $zone Zone schema.
 	 * @return array<string, mixed>|null
 	 */
-	protected function normalize_item( $item, $context, $zone_id ) {
+	protected function normalize_item( $item, $context, $zone_id, array $zone = array() ) {
 		if ( ! is_array( $item ) ) {
 			return null;
 		}
@@ -174,6 +175,12 @@ class BuilderStateRepository {
 		$definition = $this->element_registry->get( $type );
 
 		if ( ! $definition || ! in_array( $context, (array) $definition['contexts'], true ) || ! $this->element_registry->supports_zone( $type, $zone_id ) ) {
+			return null;
+		}
+
+		$allowed_elements = isset( $zone['allowed_elements'] ) ? array_map( 'strval', (array) $zone['allowed_elements'] ) : array();
+
+		if ( ! empty( $allowed_elements ) && ! in_array( $type, $allowed_elements, true ) ) {
 			return null;
 		}
 
@@ -212,6 +219,27 @@ class BuilderStateRepository {
 				case 'textarea':
 					$normalized[ $control_id ] = sanitize_textarea_field( (string) $value );
 					break;
+				case 'toggle':
+				case 'checkbox':
+					$normalized[ $control_id ] = ! empty( $value ) && 'false' !== (string) $value ? '1' : '0';
+					break;
+				case 'range':
+				case 'number':
+					$normalized[ $control_id ] = $this->normalize_number_setting( $value, $control, isset( $normalized[ $control_id ] ) ? $normalized[ $control_id ] : '' );
+					break;
+				case 'color':
+					$color = sanitize_hex_color( (string) $value );
+					$normalized[ $control_id ] = $color ? $color : ( isset( $normalized[ $control_id ] ) ? sanitize_hex_color( (string) $normalized[ $control_id ] ) : '' );
+					break;
+				case 'image':
+					$normalized[ $control_id ] = (string) absint( $value );
+					break;
+				case 'url':
+					$normalized[ $control_id ] = esc_url_raw( (string) $value );
+					break;
+				case 'repeater':
+					$normalized[ $control_id ] = $this->normalize_repeater_setting( $value, $control );
+					break;
 				case 'select':
 					$allowed = array();
 
@@ -234,6 +262,108 @@ class BuilderStateRepository {
 		}
 
 		return $normalized;
+	}
+
+	/**
+	 * Normalize a numeric setting against optional min/max bounds.
+	 *
+	 * @param mixed                $value Raw value.
+	 * @param array<string, mixed> $control Control schema.
+	 * @param mixed                $fallback Fallback value.
+	 * @return string
+	 */
+	protected function normalize_number_setting( $value, array $control, $fallback = '' ) {
+		if ( '' === (string) $value || ! is_numeric( $value ) ) {
+			$value = is_numeric( $fallback ) ? $fallback : 0;
+		}
+
+		$number = (float) $value;
+
+		if ( isset( $control['min'] ) && is_numeric( $control['min'] ) ) {
+			$number = max( (float) $control['min'], $number );
+		}
+
+		if ( isset( $control['max'] ) && is_numeric( $control['max'] ) ) {
+			$number = min( (float) $control['max'], $number );
+		}
+
+		return floor( $number ) === $number ? (string) (int) $number : (string) $number;
+	}
+
+	/**
+	 * Normalize a repeater setting using the nested field schema.
+	 *
+	 * @param mixed                $value Raw value.
+	 * @param array<string, mixed> $control Control schema.
+	 * @return array<int, array<string, mixed>>
+	 */
+	protected function normalize_repeater_setting( $value, array $control ) {
+		$rows   = is_array( $value ) ? array_values( $value ) : array();
+		$fields = isset( $control['fields'] ) && is_array( $control['fields'] ) ? $control['fields'] : array();
+		$output = array();
+
+		foreach ( $rows as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+
+			$normalized_row = array();
+
+			foreach ( $fields as $field ) {
+				$field_id = isset( $field['id'] ) ? (string) $field['id'] : '';
+
+				if ( '' === $field_id ) {
+					continue;
+				}
+
+				$field_value = isset( $row[ $field_id ] ) ? $row[ $field_id ] : ( isset( $field['default'] ) ? $field['default'] : '' );
+				$field_type  = isset( $field['type'] ) ? (string) $field['type'] : 'text';
+
+				switch ( $field_type ) {
+					case 'textarea':
+						$normalized_row[ $field_id ] = sanitize_textarea_field( (string) $field_value );
+						break;
+					case 'toggle':
+					case 'checkbox':
+						$normalized_row[ $field_id ] = ! empty( $field_value ) && 'false' !== (string) $field_value ? '1' : '0';
+						break;
+					case 'range':
+					case 'number':
+						$normalized_row[ $field_id ] = $this->normalize_number_setting( $field_value, $field, isset( $field['default'] ) ? $field['default'] : '' );
+						break;
+					case 'color':
+						$normalized_row[ $field_id ] = sanitize_hex_color( (string) $field_value );
+						break;
+					case 'image':
+						$normalized_row[ $field_id ] = (string) absint( $field_value );
+						break;
+					case 'url':
+						$normalized_row[ $field_id ] = esc_url_raw( (string) $field_value );
+						break;
+					case 'select':
+						$allowed = array();
+
+						foreach ( (array) $field['options'] as $option ) {
+							if ( isset( $option['value'] ) ) {
+								$allowed[] = (string) $option['value'];
+							}
+						}
+
+						$field_value = sanitize_text_field( (string) $field_value );
+						$normalized_row[ $field_id ] = in_array( $field_value, $allowed, true ) ? $field_value : ( isset( $field['default'] ) ? sanitize_text_field( (string) $field['default'] ) : '' );
+						break;
+					default:
+						$normalized_row[ $field_id ] = sanitize_text_field( (string) $field_value );
+						break;
+				}
+			}
+
+			if ( ! empty( array_filter( $normalized_row ) ) ) {
+				$output[] = $normalized_row;
+			}
+		}
+
+		return $output;
 	}
 
 	/**
