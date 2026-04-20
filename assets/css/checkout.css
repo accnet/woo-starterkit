@@ -390,7 +390,7 @@
 .starterkit-checkout-details__fields .form-row {
   position: relative;
   grid-column: 1 / -1;
-  margin: 0;
+  margin: 0 0 5px;
 }
 
 .starterkit-checkout-details__fields .form-row:last-child {

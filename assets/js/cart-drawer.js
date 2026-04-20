@@ -8,6 +8,7 @@
     activeAddButton: null,
     activeUpsellConfig: null,
     activeUpsellTrigger: null,
+    sheetPreviousFocus: null,
     toastTimer: null,
     productSubmitInFlight: false,
     previousCartItemKeys: [],
@@ -44,8 +45,12 @@
     if (!state.sheet) {
       state.panel.insertAdjacentHTML(
         'beforeend',
-        '<div class="starterkit-cart-drawer__sheet" aria-hidden="true">' +
-          '<button type="button" class="starterkit-cart-drawer__sheet-overlay" data-cart-drawer-sheet-close aria-label="Close product options"></button>' +
+        '<div class="starterkit-cart-drawer__sheet" role="dialog" aria-modal="true" aria-label="' +
+          escapeHtml(getI18n('chooseOptions', 'Choose options')) +
+          '" aria-hidden="true">' +
+          '<button type="button" class="starterkit-cart-drawer__sheet-overlay" data-cart-drawer-sheet-close aria-label="' +
+          escapeHtml(getI18n('closeOptions', 'Close product options')) +
+          '"></button>' +
           '<div class="starterkit-cart-drawer__sheet-panel">' +
             '<div class="starterkit-cart-drawer__sheet-content"></div>' +
           '</div>' +
@@ -120,20 +125,29 @@
     }
   }
 
-  function closeUpsellSheet(clearContent) {
+  function closeUpsellSheet(clearContent, restoreFocus) {
     syncRefs();
 
     if (!state.sheet) {
       return;
     }
 
+    var focusTarget = state.activeUpsellTrigger || state.sheetPreviousFocus;
+
     state.sheet.classList.remove('is-open');
     state.sheet.setAttribute('aria-hidden', 'true');
     state.activeUpsellConfig = null;
     state.activeUpsellTrigger = null;
+    state.sheetPreviousFocus = null;
 
     if (clearContent !== false && state.sheetContent) {
       state.sheetContent.innerHTML = '';
+    }
+
+    if (restoreFocus !== false && focusTarget && document.contains(focusTarget) && typeof focusTarget.focus === 'function') {
+      window.setTimeout(function () {
+        focusTarget.focus();
+      }, 30);
     }
   }
 
@@ -144,7 +158,7 @@
       return;
     }
 
-    closeUpsellSheet();
+    closeUpsellSheet(true, false);
     state.drawer.classList.remove('is-open');
     state.drawer.setAttribute('aria-hidden', 'true');
     document.documentElement.classList.remove('has-cart-drawer');
@@ -666,21 +680,26 @@
     var attributeMarkup = (config.attributes || [])
       .map(function (attribute, index) {
         var fieldId = 'starterkit-cart-drawer-option-' + String(config.productId || 'product') + '-' + String(index);
+        var attributeLabel = String(attribute.label || '');
         var defaultValue =
           config.defaultAttributes && Object.prototype.hasOwnProperty.call(config.defaultAttributes, attribute.name)
             ? String(config.defaultAttributes[attribute.name] || '')
             : '';
         var optionsMarkup = (attribute.options || [])
           .map(function (option) {
-            var selected = defaultValue && defaultValue === String(option.value || '') ? ' selected' : '';
+            var optionValue = Object.prototype.hasOwnProperty.call(option, 'value') ? String(option.value) : '';
+            var optionLabel = Object.prototype.hasOwnProperty.call(option, 'label') ? String(option.label) : optionValue;
+            var selected = defaultValue && defaultValue === optionValue ? ' selected' : '';
 
             return (
               '<option value="' +
-              escapeHtml(option.value || '') +
+              escapeHtml(optionValue) +
+              '" data-option-label="' +
+              escapeHtml(optionLabel) +
               '"' +
               selected +
               '>' +
-              escapeHtml(option.label || option.value || '') +
+              escapeHtml(optionLabel) +
               '</option>'
             );
           })
@@ -691,16 +710,18 @@
           '<label class="starterkit-cart-drawer__selector-label" for="' +
           escapeHtml(fieldId) +
           '">' +
-          escapeHtml(attribute.label || '') +
+          escapeHtml(attributeLabel) +
           '</label>' +
           '<div class="starterkit-cart-drawer__selector-control">' +
           '<select id="' +
           escapeHtml(fieldId) +
           '" class="starterkit-cart-drawer__selector-select" data-attribute-name="' +
           escapeHtml(attribute.name || '') +
+          '" data-attribute-label="' +
+          escapeHtml(attributeLabel) +
           '">' +
           '<option value="">' +
-          escapeHtml('Select ' + String(attribute.label || 'option')) +
+          escapeHtml(getI18n('selectOption', 'Select') + ' ' + (attributeLabel || 'option')) +
           '</option>' +
           optionsMarkup +
           '</select>' +
@@ -713,8 +734,12 @@
     return (
       '<div class="starterkit-cart-drawer__sheet-inner">' +
       '<div class="starterkit-cart-drawer__sheet-header">' +
-      '<button type="button" class="starterkit-cart-drawer__sheet-back" data-cart-drawer-sheet-close>' +
+      '<button type="button" class="starterkit-cart-drawer__sheet-back" data-cart-drawer-sheet-close aria-label="' +
       escapeHtml(getI18n('back', 'Back')) +
+      '">' +
+      '<svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">' +
+      '<path d="M12.5 4.5 7 10l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>' +
+      '</svg>' +
       '</button>' +
       '<div class="starterkit-cart-drawer__sheet-heading">' +
       '<h3>' +
@@ -741,10 +766,12 @@
       '</div>' +
       '<form class="starterkit-cart-drawer__selector-form" novalidate>' +
       attributeMarkup +
-      '<div class="starterkit-cart-drawer__selector-message" data-sheet-message></div>' +
+      '<div class="starterkit-cart-drawer__sheet-actions">' +
+      '<div class="starterkit-cart-drawer__selector-message" data-sheet-message aria-live="polite"></div>' +
       '<button type="submit" class="button button-primary starterkit-cart-drawer__sheet-submit" disabled>' +
       escapeHtml(getI18n('confirmAdd', 'Add to cart')) +
       '</button>' +
+      '</div>' +
       '</form>' +
       '</div>' +
       '</div>'
@@ -914,6 +941,7 @@
 
     var changed = true;
     var guard = 0;
+    var unavailableLabel = getI18n('unavailableOption', 'Unavailable');
 
     while (changed && guard < (config.attributes || []).length + 1) {
       changed = false;
@@ -934,8 +962,14 @@
             return;
           }
 
-          option.disabled = !isUpsellOptionAvailable(config, currentSelection, attribute.name, option.value);
+          var baseLabel = option.getAttribute('data-option-label') || option.textContent || '';
+          var disabled = !isUpsellOptionAvailable(config, currentSelection, attribute.name, option.value);
+
+          option.disabled = disabled;
+          option.textContent = disabled ? baseLabel + ' - ' + unavailableLabel : baseLabel;
         });
+
+        select.classList.toggle('has-value', !!select.value);
 
         var selectedOption = select.options[select.selectedIndex];
 
@@ -949,6 +983,48 @@
     var finalSelection = getUpsellFormSelections(form);
     var exactVariation = findExactVariation(config, finalSelection);
     updateUpsellSheetSummary(form, config, exactVariation);
+  }
+
+  function getFocusableSheetElements() {
+    var root = state.sheetContent || state.sheet;
+
+    if (!root) {
+      return [];
+    }
+
+    return Array.prototype.filter.call(
+      root.querySelectorAll('a[href], button:not([disabled]), select:not([disabled]), textarea:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+      function (node) {
+        return !!(node.offsetWidth || node.offsetHeight || node.getClientRects().length);
+      }
+    );
+  }
+
+  function trapUpsellSheetFocus(event) {
+    if (!state.sheet || !state.sheet.classList.contains('is-open') || event.key !== 'Tab') {
+      return;
+    }
+
+    var focusable = getFocusableSheetElements();
+
+    if (!focusable.length) {
+      event.preventDefault();
+      return;
+    }
+
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+      return;
+    }
+
+    if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   function openUpsellSheet(button) {
@@ -970,6 +1046,7 @@
 
     state.activeUpsellConfig = config;
     state.activeUpsellTrigger = button;
+    state.sheetPreviousFocus = document.activeElement;
     state.sheetContent.innerHTML = buildUpsellSheetMarkup(config);
     state.sheet.classList.add('is-open');
     state.sheet.setAttribute('aria-hidden', 'false');
@@ -1149,6 +1226,12 @@
     });
 
     document.addEventListener('keydown', function (event) {
+      trapUpsellSheetFocus(event);
+
+      if (event.defaultPrevented) {
+        return;
+      }
+
       if (event.key !== 'Escape') {
         return;
       }

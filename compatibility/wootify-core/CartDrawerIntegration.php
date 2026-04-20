@@ -21,11 +21,84 @@ class CartDrawerIntegration {
 	 * Constructor.
 	 */
 	public function __construct() {
+		add_filter( 'woocommerce_add_cart_item_data', array( $this, 'normalize_unique_key' ), 99, 3 );
+		add_filter( 'woocommerce_cart_item_thumbnail', array( $this, 'filter_cart_item_thumbnail' ), 10, 3 );
 		add_filter( 'starterkit_cart_drawer_product_requires_options', array( $this, 'product_requires_options' ), 10, 2 );
 		add_filter( 'starterkit_cart_drawer_product_can_open_selector', array( $this, 'product_can_open_selector' ), 10, 2 );
 		add_filter( 'starterkit_cart_drawer_selector_config', array( $this, 'filter_selector_config' ), 10, 3 );
 		add_filter( 'starterkit_cart_drawer_upsell_price_html', array( $this, 'filter_upsell_price_html' ), 10, 2 );
-		add_filter( 'starterkit_cart_drawer_upsell_selector_button_text', array( $this, 'filter_selector_button_text' ), 10, 3 );
+	}
+
+	/**
+	 * Normalize legacy Wootify cart item keys without overriding current plugin keys.
+	 *
+	 * @param array<string, mixed> $cart_item_data Cart item data.
+	 * @param int                  $product_id     Product ID.
+	 * @param int                  $variation_id   Variation ID.
+	 * @return array<string, mixed>
+	 */
+	public function normalize_unique_key( $cart_item_data, $product_id, $variation_id ) {
+		unset( $product_id, $variation_id );
+
+		if ( empty( $cart_item_data['wootify_variant_id'] ) || empty( $cart_item_data['unique_key'] ) ) {
+			return $cart_item_data;
+		}
+
+		if ( is_string( $cart_item_data['unique_key'] ) && 0 === strpos( $cart_item_data['unique_key'], 'wootify_' ) ) {
+			return $cart_item_data;
+		}
+
+		$signature = array(
+			'variant_id'          => (int) $cart_item_data['wootify_variant_id'],
+			'customizer_values'   => $this->normalize_signature_value( $cart_item_data['wootify_customizer_values'] ?? array() ),
+			'selected_attributes' => $this->normalize_signature_value( $cart_item_data['wootify_selected_attributes'] ?? array() ),
+		);
+
+		$cart_item_data['unique_key'] = 'wootify_' . md5( (string) wp_json_encode( $signature ) );
+
+		return $cart_item_data;
+	}
+
+	/**
+	 * Replace cart item thumbnail HTML with the selected Wootify variant image.
+	 *
+	 * @param string               $thumbnail     Existing thumbnail HTML.
+	 * @param array<string, mixed> $cart_item     Cart item data.
+	 * @param string               $cart_item_key Cart item key.
+	 * @return string
+	 */
+	public function filter_cart_item_thumbnail( $thumbnail, $cart_item, $cart_item_key ) {
+		unset( $cart_item_key );
+
+		if ( empty( $cart_item['wootify_variant_id'] ) || empty( $cart_item['data'] ) || ! $cart_item['data'] instanceof \WC_Product ) {
+			return (string) $thumbnail;
+		}
+
+		$variant = $this->get_cart_item_variant( $cart_item );
+
+		if ( ! is_array( $variant ) ) {
+			return (string) $thumbnail;
+		}
+
+		$image_src = $this->get_variant_image_src( $variant );
+
+		if ( '' === $image_src ) {
+			return (string) $thumbnail;
+		}
+
+		$product = $cart_item['data'];
+		$classes = 'attachment-woocommerce_thumbnail size-woocommerce_thumbnail';
+
+		if ( is_string( $thumbnail ) && preg_match( '/class="([^"]+)"/', $thumbnail, $matches ) ) {
+			$classes = trim( $matches[1] );
+		}
+
+		return sprintf(
+			'<img src="%1$s" alt="%2$s" class="%3$s" loading="lazy" />',
+			esc_url( $image_src ),
+			esc_attr( $product->get_name() ),
+			esc_attr( $classes )
+		);
 	}
 
 	/**
@@ -128,22 +201,6 @@ class CartDrawerIntegration {
 	}
 
 	/**
-	 * Keep Wootify upsell CTA copy aligned with regular add-to-cart actions.
-	 *
-	 * @param string      $button_text Existing button text.
-	 * @param \WC_Product $product Product object.
-	 * @param array       $config Selector config.
-	 * @return string
-	 */
-	public function filter_selector_button_text( $button_text, $product, $config ) {
-		if ( ! $product instanceof \WC_Product || empty( $config['isWootify'] ) ) {
-			return (string) $button_text;
-		}
-
-		return __( 'Add to cart', 'starterkit' );
-	}
-
-	/**
 	 * Fetch Wootify product data through the plugin service.
 	 *
 	 * @param \WC_Product $product Product object.
@@ -175,6 +232,149 @@ class CartDrawerIntegration {
 		$this->product_data_cache[ $product_id ] = is_array( $data ) ? $data : null;
 
 		return $this->product_data_cache[ $product_id ];
+	}
+
+	/**
+	 * Resolve the selected Wootify variant from a cart item.
+	 *
+	 * @param array<string, mixed> $cart_item Cart item data.
+	 * @return array<string, mixed>|null
+	 */
+	protected function get_cart_item_variant( array $cart_item ) {
+		$product = $cart_item['data'] ?? null;
+
+		if ( ! $product instanceof \WC_Product ) {
+			return null;
+		}
+
+		$data = $this->get_product_data( $product );
+
+		if ( ! is_array( $data ) || empty( $data['variants'] ) ) {
+			return null;
+		}
+
+		$variant_id = isset( $cart_item['wootify_variant_id'] ) ? (int) $cart_item['wootify_variant_id'] : 0;
+
+		if ( $variant_id > 0 ) {
+			foreach ( (array) $data['variants'] as $variant ) {
+				if ( ! is_array( $variant ) ) {
+					continue;
+				}
+
+				$current_variant_id = isset( $variant['id'] ) ? (int) $variant['id'] : (int) ( $variant['variation_id'] ?? 0 );
+
+				if ( $current_variant_id === $variant_id ) {
+					return $variant;
+				}
+			}
+		}
+
+		$selected_attributes = $this->normalize_cart_item_attributes( $cart_item['wootify_selected_attributes'] ?? array() );
+
+		if ( empty( $selected_attributes ) ) {
+			return null;
+		}
+
+		foreach ( (array) $data['variants'] as $variant ) {
+			if ( ! is_array( $variant ) ) {
+				continue;
+			}
+
+			$matches = true;
+
+			foreach ( $selected_attributes as $attribute_key => $attribute_value ) {
+				if ( $attribute_value !== $this->get_variant_attribute_value( $variant, $attribute_key, 0 ) ) {
+					$matches = false;
+					break;
+				}
+			}
+
+			if ( $matches ) {
+				return $variant;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Normalize selected attribute payloads stored on cart items.
+	 *
+	 * @param mixed $attributes Selected attributes payload.
+	 * @return array<string, string>
+	 */
+	protected function normalize_cart_item_attributes( $attributes ) {
+		if ( is_string( $attributes ) ) {
+			$decoded = json_decode( wp_unslash( $attributes ), true );
+
+			if ( is_array( $decoded ) ) {
+				$attributes = $decoded;
+			}
+		}
+
+		if ( ! is_array( $attributes ) ) {
+			return array();
+		}
+
+		$normalized = array();
+
+		foreach ( $attributes as $key => $value ) {
+			$attribute_key = trim( (string) $key );
+			$attribute_value = trim( (string) $value );
+
+			if ( '' === $attribute_key || '' === $attribute_value ) {
+				continue;
+			}
+
+			$normalized[ $attribute_key ] = $attribute_value;
+		}
+
+		return $normalized;
+	}
+
+	/**
+	 * Normalize values used in cart item identity signatures.
+	 *
+	 * @param mixed $value Signature value.
+	 * @return mixed
+	 */
+	protected function normalize_signature_value( $value ) {
+		if ( is_array( $value ) ) {
+			$normalized = array();
+
+			foreach ( $value as $key => $item ) {
+				$normalized[ $key ] = $this->normalize_signature_value( $item );
+			}
+
+			if ( array_values( $normalized ) === $normalized ) {
+				usort(
+					$normalized,
+					static function( $left, $right ) {
+						return strcmp( (string) wp_json_encode( $left ), (string) wp_json_encode( $right ) );
+					}
+				);
+
+				return $normalized;
+			}
+
+			ksort( $normalized, SORT_NATURAL );
+
+			return $normalized;
+		}
+
+		if ( is_bool( $value ) ) {
+			return $value ? '1' : '0';
+		}
+
+		if ( is_numeric( $value ) ) {
+			return (string) $value;
+		}
+
+		if ( null === $value ) {
+			return '';
+		}
+
+		return trim( (string) $value );
 	}
 
 	/**

@@ -32,26 +32,6 @@ class CartDrawerManager {
 		add_action( 'wp_ajax_nopriv_starterkit_update_cart_item', array( $this, 'ajax_update_cart_item' ) );
 		add_action( 'wp_ajax_starterkit_remove_cart_item', array( $this, 'ajax_remove_cart_item' ) );
 		add_action( 'wp_ajax_nopriv_starterkit_remove_cart_item', array( $this, 'ajax_remove_cart_item' ) );
-		add_filter( 'woocommerce_add_cart_item_data', array( $this, 'fix_wootify_unique_key' ), 99, 3 );
-	}
-
-	/**
-	 * Fix Wootify's non-deterministic unique_key so same variant merges quantity.
-	 *
-	 * @param array $cart_item_data Cart item data.
-	 * @param int   $product_id    Product ID.
-	 * @param int   $variation_id  Variation ID.
-	 * @return array
-	 */
-	public function fix_wootify_unique_key( $cart_item_data, $product_id, $variation_id ) {
-		if ( isset( $cart_item_data['wootify_variant_id'] ) && isset( $cart_item_data['unique_key'] ) ) {
-			$cart_item_data['unique_key'] = md5(
-				'wootify_' . (int) $cart_item_data['wootify_variant_id'] . '_' .
-				serialize( $cart_item_data['wootify_customizer_values'] ?? array() )
-			);
-		}
-
-		return $cart_item_data;
 	}
 
 	/**
@@ -96,9 +76,12 @@ class CartDrawerManager {
 					'error'                => __( 'We could not update your cart. Please try again.', 'starterkit' ),
 					'chooseOptions'        => __( 'Choose options', 'starterkit' ),
 					'chooseAllOptions'     => __( 'Please choose product options before adding to cart.', 'starterkit' ),
+					'closeOptions'         => __( 'Close product options', 'starterkit' ),
 					'unavailableVariation' => __( 'This combination is currently unavailable.', 'starterkit' ),
+					'unavailableOption'    => __( 'Unavailable', 'starterkit' ),
 					'back'                 => __( 'Back', 'starterkit' ),
 					'confirmAdd'           => __( 'Add to cart', 'starterkit' ),
+					'selectOption'         => __( 'Select', 'starterkit' ),
 				),
 			)
 		);
@@ -121,7 +104,7 @@ class CartDrawerManager {
 		echo '<div class="starterkit-cart-drawer__inner">';
 		echo $this->get_drawer_inner_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo '</div>';
-		echo '<div class="starterkit-cart-drawer__sheet" aria-hidden="true">';
+		echo '<div class="starterkit-cart-drawer__sheet" role="dialog" aria-modal="true" aria-label="' . esc_attr__( 'Choose options', 'starterkit' ) . '" aria-hidden="true">';
 		echo '<button type="button" class="starterkit-cart-drawer__sheet-overlay" data-cart-drawer-sheet-close aria-label="' . esc_attr__( 'Close product options', 'starterkit' ) . '"></button>';
 		echo '<div class="starterkit-cart-drawer__sheet-panel">';
 		echo '<div class="starterkit-cart-drawer__sheet-content"></div>';
@@ -288,7 +271,7 @@ class CartDrawerManager {
 						}
 
 						$product_permalink = $product->is_visible() ? $product->get_permalink( $cart_item ) : '';
-						$image_html        = $product->get_image( 'woocommerce_thumbnail' );
+						$image_html        = apply_filters( 'woocommerce_cart_item_thumbnail', $product->get_image( 'woocommerce_thumbnail' ), $cart_item, $cart_item_key );
 						$quantity          = isset( $cart_item['quantity'] ) ? (int) $cart_item['quantity'] : 1;
 						?>
 						<li class="starterkit-cart-drawer__item" data-cart-item-key="<?php echo esc_attr( $cart_item_key ); ?>" data-quantity="<?php echo esc_attr( (string) $quantity ); ?>">
@@ -536,7 +519,6 @@ class CartDrawerManager {
 			'permalink'         => (string) $product->get_permalink(),
 			'priceHtml'         => (string) $product->get_price_html(),
 			'buttonText'        => (string) $product->add_to_cart_text(),
-			'isWootify'         => false,
 			'defaultAttributes' => $default_attributes,
 			'image'             => $this->get_upsell_selector_product_image( $product ),
 			'attributes'        => $attributes,
