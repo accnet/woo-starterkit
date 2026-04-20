@@ -79,6 +79,29 @@
       .replace(/'/g, '&#039;');
   }
 
+  function decodeHtmlEntities(value) {
+    return String(value || '')
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
+  }
+
+  function parseConfigJson(value) {
+    var raw = String(value || '{}');
+
+    try {
+      return JSON.parse(raw);
+    } catch (_error) {
+      try {
+        return JSON.parse(decodeHtmlEntities(raw));
+      } catch (_decodedError) {
+        return null;
+      }
+    }
+  }
+
   function openDrawer() {
     syncRefs();
 
@@ -632,11 +655,7 @@
       return null;
     }
 
-    try {
-      return JSON.parse(node.textContent || '{}');
-    } catch (_error) {
-      return null;
-    }
+    return parseConfigJson(node.textContent || '{}');
   }
 
   function buildUpsellSheetMarkup(config) {
@@ -998,6 +1017,7 @@
     if (state.activeUpsellConfig.isWootify) {
       formData.set('product_id', String(state.activeUpsellConfig.productId || ''));
       formData.set('wootify_variant_id', String(variation.variationId || ''));
+      formData.set('wootify_selected_attributes', JSON.stringify(selection || {}));
     } else {
       formData.set('product_id', String(variation.variationId || state.activeUpsellConfig.productId || ''));
     }

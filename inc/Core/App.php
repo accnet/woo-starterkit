@@ -9,6 +9,7 @@ namespace StarterKit\Core;
 
 use StarterKit\Admin\SettingsPage;
 use StarterKit\Admin\ThemeBuilderPage;
+use StarterKit\Compatibility\WootifyCore\CartDrawerIntegration as WootifyCartDrawerIntegration;
 use StarterKit\Layouts\LayoutRegistry;
 use StarterKit\Layouts\LayoutResolver;
 use StarterKit\Rules\DisplayRuleEvaluator;
@@ -98,6 +99,7 @@ class App {
 		$this->checkout_layout_manager();
 		$this->checkout_runtime_manager();
 		$this->hook_registrar();
+		$this->wootify_cart_drawer_integration();
 		$this->cart_drawer_manager();
 	}
 
@@ -545,6 +547,20 @@ class App {
 			'cart_drawer_manager',
 			function() {
 				return new CartDrawerManager( $this->settings_manager() );
+			}
+		);
+	}
+
+	/**
+	 * Wootify integration for cart drawer recommendations.
+	 *
+	 * @return WootifyCartDrawerIntegration
+	 */
+	public function wootify_cart_drawer_integration() {
+		return $this->service(
+			'wootify_cart_drawer_integration',
+			function() {
+				return new WootifyCartDrawerIntegration();
 			}
 		);
 	}

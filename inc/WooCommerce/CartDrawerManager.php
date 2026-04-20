@@ -385,7 +385,9 @@ class CartDrawerManager {
 							<a class="starterkit-cart-drawer__upsell-title" href="<?php echo esc_url( $product->get_permalink() ); ?>">
 								<?php echo esc_html( $product->get_name() ); ?>
 							</a>
-							<div class="starterkit-cart-drawer__upsell-price"><?php echo wp_kses_post( $product->get_price_html() ); ?></div>
+							<div class="starterkit-cart-drawer__upsell-price">
+								<?php echo wp_kses_post( apply_filters( 'starterkit_cart_drawer_upsell_price_html', $product->get_price_html(), $product ) ); ?>
+							</div>
 							<?php echo $this->get_upsell_button_html( $product ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 						</div>
 					</div>
@@ -404,19 +406,27 @@ class CartDrawerManager {
 	 * @return string
 	 */
 	protected function get_upsell_button_html( $product ) {
-		if ( $this->product_requires_variant_selection( $product ) && $product->is_purchasable() && $product->is_in_stock() ) {
+		$can_open_selector = (bool) apply_filters( 'starterkit_cart_drawer_product_can_open_selector', $product->is_purchasable() && $product->is_in_stock(), $product );
+
+		if ( $this->product_requires_variant_selection( $product ) && $can_open_selector ) {
 			$config = $this->get_upsell_selector_config( $product );
 
 			if ( ! empty( $config ) ) {
 				$config_id = 'starterkit-cart-drawer-upsell-config-' . (int) $product->get_id();
+				$config_json = wp_json_encode( $config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT );
+				$button_text = apply_filters( 'starterkit_cart_drawer_upsell_selector_button_text', __( 'Add to cart', 'starterkit' ), $product, $config );
+
+				if ( ! is_string( $config_json ) ) {
+					$config_json = '{}';
+				}
 
 				return sprintf(
 					'<button type="button" data-product_id="%1$s" data-product_url="%2$s" data-quantity="1" data-config-selector="#%3$s" class="button button-secondary starterkit-cart-drawer__upsell-add starterkit-cart-drawer__upsell-add--selector">%4$s</button><script type="application/json" id="%3$s">%5$s</script>',
 					esc_attr( (string) $product->get_id() ),
 					esc_url( $product->get_permalink() ),
 					esc_attr( $config_id ),
-					esc_html( $product->add_to_cart_text() ),
-					wp_json_encode( $config )
+					esc_html( (string) $button_text ),
+					$config_json
 				);
 			}
 		}
@@ -699,6 +709,9 @@ class CartDrawerManager {
 	 */
 	protected function get_upsell_products() {
 		$exclude = array();
+		$products = array();
+		$seen     = array();
+		$limit    = 2;
 
 		foreach ( WC()->cart->get_cart() as $cart_item ) {
 			if ( ! empty( $cart_item['product_id'] ) ) {
@@ -706,21 +719,75 @@ class CartDrawerManager {
 			}
 		}
 
-		$args = array(
-			'status'  => 'publish',
-			'limit'   => 2,
-			'orderby' => 'date',
-			'order'   => 'DESC',
-			'exclude' => array_unique( $exclude ),
-		);
+		$exclude = array_values( array_unique( array_filter( $exclude ) ) );
 
-		$products = function_exists( 'wc_get_products' ) ? wc_get_products( array_merge( $args, array( 'featured' => true ) ) ) : array();
+		$append_products = static function( $items ) use ( &$products, &$seen, $exclude, $limit ) {
+			foreach ( (array) $items as $item ) {
+				if ( ! $item instanceof \WC_Product ) {
+					continue;
+				}
 
-		if ( empty( $products ) && function_exists( 'wc_get_products' ) ) {
-			$products = wc_get_products( $args );
+				$product_id = (int) $item->get_id();
+
+				if ( $product_id <= 0 || isset( $seen[ $product_id ] ) || in_array( $product_id, $exclude, true ) ) {
+					continue;
+				}
+
+				$seen[ $product_id ] = true;
+				$products[]          = $item;
+
+				if ( count( $products ) >= $limit ) {
+					break;
+				}
+			}
+		};
+
+		$cross_sell_ids = array();
+
+		foreach ( WC()->cart->get_cart() as $cart_item ) {
+			$product = isset( $cart_item['data'] ) ? $cart_item['data'] : null;
+
+			if ( ! $product instanceof \WC_Product || ! method_exists( $product, 'get_cross_sell_ids' ) ) {
+				continue;
+			}
+
+			$cross_sell_ids = array_merge( $cross_sell_ids, array_map( 'intval', (array) $product->get_cross_sell_ids() ) );
 		}
 
-		return is_array( $products ) ? $products : array();
+		$cross_sell_ids = array_values( array_diff( array_unique( array_filter( $cross_sell_ids ) ), $exclude ) );
+
+		if ( ! empty( $cross_sell_ids ) && function_exists( 'wc_get_products' ) ) {
+			$append_products(
+				wc_get_products(
+					array(
+						'status'  => 'publish',
+						'limit'   => $limit,
+						'include' => $cross_sell_ids,
+						'orderby' => 'include',
+					)
+				)
+			);
+		}
+
+		$args = array(
+			'status'  => 'publish',
+			'limit'   => $limit,
+			'orderby' => 'date',
+			'order'   => 'DESC',
+			'exclude' => $exclude,
+		);
+
+		if ( count( $products ) < $limit && function_exists( 'wc_get_products' ) ) {
+			$append_products( wc_get_products( array_merge( $args, array( 'featured' => true ) ) ) );
+		}
+
+		if ( count( $products ) < $limit && function_exists( 'wc_get_products' ) ) {
+			$append_products( wc_get_products( $args ) );
+		}
+
+		$products = apply_filters( 'starterkit_cart_drawer_upsell_products', $products, $exclude, $this );
+
+		return is_array( $products ) ? array_slice( $products, 0, $limit ) : array();
 	}
 
 	/**
