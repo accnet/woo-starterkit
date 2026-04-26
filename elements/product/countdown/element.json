@@ -3,6 +3,7 @@
   "label": "Countdown",
   "context": "product",
   "category": "urgency",
+  "max_instances": 1,
   "allowed_zones": ["product_before_gallery", "product_after_gallery", "product_before_summary", "product_after_summary"],
   "assets": {
     "css": "style.css"

@@ -1,4 +1,6 @@
 .starterkit-element-topbar {
   align-items: center;
   text-align: center;
+  --starterkit-element-surface: #f6f6f7;
+  --starterkit-element-border: #dfe3e8;
 }

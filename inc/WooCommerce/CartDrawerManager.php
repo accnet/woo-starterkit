@@ -7,6 +7,7 @@
 
 namespace StarterKit\WooCommerce;
 
+use StarterKit\Core\AssetVersion;
 use StarterKit\Settings\GlobalSettingsManager;
 
 class CartDrawerManager {
@@ -51,14 +52,14 @@ class CartDrawerManager {
 			'starterkit-cart-drawer',
 			get_template_directory_uri() . '/assets/css/cart-drawer.css',
 			array( 'starterkit-theme' ),
-			file_exists( $css_path ) ? (string) filemtime( $css_path ) : wp_get_theme()->get( 'Version' )
+			AssetVersion::for_file( $css_path )
 		);
 
 		wp_enqueue_script(
 			'starterkit-cart-drawer',
 			get_template_directory_uri() . '/assets/js/cart-drawer.js',
 			array(),
-			file_exists( $js_path ) ? (string) filemtime( $js_path ) : wp_get_theme()->get( 'Version' ),
+			AssetVersion::for_file( $js_path ),
 			true
 		);
 

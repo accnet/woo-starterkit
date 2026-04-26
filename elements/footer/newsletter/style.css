@@ -1,3 +1,5 @@
 .starterkit-element-newsletter {
   overflow: hidden;
+  --starterkit-element-surface: #f6f6f7;
+  --starterkit-element-border: #dfe3e8;
 }

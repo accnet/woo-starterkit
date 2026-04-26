@@ -7,6 +7,7 @@
 
 namespace StarterKit\Admin;
 
+use StarterKit\Core\AssetVersion;
 use StarterKit\ThemeBuilder\ApiController;
 
 class ThemeBuilderPage {
@@ -70,21 +71,21 @@ class ThemeBuilderPage {
 			'starterkit-coloris',
 			$coloris_uri . 'coloris.min.css',
 			array(),
-			file_exists( $coloris_css ) ? filemtime( $coloris_css ) : '0.25.0'
+			AssetVersion::for_file( $coloris_css, '0.25.0' )
 		);
 
 		wp_enqueue_style(
 			'starterkit-theme-builder',
 			get_template_directory_uri() . '/assets/css/theme-builder.css',
 			array( 'starterkit-coloris' ),
-			filemtime( get_template_directory() . '/assets/css/theme-builder.css' )
+			AssetVersion::for_file( get_template_directory() . '/assets/css/theme-builder.css' )
 		);
 
 		wp_enqueue_script(
 			'starterkit-coloris',
 			$coloris_uri . 'coloris.min.js',
 			array(),
-			file_exists( $coloris_js ) ? filemtime( $coloris_js ) : '0.25.0',
+			AssetVersion::for_file( $coloris_js, '0.25.0' ),
 			true
 		);
 
@@ -92,7 +93,7 @@ class ThemeBuilderPage {
 			'starterkit-theme-builder-app',
 			get_template_directory_uri() . '/assets/js/theme-builder-app.js',
 			array( 'starterkit-coloris' ),
-			filemtime( get_template_directory() . '/assets/js/theme-builder-app.js' ),
+			AssetVersion::for_file( get_template_directory() . '/assets/js/theme-builder-app.js' ),
 			true
 		);
 

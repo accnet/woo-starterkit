@@ -1,0 +1,16 @@
+{
+  "id": "stock-counter",
+  "label": "Stock Counter",
+  "context": "product",
+  "category": "urgency",
+  "max_instances": 1,
+  "allowed_zones": ["product_before_summary", "product_after_summary"],
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Availability" },
+    "low_stock_threshold": { "type": "number", "label": "Low Stock Threshold", "default": "10", "min": "1", "max": "100", "step": "1" },
+    "show_exact_quantity": { "type": "toggle", "label": "Show Exact Quantity", "default": "1" },
+    "in_stock_text": { "type": "text", "label": "In Stock Text", "default": "In stock and ready to ship" },
+    "low_stock_text": { "type": "text", "label": "Low Stock Text", "default": "Only {quantity} left in stock" },
+    "out_of_stock_text": { "type": "text", "label": "Out Of Stock Text", "default": "Currently out of stock" }
+  }
+}

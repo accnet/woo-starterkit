@@ -9,8 +9,11 @@ $cart_count = function_exists( 'WC' ) && WC()->cart ? (int) WC()->cart->get_cart
 $cart_url   = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
 $logo_id   = (int) starterkit()->settings_manager()->get( 'logo_id', 0 );
 $zone_renderer = starterkit()->zone_renderer();
+$layout_settings_manager = starterkit()->layout_settings_manager();
+$layout_settings         = $layout_settings_manager->get_layout_settings( 'header-1' );
+$header_style            = $layout_settings_manager->header_1_inline_style( $layout_settings );
 ?>
-<header class="site-header site-header--preset-1" data-header-behavior="menu search">
+<header class="site-header site-header--preset-1" data-header-behavior="menu search"<?php echo $header_style ? ' style="' . esc_attr( $header_style ) . '"' : ''; ?>>
 	<?php $zone_renderer->render( 'header_top', array( 'context' => 'master' ) ); ?>
 	<button class="site-header__backdrop" type="button" data-header-close aria-label="<?php esc_attr_e( 'Close menu', 'starterkit' ); ?>"></button>
 	<div class="container header-shell header-shell--preset-1">
@@ -31,9 +34,7 @@ $zone_renderer = starterkit()->zone_renderer();
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
-			<nav class="site-navigation">
-				<?php wp_nav_menu( array( 'theme_location' => 'primary', 'fallback_cb' => false ) ); ?>
-			</nav>
+			<?php echo $layout_settings_manager->render_header_1_navigation( $layout_settings ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			<div class="site-header__panel-actions">
 				<button class="header-search-button" type="button" aria-expanded="false" aria-controls="site-header-search-1">
 					<?php esc_html_e( 'Search', 'starterkit' ); ?>

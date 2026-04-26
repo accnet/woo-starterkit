@@ -180,17 +180,27 @@ h6 {
 }
 
 .starterkit-element-card {
+  --starterkit-element-surface: #ffffff;
+  --starterkit-element-border: #dfe3e8;
+  --starterkit-element-muted: #637381;
+  --starterkit-element-ink: #202223;
+  --starterkit-element-accent: #008060;
+  --starterkit-element-critical: #d72c0d;
+  --starterkit-element-warning: #b98900;
   display: grid;
-  gap: 10px;
-  padding: 16px 0;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: #fff;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  gap: 0;
+  padding: 14px 0;
+  border: 1px solid var(--starterkit-element-border);
+  border-radius: 8px;
+  color: var(--starterkit-element-ink);
+  background: var(--starterkit-element-surface);
+  box-shadow: 0 1px 0 rgba(22, 29, 37, 0.05), 0 1px 3px rgba(22, 29, 37, 0.08);
 }
 
 .starterkit-element-card__inner {
   display: grid;
   gap: 10px;
+  min-width: 0;
 }
 
 .starterkit-element-card__inner.container {
@@ -198,26 +208,34 @@ h6 {
 }
 
 .starterkit-element-card--accent {
-  background: linear-gradient(135deg, #0f172a, #1d4ed8);
-  color: #fff;
+  --starterkit-element-surface: #f1f8f5;
+  --starterkit-element-border: #b7d9cc;
+  --starterkit-element-ink: #202223;
+  color: var(--starterkit-element-ink);
+  background: var(--starterkit-element-surface);
 }
 
 .starterkit-element-card--newsletter .starterkit-element-card__inner {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
-  gap: 16px;
+  gap: 20px;
 }
 
 .starterkit-element-newsletter__form {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  align-items: center;
 }
 
 .starterkit-element-newsletter__form input {
   flex: 1;
+  min-height: 44px;
   padding: 10px 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--starterkit-element-border);
+  border-radius: 6px;
+  color: var(--starterkit-element-ink);
+  background: #fff;
 }
 
 .starterkit-element-category-banner .starterkit-element-card__inner {
@@ -239,7 +257,9 @@ h6 {
   width: 100%;
   margin: 0;
   overflow: hidden;
-  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid var(--starterkit-element-border);
+  border-radius: 8px;
+  background: #f6f6f7;
 }
 
 .starterkit-element-category-banner__media img {
@@ -265,10 +285,13 @@ h6 {
 }
 
 .starterkit-element-category-banner__highlights li {
-  padding: 7px 10px;
-  border: 1px solid rgba(148, 163, 184, 0.26);
+  padding: 6px 10px;
+  border: 1px solid #c9cccf;
+  border-radius: 999px;
+  background: #f6f6f7;
   color: inherit;
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 600;
   line-height: 1.2;
 }
 
@@ -280,25 +303,161 @@ h6 {
   justify-self: center;
 }
 
-[class*="starterkit-element-"],
-[class*="starterkit-element-"] * {
-  border-radius: 0 !important;
-}
-
 .starterkit-element-wrapper {
   display: block;
   min-width: 0;
+}
+
+.starterkit-element-card__title {
+  display: block;
+  color: var(--starterkit-element-ink);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.starterkit-element-card__content {
+  color: var(--starterkit-element-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.starterkit-element-card__content p {
+  margin: 0;
+}
+
+.starterkit-element-card__content p + p {
+  margin-top: 8px;
 }
 
 .starterkit-element-list,
 .starterkit-element-faq {
   display: grid;
   gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.starterkit-element-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.starterkit-element-list li {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 10px;
+  border: 1px solid #c9cccf;
+  border-radius: 999px;
+  background: #f6f6f7;
+  color: var(--starterkit-element-ink);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.starterkit-element-list--badges li {
+  border-color: #b7d9cc;
+  color: #005c48;
+  background: #e3f1df;
+}
+
+.starterkit-element-badge--sale {
+  border-color: #fed3d1;
+  color: #d72c0d;
+  background: #fff4f4;
+}
+
+.starterkit-element-badge--featured {
+  border-color: #b7d9cc;
+  color: #005c48;
+  background: #e3f1df;
+}
+
+.starterkit-element-badge--new {
+  border-color: #bbd6ff;
+  color: #1f5199;
+  background: #eef4ff;
+}
+
+.starterkit-element-badge--out-of-stock {
+  border-color: #d2d5d8;
+  color: #6d7175;
+  background: #f1f2f3;
+}
+
+.starterkit-element-card--stock-instock,
+.starterkit-element-card--stock-low-stock,
+.starterkit-element-card--stock-onbackorder {
+  --starterkit-element-surface: #f1f8f5;
+  --starterkit-element-border: #b7d9cc;
+  --starterkit-element-accent: #008060;
+}
+
+.starterkit-element-card--stock-low-stock {
+  --starterkit-element-surface: #fff5d6;
+  --starterkit-element-border: #e1b878;
+  --starterkit-element-accent: #b98900;
+}
+
+.starterkit-element-card--stock-outofstock {
+  --starterkit-element-surface: #fff4f4;
+  --starterkit-element-border: #fed3d1;
+  --starterkit-element-accent: #d72c0d;
+}
+
+.starterkit-element-card--stock .starterkit-element-card__content {
+  color: var(--starterkit-element-accent);
+  font-weight: 700;
+}
+
+.starterkit-element-card__rating {
+  display: inline-flex;
+  gap: 2px;
+  color: #b98900;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.starterkit-element-faq__item {
+  border: 1px solid var(--starterkit-element-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.starterkit-element-faq__item summary {
+  cursor: pointer;
+  padding: 12px 14px;
+  color: var(--starterkit-element-ink);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.starterkit-element-faq__item div {
+  padding: 0 14px 14px;
+  color: var(--starterkit-element-muted);
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .starterkit-element-countdown__value {
-  font-size: 14px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid #e1b878;
+  border-radius: 6px;
+  color: #8a6116;
+  background: #fff5d6;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .starterkit-archive-preset--2 {
@@ -321,6 +480,11 @@ h6 {
 
   .starterkit-element-category-banner--has-image .starterkit-element-card__inner {
     grid-template-columns: 1fr;
+  }
+
+  .starterkit-element-newsletter__form {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 

@@ -8,6 +8,7 @@
 namespace StarterKit\ThemeBuilder;
 
 use StarterKit\Layouts\LayoutResolver;
+use StarterKit\Settings\ControlSanitizer;
 
 class PresetSchemaRegistry {
 	/**
@@ -18,12 +19,20 @@ class PresetSchemaRegistry {
 	protected $layout_resolver;
 
 	/**
+	 * Shared control sanitizer.
+	 *
+	 * @var ControlSanitizer
+	 */
+	protected $sanitizer;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param LayoutResolver $layout_resolver Layout resolver.
 	 */
-	public function __construct( LayoutResolver $layout_resolver ) {
+	public function __construct( LayoutResolver $layout_resolver, ControlSanitizer $sanitizer = null ) {
 		$this->layout_resolver = $layout_resolver;
+		$this->sanitizer       = $sanitizer ? $sanitizer : new ControlSanitizer();
 	}
 
 	/**
@@ -82,10 +91,10 @@ class PresetSchemaRegistry {
 			'product-layout-1' => $this->product_schema(
 				'product-layout-1',
 				array(
-					'product_before_gallery' => array( 'review-summary', 'countdown', 'trust-badge', 'shipping-info' ),
-					'product_after_gallery'  => array( 'review-summary', 'countdown', 'trust-badge', 'shipping-info' ),
-					'product_before_summary' => array( 'review-summary', 'countdown', 'trust-badge', 'shipping-info', 'guarantee' ),
-					'product_after_summary'  => array( 'review-summary', 'countdown', 'trust-badge', 'shipping-info', 'faq', 'guarantee' ),
+					'product_before_gallery' => array( 'product-badges', 'review-summary', 'countdown', 'trust-badge', 'shipping-info' ),
+					'product_after_gallery'  => array( 'product-badges', 'review-summary', 'countdown', 'trust-badge', 'shipping-info' ),
+					'product_before_summary' => array( 'product-badges', 'review-summary', 'countdown', 'stock-counter', 'trust-badge', 'shipping-info', 'guarantee' ),
+					'product_after_summary'  => array( 'product-badges', 'review-summary', 'countdown', 'stock-counter', 'trust-badge', 'shipping-info', 'faq', 'guarantee' ),
 					'product_before_related' => array( 'faq', 'guarantee', 'trust-badge' ),
 					'product_after_related'  => array( 'faq', 'guarantee', 'trust-badge' ),
 				)
@@ -93,8 +102,8 @@ class PresetSchemaRegistry {
 			'product-layout-2' => $this->product_schema(
 				'product-layout-2',
 				array(
-					'product_before_summary' => array( 'review-summary', 'countdown', 'trust-badge', 'shipping-info', 'guarantee' ),
-					'product_after_summary'  => array( 'faq', 'guarantee', 'trust-badge' ),
+					'product_before_summary' => array( 'product-badges', 'review-summary', 'countdown', 'stock-counter', 'trust-badge', 'shipping-info', 'guarantee' ),
+					'product_after_summary'  => array( 'product-badges', 'stock-counter', 'faq', 'guarantee', 'trust-badge' ),
 					'product_before_tabs'    => array( 'faq', 'guarantee', 'shipping-info' ),
 					'product_after_tabs'     => array( 'faq', 'guarantee', 'trust-badge' ),
 				)
@@ -102,10 +111,10 @@ class PresetSchemaRegistry {
 			'product-layout-3' => $this->product_schema(
 				'product-layout-3',
 				array(
-					'product_before_gallery' => array( 'review-summary', 'countdown', 'trust-badge', 'shipping-info' ),
-					'product_after_gallery'  => array( 'review-summary', 'countdown', 'trust-badge', 'shipping-info' ),
-					'product_before_summary' => array( 'review-summary', 'countdown', 'trust-badge', 'shipping-info', 'guarantee' ),
-					'product_after_summary'  => array( 'review-summary', 'countdown', 'trust-badge', 'shipping-info', 'faq', 'guarantee' ),
+					'product_before_gallery' => array( 'product-badges', 'review-summary', 'countdown', 'trust-badge', 'shipping-info' ),
+					'product_after_gallery'  => array( 'product-badges', 'review-summary', 'countdown', 'trust-badge', 'shipping-info' ),
+					'product_before_summary' => array( 'product-badges', 'review-summary', 'countdown', 'stock-counter', 'trust-badge', 'shipping-info', 'guarantee' ),
+					'product_after_summary'  => array( 'product-badges', 'review-summary', 'countdown', 'stock-counter', 'trust-badge', 'shipping-info', 'faq', 'guarantee' ),
 					'product_before_tabs'    => array( 'faq', 'shipping-info', 'guarantee' ),
 					'product_after_tabs'     => array( 'faq', 'guarantee', 'trust-badge' ),
 					'product_before_related' => array( 'faq', 'guarantee', 'trust-badge' ),
@@ -368,17 +377,43 @@ class PresetSchemaRegistry {
 		$output = array();
 
 		foreach ( $zones as $zone_id => $zone ) {
+			$constraints = isset( $zone['constraints'] ) && is_array( $zone['constraints'] ) ? $zone['constraints'] : array();
+			$max_items   = isset( $constraints['max_items'] ) ? absint( $constraints['max_items'] ) : 12;
+
 			$output[] = array(
-				'id'               => $zone_id,
-				'label'            => isset( $zone['label'] ) ? $zone['label'] : ucwords( str_replace( '_', ' ', $zone_id ) ),
+				'id'               => sanitize_key( (string) $zone_id ),
+				'label'            => isset( $zone['label'] ) ? sanitize_text_field( (string) $zone['label'] ) : ucwords( str_replace( '_', ' ', $zone_id ) ),
 				'droppable'        => true,
 				'sortable'         => true,
-				'allowed_elements' => isset( $zone['allowed_elements'] ) ? array_values( array_map( 'strval', (array) $zone['allowed_elements'] ) ) : array(),
-				'settings_schema'  => isset( $zone['settings_schema'] ) ? (array) $zone['settings_schema'] : array(),
-				'constraints'      => isset( $zone['constraints'] ) ? (array) $zone['constraints'] : array( 'max_items' => 12 ),
+				'allowed_elements' => $this->sanitize_string_list( isset( $zone['allowed_elements'] ) ? $zone['allowed_elements'] : array() ),
+				'settings_schema'  => $this->sanitizer->normalize_schema( isset( $zone['settings_schema'] ) && is_array( $zone['settings_schema'] ) ? $zone['settings_schema'] : array() ),
+				'constraints'      => array(
+					'max_items' => max( 1, $max_items ),
+				),
 			);
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Sanitize a list of keys.
+	 *
+	 * @param mixed $values Raw values.
+	 * @return string[]
+	 */
+	protected function sanitize_string_list( $values ) {
+		$values = is_array( $values ) ? $values : array( $values );
+
+		return array_values(
+			array_filter(
+				array_map(
+					function( $value ) {
+						return sanitize_key( (string) $value );
+					},
+					$values
+				)
+			)
+		);
 	}
 }

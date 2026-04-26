@@ -6,8 +6,22 @@
  */
 
 $title = isset( $settings['title'] ) ? (string) $settings['title'] : '';
-$items = isset( $settings['items'] ) ? preg_split( '/\r\n|\r|\n/', (string) $settings['items'] ) : array();
-$items = array_filter( array_map( 'trim', (array) $items ) );
+$items = isset( $settings['items'] ) ? $settings['items'] : array();
+
+if ( is_string( $items ) ) {
+	$items = preg_split( '/\r\n|\r|\n/', $items );
+}
+
+$items = array_values(
+	array_filter(
+		array_map(
+			function( $item ) {
+				return is_array( $item ) && isset( $item['text'] ) ? trim( (string) $item['text'] ) : trim( (string) $item );
+			},
+			(array) $items
+		)
+	)
+);
 ?>
 <div class="starterkit-element-card starterkit-element-card--list">
 	<div class="container starterkit-element-card__inner">

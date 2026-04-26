@@ -1,5 +1,5 @@
 .site-footer--preset-1 {
-  padding-top: 56px;
+  padding-top: 30px;
   background: #0f172a;
   color: #cbd5e1;
 }
@@ -14,10 +14,10 @@
   color: #fff;
 }
 
-/* 4-column grid */
+/* Footer grid */
 .site-footer--preset-1 .footer-grid--preset-1 {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--footer-1-columns, 4), minmax(0, 1fr));
   gap: 40px;
   padding-bottom: 48px;
 }

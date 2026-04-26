@@ -1,9 +1,14 @@
+.site-header--preset-1 {
+  background: var(--header-1-bg, #fff);
+}
+
 .site-header--preset-1 .header-shell--preset-1 {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   justify-content: space-between;
   gap: var(--component-gap);
+  min-height: var(--header-1-min-height, 72px);
 }
 
 .site-header--preset-1 .site-branding {
@@ -11,7 +16,7 @@
 }
 
 .site-header--preset-1 .site-logo {
-  max-height: 45px;
+  max-height: var(--header-1-logo-max-height, 45px);
 }
 
 .site-header--preset-1 .site-header__panel {
@@ -281,7 +286,7 @@ body.has-mobile-menu-open {
   }
 
   .site-header--preset-1 .site-logo {
-    max-height: 45px;
+    max-height: var(--header-1-logo-max-height, 45px);
   }
 
   .site-header--preset-1 .header-cart-link {

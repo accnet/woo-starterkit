@@ -3,10 +3,21 @@
   "label": "Review Summary",
   "context": "product",
   "category": "social-proof",
+  "max_instances": 1,
   "allowed_zones": ["product_before_gallery", "product_after_gallery", "product_before_summary", "product_after_summary"],
   "settings": {
     "title": { "type": "text", "label": "Title", "default": "Review Summary" },
-    "content": { "type": "textarea", "label": "Content", "default": "Rated 4.9/5 by 1,240 customers" },
+    "source": {
+      "type": "select",
+      "label": "Source",
+      "default": "woocommerce",
+      "options": [
+        { "value": "woocommerce", "label": "WooCommerce" },
+        { "value": "manual", "label": "Manual" }
+      ]
+    },
+    "content": { "type": "textarea", "label": "Manual Content", "default": "Rated 4.9/5 by 1,240 customers" },
+    "show_stars": { "type": "toggle", "label": "Show Stars", "default": "1" },
     "style": {
       "type": "select",
       "label": "Style",

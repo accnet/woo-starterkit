@@ -7,6 +7,8 @@
 
 namespace StarterKit\ThemeBuilder;
 
+use StarterKit\Settings\ControlSanitizer;
+
 class BuilderStateRepository {
 	const OPTION_KEY = 'starterkit_builder_state';
 
@@ -25,14 +27,30 @@ class BuilderStateRepository {
 	protected $element_registry;
 
 	/**
+	 * Shared control sanitizer.
+	 *
+	 * @var ControlSanitizer
+	 */
+	protected $sanitizer;
+
+	/**
+	 * Request-local normalized state cache.
+	 *
+	 * @var array<string, mixed>|null
+	 */
+	protected $state_cache = null;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param PresetSchemaRegistry $preset_schema_registry Preset schema registry.
 	 * @param ElementRegistry      $element_registry Element registry.
+	 * @param ControlSanitizer     $sanitizer Shared control sanitizer.
 	 */
-	public function __construct( PresetSchemaRegistry $preset_schema_registry, ElementRegistry $element_registry ) {
+	public function __construct( PresetSchemaRegistry $preset_schema_registry, ElementRegistry $element_registry, ControlSanitizer $sanitizer ) {
 		$this->preset_schema_registry = $preset_schema_registry;
 		$this->element_registry       = $element_registry;
+		$this->sanitizer              = $sanitizer;
 	}
 
 	/**
@@ -41,7 +59,13 @@ class BuilderStateRepository {
 	 * @return array<string, mixed>
 	 */
 	public function all() {
-		return $this->normalize_state( get_option( self::OPTION_KEY, array() ) );
+		if ( null !== $this->state_cache ) {
+			return $this->state_cache;
+		}
+
+		$this->state_cache = $this->normalize_state( get_option( self::OPTION_KEY, array() ) );
+
+		return $this->state_cache;
 	}
 
 	/**
@@ -90,6 +114,7 @@ class BuilderStateRepository {
 		$normalized = $this->normalize_state( $state );
 
 		update_option( self::OPTION_KEY, $normalized, false );
+		$this->state_cache = $normalized;
 
 		return $normalized;
 	}
@@ -215,79 +240,20 @@ class BuilderStateRepository {
 			$value = isset( $settings[ $control_id ] ) ? $settings[ $control_id ] : ( isset( $normalized[ $control_id ] ) ? $normalized[ $control_id ] : '' );
 			$type  = isset( $control['type'] ) ? (string) $control['type'] : 'text';
 
-			switch ( $type ) {
-				case 'textarea':
-					$normalized[ $control_id ] = sanitize_textarea_field( (string) $value );
-					break;
-				case 'toggle':
-				case 'checkbox':
-					$normalized[ $control_id ] = ! empty( $value ) && 'false' !== (string) $value ? '1' : '0';
-					break;
-				case 'range':
-				case 'number':
-					$normalized[ $control_id ] = $this->normalize_number_setting( $value, $control, isset( $normalized[ $control_id ] ) ? $normalized[ $control_id ] : '' );
-					break;
-				case 'color':
-					$color = sanitize_hex_color( (string) $value );
-					$normalized[ $control_id ] = $color ? $color : ( isset( $normalized[ $control_id ] ) ? sanitize_hex_color( (string) $normalized[ $control_id ] ) : '' );
-					break;
-				case 'image':
-					$normalized[ $control_id ] = (string) absint( $value );
-					break;
-				case 'url':
-					$normalized[ $control_id ] = esc_url_raw( (string) $value );
-					break;
-				case 'repeater':
-					$normalized[ $control_id ] = $this->normalize_repeater_setting( $value, $control );
-					break;
-				case 'select':
-					$allowed = array();
+			if ( 'repeater' === $type ) {
+				$normalized[ $control_id ] = $this->normalize_repeater_setting( $value, $control );
+			} else {
+				$control_for_sanitize = $control;
 
-					foreach ( (array) $control['options'] as $option ) {
-						if ( isset( $option['value'] ) ) {
-							$allowed[] = (string) $option['value'];
-						}
-					}
+				if ( ! isset( $control_for_sanitize['default'] ) && isset( $normalized[ $control_id ] ) ) {
+					$control_for_sanitize['default'] = $normalized[ $control_id ];
+				}
 
-					$value = sanitize_text_field( (string) $value );
-					$normalized[ $control_id ] = in_array( $value, $allowed, true ) ? $value : ( isset( $normalized[ $control_id ] ) ? $normalized[ $control_id ] : '' );
-					break;
-				case 'datetime-local':
-					$normalized[ $control_id ] = sanitize_text_field( (string) $value );
-					break;
-				default:
-					$normalized[ $control_id ] = sanitize_text_field( (string) $value );
-					break;
+				$normalized[ $control_id ] = $this->sanitizer->sanitize_control_value( $control_for_sanitize, $value );
 			}
 		}
 
 		return $normalized;
-	}
-
-	/**
-	 * Normalize a numeric setting against optional min/max bounds.
-	 *
-	 * @param mixed                $value Raw value.
-	 * @param array<string, mixed> $control Control schema.
-	 * @param mixed                $fallback Fallback value.
-	 * @return string
-	 */
-	protected function normalize_number_setting( $value, array $control, $fallback = '' ) {
-		if ( '' === (string) $value || ! is_numeric( $value ) ) {
-			$value = is_numeric( $fallback ) ? $fallback : 0;
-		}
-
-		$number = (float) $value;
-
-		if ( isset( $control['min'] ) && is_numeric( $control['min'] ) ) {
-			$number = max( (float) $control['min'], $number );
-		}
-
-		if ( isset( $control['max'] ) && is_numeric( $control['max'] ) ) {
-			$number = min( (float) $control['max'], $number );
-		}
-
-		return floor( $number ) === $number ? (string) (int) $number : (string) $number;
 	}
 
 	/**
@@ -298,72 +264,61 @@ class BuilderStateRepository {
 	 * @return array<int, array<string, mixed>>
 	 */
 	protected function normalize_repeater_setting( $value, array $control ) {
-		$rows   = is_array( $value ) ? array_values( $value ) : array();
-		$fields = isset( $control['fields'] ) && is_array( $control['fields'] ) ? $control['fields'] : array();
-		$output = array();
+		$rows = is_array( $value ) ? array_values( $value ) : $this->legacy_text_to_repeater_rows( $value, $control );
 
-		foreach ( $rows as $row ) {
-			if ( ! is_array( $row ) ) {
-				continue;
-			}
+		return $this->sanitizer->normalize_repeater_default( $rows, $control );
+	}
 
-			$normalized_row = array();
+	/**
+	 * Convert legacy newline textarea values into repeater rows.
+	 *
+	 * @param mixed                $value Raw value.
+	 * @param array<string, mixed> $control Control schema.
+	 * @return array<int, array<string, mixed>>
+	 */
+	protected function legacy_text_to_repeater_rows( $value, array $control ) {
+		if ( ! is_string( $value ) || '' === trim( $value ) ) {
+			return array();
+		}
 
-			foreach ( $fields as $field ) {
-				$field_id = isset( $field['id'] ) ? (string) $field['id'] : '';
+		$fields    = isset( $control['fields'] ) && is_array( $control['fields'] ) ? $control['fields'] : array();
+		$field_ids = array();
 
-				if ( '' === $field_id ) {
-					continue;
-				}
-
-				$field_value = isset( $row[ $field_id ] ) ? $row[ $field_id ] : ( isset( $field['default'] ) ? $field['default'] : '' );
-				$field_type  = isset( $field['type'] ) ? (string) $field['type'] : 'text';
-
-				switch ( $field_type ) {
-					case 'textarea':
-						$normalized_row[ $field_id ] = sanitize_textarea_field( (string) $field_value );
-						break;
-					case 'toggle':
-					case 'checkbox':
-						$normalized_row[ $field_id ] = ! empty( $field_value ) && 'false' !== (string) $field_value ? '1' : '0';
-						break;
-					case 'range':
-					case 'number':
-						$normalized_row[ $field_id ] = $this->normalize_number_setting( $field_value, $field, isset( $field['default'] ) ? $field['default'] : '' );
-						break;
-					case 'color':
-						$normalized_row[ $field_id ] = sanitize_hex_color( (string) $field_value );
-						break;
-					case 'image':
-						$normalized_row[ $field_id ] = (string) absint( $field_value );
-						break;
-					case 'url':
-						$normalized_row[ $field_id ] = esc_url_raw( (string) $field_value );
-						break;
-					case 'select':
-						$allowed = array();
-
-						foreach ( (array) $field['options'] as $option ) {
-							if ( isset( $option['value'] ) ) {
-								$allowed[] = (string) $option['value'];
-							}
-						}
-
-						$field_value = sanitize_text_field( (string) $field_value );
-						$normalized_row[ $field_id ] = in_array( $field_value, $allowed, true ) ? $field_value : ( isset( $field['default'] ) ? sanitize_text_field( (string) $field['default'] ) : '' );
-						break;
-					default:
-						$normalized_row[ $field_id ] = sanitize_text_field( (string) $field_value );
-						break;
-				}
-			}
-
-			if ( ! empty( array_filter( $normalized_row ) ) ) {
-				$output[] = $normalized_row;
+		foreach ( $fields as $field ) {
+			if ( isset( $field['id'] ) ) {
+				$field_ids[] = sanitize_key( (string) $field['id'] );
 			}
 		}
 
-		return $output;
+		if ( empty( $field_ids ) ) {
+			return array();
+		}
+
+		$rows = array();
+
+		foreach ( preg_split( '/\r\n|\r|\n/', $value ) ?: array() as $line ) {
+			$line = trim( (string) $line );
+
+			if ( '' === $line ) {
+				continue;
+			}
+
+			if ( in_array( 'question', $field_ids, true ) && in_array( 'answer', $field_ids, true ) ) {
+				list( $question, $answer ) = array_pad( array_map( 'trim', explode( '|', $line, 2 ) ), 2, '' );
+				$rows[]                   = array(
+					'question' => $question,
+					'answer'   => $answer,
+				);
+				continue;
+			}
+
+			$first_field = $field_ids[0];
+			$rows[]      = array(
+				$first_field => $line,
+			);
+		}
+
+		return $rows;
 	}
 
 	/**

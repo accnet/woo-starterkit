@@ -25,6 +25,13 @@ class LayoutResolver {
 	protected $settings;
 
 	/**
+	 * Request-local resolved layout cache.
+	 *
+	 * @var array<string, array<string, mixed>|null>
+	 */
+	protected $resolved = array();
+
+	/**
 	 * Constructor.
 	 *
 	 * @param LayoutRegistry         $registry Layout registry.
@@ -42,6 +49,12 @@ class LayoutResolver {
 	 * @return array<string, mixed>|null
 	 */
 	public function resolve( $type ) {
+		$type = (string) $type;
+
+		if ( array_key_exists( $type, $this->resolved ) ) {
+			return $this->resolved[ $type ];
+		}
+
 		$map = array(
 			'header'  => 'header_layout',
 			'footer'  => 'footer_layout',
@@ -50,10 +63,13 @@ class LayoutResolver {
 		);
 
 		if ( ! isset( $map[ $type ] ) ) {
+			$this->resolved[ $type ] = null;
 			return null;
 		}
 
-		return $this->registry->get( $this->settings->get( $map[ $type ] ) );
+		$this->resolved[ $type ] = $this->registry->get( $this->settings->get( $map[ $type ] ) );
+
+		return $this->resolved[ $type ];
 	}
 
 	/**

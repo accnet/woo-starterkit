@@ -1,3 +1,4 @@
 .starterkit-element-countdown {
-  border-color: rgba(234, 88, 12, 0.25);
+  --starterkit-element-surface: #fff5d6;
+  --starterkit-element-border: #e1b878;
 }

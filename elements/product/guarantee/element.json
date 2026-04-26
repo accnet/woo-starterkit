@@ -3,6 +3,7 @@
   "label": "Guarantee",
   "context": "product",
   "category": "trust",
+  "max_instances": 1,
   "allowed_zones": ["product_before_summary", "product_after_summary", "product_before_related", "product_after_related", "product_before_tabs", "product_after_tabs"],
   "settings": {
     "title": { "type": "text", "label": "Title", "default": "Guarantee" },

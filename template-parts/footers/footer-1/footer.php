@@ -4,41 +4,12 @@
  *
  * @package StarterKit
  */
+$layout_settings_manager = starterkit()->layout_settings_manager();
+$layout_settings         = $layout_settings_manager->get_layout_settings( 'footer-1' );
 ?>
 <footer class="site-footer site-footer--preset-1">
 	<?php starterkit()->zone_renderer()->render( 'footer_top', array( 'context' => 'master' ) ); ?>
-	<div class="container footer-grid footer-grid--preset-1">
-		<div class="footer-col">
-			<?php if ( is_active_sidebar( 'footer-1' ) ) : ?>
-				<?php dynamic_sidebar( 'footer-1' ); ?>
-			<?php else : ?>
-				<h3 class="footer-col__title"><?php bloginfo( 'name' ); ?></h3>
-				<p class="footer-col__desc"><?php esc_html_e( 'Structured theme builder for WordPress and WooCommerce.', 'starterkit' ); ?></p>
-			<?php endif; ?>
-		</div>
-		<div class="footer-col">
-			<?php if ( is_active_sidebar( 'footer-2' ) ) : ?>
-				<?php dynamic_sidebar( 'footer-2' ); ?>
-			<?php else : ?>
-				<h3 class="footer-col__title"><?php esc_html_e( 'Quick Links', 'starterkit' ); ?></h3>
-				<?php wp_nav_menu( array( 'theme_location' => 'footer', 'fallback_cb' => false ) ); ?>
-			<?php endif; ?>
-		</div>
-		<div class="footer-col">
-			<?php if ( is_active_sidebar( 'footer-3' ) ) : ?>
-				<?php dynamic_sidebar( 'footer-3' ); ?>
-			<?php else : ?>
-				<h3 class="footer-col__title"><?php esc_html_e( 'Support', 'starterkit' ); ?></h3>
-			<?php endif; ?>
-		</div>
-		<div class="footer-col">
-			<?php if ( is_active_sidebar( 'footer-4' ) ) : ?>
-				<?php dynamic_sidebar( 'footer-4' ); ?>
-			<?php else : ?>
-				<h3 class="footer-col__title"><?php esc_html_e( 'Contact', 'starterkit' ); ?></h3>
-			<?php endif; ?>
-		</div>
-	</div>
+	<?php echo $layout_settings_manager->render_footer_1_grid( $layout_settings ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 	<div class="container footer-bottom footer-bottom--preset-1">
 		<p>&copy; <?php echo esc_html( gmdate( 'Y' ) ); ?> <?php bloginfo( 'name' ); ?></p>
 	</div>

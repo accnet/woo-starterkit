@@ -7,6 +7,8 @@
 
 namespace StarterKit\ThemeBuilder;
 
+use StarterKit\Settings\ControlSanitizer;
+
 class ElementRegistry {
 	/**
 	 * Base elements directory.
@@ -30,14 +32,22 @@ class ElementRegistry {
 	protected $definitions;
 
 	/**
+	 * Shared schema sanitizer.
+	 *
+	 * @var ControlSanitizer
+	 */
+	protected $sanitizer;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $base_path Elements base path.
 	 * @param string $base_uri Elements base URI.
 	 */
-	public function __construct( $base_path = '', $base_uri = '' ) {
+	public function __construct( $base_path = '', $base_uri = '', ControlSanitizer $sanitizer = null ) {
 		$this->base_path = $base_path ? untrailingslashit( $base_path ) : untrailingslashit( get_template_directory() . '/elements' );
 		$this->base_uri  = $base_uri ? untrailingslashit( $base_uri ) : untrailingslashit( get_template_directory_uri() . '/elements' );
+		$this->sanitizer = $sanitizer ? $sanitizer : new ControlSanitizer();
 	}
 
 	/**
@@ -237,6 +247,7 @@ class ElementRegistry {
 		$relative    = ltrim( str_replace( $this->base_path, '', $module_path ), '/\\' );
 		$module_uri  = trailingslashit( $this->base_uri ) . str_replace( DIRECTORY_SEPARATOR, '/', $relative );
 		$settings    = isset( $raw['settings'] ) && is_array( $raw['settings'] ) ? $raw['settings'] : array();
+		$schema      = $this->sanitizer->normalize_manifest_settings( $settings );
 
 		return array(
 			'id'               => sanitize_key( (string) $raw['id'] ),
@@ -247,8 +258,8 @@ class ElementRegistry {
 			'allowed_zones'    => $this->sanitize_string_list( isset( $raw['allowed_zones'] ) ? $raw['allowed_zones'] : array() ),
 			'max_instances'    => isset( $raw['max_instances'] ) ? absint( $raw['max_instances'] ) : 0,
 			'assets'           => isset( $raw['assets'] ) && is_array( $raw['assets'] ) ? $raw['assets'] : array(),
-			'default_settings' => $this->extract_default_settings( $settings ),
-			'settings_schema'  => $this->extract_settings_schema( $settings ),
+			'default_settings' => $this->sanitizer->defaults_from_schema( $schema ),
+			'settings_schema'  => $schema,
 			'module_path'      => $module_path,
 			'module_uri'       => $module_uri,
 			'render_path'      => file_exists( $module_path . '/render.php' ) ? $module_path . '/render.php' : '',
@@ -278,125 +289,6 @@ class ElementRegistry {
 		}
 
 		return array();
-	}
-
-	/**
-	 * Extract default settings from manifest controls.
-	 *
-	 * @param array<string, mixed> $settings Settings schema object.
-	 * @return array<string, mixed>
-	 */
-	protected function extract_default_settings( array $settings ) {
-		$defaults = array();
-
-		foreach ( $settings as $setting_id => $control ) {
-			if ( ! is_array( $control ) ) {
-				continue;
-			}
-
-			$defaults[ sanitize_key( (string) $setting_id ) ] = isset( $control['default'] ) ? $control['default'] : '';
-		}
-
-		return $defaults;
-	}
-
-	/**
-	 * Convert manifest settings object to the existing builder controls schema.
-	 *
-	 * @param array<string, mixed> $settings Settings schema object.
-	 * @return array<int, array<string, mixed>>
-	 */
-	protected function extract_settings_schema( array $settings ) {
-		$schema = array();
-
-		foreach ( $settings as $setting_id => $control ) {
-			if ( ! is_array( $control ) ) {
-				continue;
-			}
-
-			$control_schema = array(
-				'id'      => sanitize_key( (string) $setting_id ),
-				'type'    => isset( $control['type'] ) ? sanitize_key( (string) $control['type'] ) : 'text',
-				'label'   => isset( $control['label'] ) ? sanitize_text_field( (string) $control['label'] ) : ucwords( str_replace( '_', ' ', (string) $setting_id ) ),
-				'default' => isset( $control['default'] ) ? $control['default'] : '',
-				'options' => isset( $control['options'] ) && is_array( $control['options'] ) ? $this->sanitize_control_options( $control['options'] ) : array(),
-			);
-
-			foreach ( array( 'placeholder', 'help', 'min', 'max', 'step', 'rows', 'accept', 'item_label' ) as $meta_key ) {
-				if ( isset( $control[ $meta_key ] ) ) {
-					$control_schema[ $meta_key ] = sanitize_text_field( (string) $control[ $meta_key ] );
-				}
-			}
-
-			if ( isset( $control['multiple'] ) ) {
-				$control_schema['multiple'] = ! empty( $control['multiple'] );
-			}
-
-			if ( isset( $control['fields'] ) && is_array( $control['fields'] ) ) {
-				$control_schema['fields'] = $this->sanitize_control_fields( $control['fields'] );
-			}
-
-			$schema[] = $control_schema;
-		}
-
-		return $schema;
-	}
-
-	/**
-	 * Sanitize select-like control options.
-	 *
-	 * @param array<int, mixed> $options Raw options.
-	 * @return array<int, array<string, string>>
-	 */
-	protected function sanitize_control_options( array $options ) {
-		$sanitized = array();
-
-		foreach ( $options as $option ) {
-			if ( ! is_array( $option ) || ! isset( $option['value'] ) ) {
-				continue;
-			}
-
-			$sanitized[] = array(
-				'value' => sanitize_text_field( (string) $option['value'] ),
-				'label' => isset( $option['label'] ) ? sanitize_text_field( (string) $option['label'] ) : sanitize_text_field( (string) $option['value'] ),
-			);
-		}
-
-		return $sanitized;
-	}
-
-	/**
-	 * Sanitize repeater field schema.
-	 *
-	 * @param array<int, mixed> $fields Raw repeater fields.
-	 * @return array<int, array<string, mixed>>
-	 */
-	protected function sanitize_control_fields( array $fields ) {
-		$sanitized = array();
-
-		foreach ( $fields as $field ) {
-			if ( ! is_array( $field ) || empty( $field['id'] ) ) {
-				continue;
-			}
-
-			$field_schema = array(
-				'id'      => sanitize_key( (string) $field['id'] ),
-				'type'    => isset( $field['type'] ) ? sanitize_key( (string) $field['type'] ) : 'text',
-				'label'   => isset( $field['label'] ) ? sanitize_text_field( (string) $field['label'] ) : ucwords( str_replace( '_', ' ', (string) $field['id'] ) ),
-				'default' => isset( $field['default'] ) ? $field['default'] : '',
-				'options' => isset( $field['options'] ) && is_array( $field['options'] ) ? $this->sanitize_control_options( $field['options'] ) : array(),
-			);
-
-			foreach ( array( 'placeholder', 'help', 'min', 'max', 'step', 'rows', 'accept' ) as $meta_key ) {
-				if ( isset( $field[ $meta_key ] ) ) {
-					$field_schema[ $meta_key ] = sanitize_text_field( (string) $field[ $meta_key ] );
-				}
-			}
-
-			$sanitized[] = $field_schema;
-		}
-
-		return $sanitized;
 	}
 
 	/**

@@ -28,6 +28,9 @@ class LayoutRegistry {
 					'template'    => 'template-parts/headers/header-1/header.php',
 					'asset_base'  => 'template-parts/headers/header-1',
 					'slots'       => array( 'header_top', 'header_bottom' ),
+					'features'         => array( 'menu', 'search', 'cart' ),
+					'settings_version' => 1,
+					'settings_schema'  => $this->header_1_settings_schema(),
 				),
 				'header-2' => array(
 					'id'          => 'header-2',
@@ -54,6 +57,9 @@ class LayoutRegistry {
 					'template'    => 'template-parts/footers/footer-1/footer.php',
 					'asset_base'  => 'template-parts/footers/footer-1',
 					'slots'       => array( 'footer_top', 'footer_bottom' ),
+					'features'         => array( 'footer_widgets' ),
+					'settings_version' => 1,
+					'settings_schema'  => $this->footer_1_settings_schema(),
 				),
 				'footer-2' => array(
 					'id'          => 'footer-2',
@@ -202,5 +208,124 @@ class LayoutRegistry {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Return settings schema for header-1.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	protected function header_1_settings_schema() {
+		return array(
+			array(
+				'id'               => 'header_1_logo_max_height',
+				'type'             => 'range',
+				'label'            => __( 'Logo Max Height', 'starterkit' ),
+				'default'          => '45',
+				'min'              => '24',
+				'max'              => '96',
+				'step'             => '1',
+				'unit'             => 'px',
+				'preview_strategy' => 'css_variable',
+				'target'           => '--header-1-logo-max-height',
+			),
+			array(
+				'id'               => 'header_1_header_min_height',
+				'type'             => 'range',
+				'label'            => __( 'Header Min Height', 'starterkit' ),
+				'default'          => '72',
+				'min'              => '56',
+				'max'              => '128',
+				'step'             => '1',
+				'unit'             => 'px',
+				'preview_strategy' => 'css_variable',
+				'target'           => '--header-1-min-height',
+			),
+			array(
+				'id'               => 'header_1_background_color',
+				'type'             => 'color',
+				'label'            => __( 'Background Color', 'starterkit' ),
+				'default'          => '#ffffff',
+				'preview_strategy' => 'css_variable',
+				'target'           => '--header-1-bg',
+			),
+			array(
+				'id'               => 'header_1_main_menu_id',
+				'type'             => 'select',
+				'label'            => __( 'Main Menu', 'starterkit' ),
+				'default'          => '0',
+				'options_source'   => 'nav_menus',
+				'options'          => array(
+					array(
+						'value' => '0',
+						'label' => __( 'Use Primary Menu', 'starterkit' ),
+					),
+				),
+				'preview_strategy' => 'partial_render',
+				'target'           => '.site-header--preset-1 .site-navigation',
+				'partial'          => 'header_1_navigation',
+			),
+		);
+	}
+
+	/**
+	 * Return settings schema for footer-1.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	protected function footer_1_settings_schema() {
+		return array(
+			array(
+				'id'               => 'footer_1_column_count',
+				'type'             => 'select',
+				'label'            => __( 'Column Count', 'starterkit' ),
+				'default'          => '4',
+				'options'          => array(
+					array( 'value' => '1', 'label' => __( '1 Column', 'starterkit' ) ),
+					array( 'value' => '2', 'label' => __( '2 Columns', 'starterkit' ) ),
+					array( 'value' => '3', 'label' => __( '3 Columns', 'starterkit' ) ),
+					array( 'value' => '4', 'label' => __( '4 Columns', 'starterkit' ) ),
+				),
+				'preview_strategy' => 'partial_render',
+				'target'           => '.site-footer--preset-1 .footer-grid--preset-1',
+				'partial'          => 'footer_1_grid',
+			),
+			array(
+				'id'               => 'footer_1_show_column_1',
+				'type'             => 'toggle',
+				'label'            => __( 'Show Column 1', 'starterkit' ),
+				'default'          => '1',
+				'preview_strategy' => 'partial_render',
+				'target'           => '.site-footer--preset-1 .footer-grid--preset-1',
+				'partial'          => 'footer_1_grid',
+			),
+			array(
+				'id'               => 'footer_1_show_column_2',
+				'type'             => 'toggle',
+				'label'            => __( 'Show Column 2', 'starterkit' ),
+				'default'          => '1',
+				'preview_strategy' => 'partial_render',
+				'target'           => '.site-footer--preset-1 .footer-grid--preset-1',
+				'partial'          => 'footer_1_grid',
+			),
+			array(
+				'id'               => 'footer_1_show_column_3',
+				'type'             => 'toggle',
+				'label'            => __( 'Show Column 3', 'starterkit' ),
+				'default'          => '1',
+				'preview_strategy' => 'partial_render',
+				'target'           => '.site-footer--preset-1 .footer-grid--preset-1',
+				'partial'          => 'footer_1_grid',
+			),
+			array(
+				'id'               => 'footer_1_show_column_4',
+				'type'             => 'toggle',
+				'label'            => __( 'Show Column 4', 'starterkit' ),
+				'default'          => '1',
+				'preview_strategy' => 'partial_render',
+				'target'           => '.site-footer--preset-1 .footer-grid--preset-1',
+				'partial'          => 'footer_1_grid',
+			),
+		);
 	}
 }

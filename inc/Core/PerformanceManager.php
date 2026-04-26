@@ -99,6 +99,8 @@ class PerformanceManager {
 			wp_dequeue_style( 'wc-blocks-vendors-style' );
 			wp_deregister_style( 'wc-blocks-vendors-style' );
 		}
+
+		$this->dequeue_unused_woocommerce_assets();
 	}
 
 	/**
@@ -208,5 +210,43 @@ class PerformanceManager {
 	 */
 	protected function is_enabled( $key ) {
 		return '1' === (string) $this->settings->get( $key, '0' );
+	}
+
+	/**
+	 * Dequeue WooCommerce frontend scripts that are irrelevant to the current route.
+	 *
+	 * @return void
+	 */
+	protected function dequeue_unused_woocommerce_assets() {
+		if ( ! class_exists( 'WooCommerce' ) ) {
+			return;
+		}
+
+		$is_product        = function_exists( 'is_product' ) && is_product();
+		$is_cart           = function_exists( 'is_cart' ) && is_cart();
+		$is_checkout       = function_exists( 'is_checkout' ) && is_checkout();
+		$is_order_received = function_exists( 'is_order_received_page' ) && is_order_received_page();
+
+		if ( ! $is_product ) {
+			foreach ( array( 'wc-single-product', 'zoom', 'photoswipe-ui-default', 'flexslider', 'wc-add-to-cart-variation' ) as $handle ) {
+				wp_dequeue_script( $handle );
+				wp_deregister_script( $handle );
+			}
+
+			foreach ( array( 'photoswipe-default-skin', 'photoswipe' ) as $handle ) {
+				wp_dequeue_style( $handle );
+				wp_deregister_style( $handle );
+			}
+		}
+
+		if ( ! $is_cart ) {
+			wp_dequeue_script( 'wc-cart' );
+			wp_deregister_script( 'wc-cart' );
+		}
+
+		if ( ! $is_checkout || $is_order_received ) {
+			wp_dequeue_script( 'wc-checkout' );
+			wp_deregister_script( 'wc-checkout' );
+		}
 	}
 }

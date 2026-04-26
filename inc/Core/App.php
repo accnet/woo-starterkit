@@ -12,8 +12,10 @@ use StarterKit\Admin\ThemeBuilderPage;
 use StarterKit\Compatibility\WootifyCore\CartDrawerIntegration as WootifyCartDrawerIntegration;
 use StarterKit\Layouts\LayoutRegistry;
 use StarterKit\Layouts\LayoutResolver;
+use StarterKit\Layouts\LayoutSettingsManager;
 use StarterKit\Rules\DisplayRuleEvaluator;
 use StarterKit\Rules\PageContextResolver;
+use StarterKit\Settings\ControlSanitizer;
 use StarterKit\Settings\CssVariableOutput;
 use StarterKit\Settings\GlobalSettingsManager;
 use StarterKit\ThemeBuilder\ApiController;
@@ -72,25 +74,27 @@ class App {
 	public function boot() {
 		$this->theme_setup();
 		$this->settings_manager();
+		$this->control_sanitizer();
 		$this->css_variable_output();
 		$this->layout_registry();
-			$this->layout_resolver();
-			$this->settings_page();
-			$this->builder_context();
-			$this->builder_mode();
-			$this->preset_schema_registry();
-			$this->element_registry();
-			$this->builder_state_repository();
-			$this->preview_context_resolver();
-			$this->element_renderer();
-			$this->theme_builder_element_asset_manager();
-			$this->zone_renderer();
-			$this->theme_builder_api_controller();
-			$this->theme_builder_page();
-			$this->theme_builder_preview_asset_manager();
-			$this->context_resolver();
-			$this->display_rule_evaluator();
-			$this->asset_manager();
+		$this->layout_resolver();
+		$this->layout_settings_manager();
+		$this->settings_page();
+		$this->builder_context();
+		$this->builder_mode();
+		$this->preset_schema_registry();
+		$this->element_registry();
+		$this->builder_state_repository();
+		$this->preview_context_resolver();
+		$this->element_renderer();
+		$this->theme_builder_element_asset_manager();
+		$this->zone_renderer();
+		$this->theme_builder_api_controller();
+		$this->theme_builder_page();
+		$this->theme_builder_preview_asset_manager();
+		$this->context_resolver();
+		$this->display_rule_evaluator();
+		$this->asset_manager();
 		$this->performance_manager();
 		$this->script_injection_manager();
 		$this->product_layout_manager();
@@ -189,7 +193,21 @@ class App {
 		return $this->service(
 			'settings_manager',
 			function() {
-				return new GlobalSettingsManager();
+				return new GlobalSettingsManager( $this->layout_registry(), $this->control_sanitizer() );
+			}
+		);
+	}
+
+	/**
+	 * Shared control sanitizer.
+	 *
+	 * @return ControlSanitizer
+	 */
+	public function control_sanitizer() {
+		return $this->service(
+			'control_sanitizer',
+			function() {
+				return new ControlSanitizer();
 			}
 		);
 	}
@@ -232,6 +250,20 @@ class App {
 			'layout_resolver',
 			function() {
 				return new LayoutResolver( $this->layout_registry(), $this->settings_manager() );
+			}
+		);
+	}
+
+	/**
+	 * Layout settings manager.
+	 *
+	 * @return LayoutSettingsManager
+	 */
+	public function layout_settings_manager() {
+		return $this->service(
+			'layout_settings_manager',
+			function() {
+				return new LayoutSettingsManager( $this->layout_registry(), $this->layout_resolver(), $this->settings_manager(), $this->control_sanitizer() );
 			}
 		);
 	}
@@ -287,7 +319,7 @@ class App {
 		return $this->service(
 			'preset_schema_registry',
 			function() {
-				return new PresetSchemaRegistry( $this->layout_resolver() );
+				return new PresetSchemaRegistry( $this->layout_resolver(), $this->control_sanitizer() );
 			}
 		);
 	}
@@ -301,7 +333,7 @@ class App {
 		return $this->service(
 			'element_registry',
 			function() {
-				return new ElementRegistry( get_template_directory() . '/elements', get_template_directory_uri() . '/elements' );
+				return new ElementRegistry( get_template_directory() . '/elements', get_template_directory_uri() . '/elements', $this->control_sanitizer() );
 			}
 		);
 	}
@@ -315,7 +347,7 @@ class App {
 		return $this->service(
 			'theme_builder_element_asset_manager',
 			function() {
-				return new ElementAssetManager( $this->element_registry(), $this->builder_state_repository() );
+				return new ElementAssetManager( $this->element_registry(), $this->builder_state_repository(), $this->preset_schema_registry(), $this->context_resolver() );
 			}
 		);
 	}
@@ -329,7 +361,7 @@ class App {
 		return $this->service(
 			'builder_state_repository',
 			function() {
-				return new BuilderStateRepository( $this->preset_schema_registry(), $this->element_registry() );
+				return new BuilderStateRepository( $this->preset_schema_registry(), $this->element_registry(), $this->control_sanitizer() );
 			}
 		);
 	}
@@ -371,7 +403,7 @@ class App {
 		return $this->service(
 			'zone_renderer',
 			function() {
-				return new ZoneRenderer( $this->preset_schema_registry(), $this->builder_state_repository(), $this->element_renderer(), $this->builder_mode() );
+				return new ZoneRenderer( $this->preset_schema_registry(), $this->builder_state_repository(), $this->element_renderer(), $this->builder_mode(), $this->context_resolver() );
 			}
 		);
 	}
@@ -391,7 +423,8 @@ class App {
 					$this->element_registry(),
 					$this->builder_state_repository(),
 					$this->preview_context_resolver(),
-					$this->zone_renderer()
+					$this->zone_renderer(),
+					$this->layout_settings_manager()
 				);
 			}
 		);

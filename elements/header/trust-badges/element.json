@@ -6,6 +6,18 @@
   "allowed_zones": ["header_top", "header_bottom", "footer_top", "footer_bottom"],
   "settings": {
     "title": { "type": "text", "label": "Title", "default": "Trust Badges" },
-    "items": { "type": "textarea", "label": "Items", "default": "30-day returns\nSecure checkout\nFast delivery" }
+    "items": {
+      "type": "repeater",
+      "label": "Items",
+      "item_label": "Badge",
+      "default": [
+        { "text": "30-day returns" },
+        { "text": "Secure checkout" },
+        { "text": "Fast delivery" }
+      ],
+      "fields": [
+        { "id": "text", "type": "text", "label": "Text", "default": "" }
+      ]
+    }
   }
 }

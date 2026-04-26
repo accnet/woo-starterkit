@@ -6,6 +6,18 @@
   "allowed_zones": ["header_bottom", "footer_top", "footer_bottom"],
   "settings": {
     "title": { "type": "text", "label": "Title", "default": "Payment Icons" },
-    "items": { "type": "textarea", "label": "Items", "default": "Visa\nMastercard\nPayPal" }
+    "items": {
+      "type": "repeater",
+      "label": "Items",
+      "item_label": "Payment Method",
+      "default": [
+        { "text": "Visa" },
+        { "text": "Mastercard" },
+        { "text": "PayPal" }
+      ],
+      "fields": [
+        { "id": "text", "type": "text", "label": "Text", "default": "" }
+      ]
+    }
   }
 }

@@ -7,6 +7,8 @@
 
 namespace StarterKit\ThemeBuilder;
 
+use StarterKit\Core\AssetVersion;
+
 class PreviewAssetManager {
 	/**
 	 * Builder mode.
@@ -42,14 +44,14 @@ class PreviewAssetManager {
 			'starterkit-theme-builder-preview',
 			get_template_directory_uri() . '/assets/css/theme-builder.css',
 			array(),
-			filemtime( get_template_directory() . '/assets/css/theme-builder.css' )
+			AssetVersion::for_file( get_template_directory() . '/assets/css/theme-builder.css' )
 		);
 
 		wp_enqueue_script(
 			'starterkit-theme-builder-preview',
 			get_template_directory_uri() . '/assets/js/theme-builder-preview.js',
 			array(),
-			filemtime( get_template_directory() . '/assets/js/theme-builder-preview.js' ),
+			AssetVersion::for_file( get_template_directory() . '/assets/js/theme-builder-preview.js' ),
 			true
 		);
 	}

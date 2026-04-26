@@ -13,23 +13,32 @@
   var previewUrls = bootstrap.previewUrls || {};
   var activeSchemas = bootstrap.activeSchemas || {};
   var elements = bootstrap.elements || {};
+  var layoutSettings = JSON.parse(JSON.stringify(bootstrap.layoutSettings || {}));
+  var layoutSettingsVersion = bootstrap.layoutSettingsVersion || '';
+  var layoutSettingsSchemas = bootstrap.layoutSettingsSchemas || {};
   var exitUrl = config.exitUrl || '';
   var allowedMessageOrigins = getAllowedMessageOrigins();
   var colorPickerInitialized = false;
+  var pendingLayoutPreviewPartials = {};
 
   var ui = {
     context: contexts[0] ? contexts[0].id : 'master',
+    inspectorMode: (contexts[0] && contexts[0].id && contexts[0].id !== 'master') ? 'element' : 'settings',
     selectedContext: '',
     selectedZone: '',
     selectedElementId: '',
     deviceMode: 'desktop',
     search: '',
     drag: null,
-    undoState: null,
     previewReloadTimer: null,
+    layoutPreviewTimer: null,
     loading: false,
+    builderDirty: false,
+    layoutSettingsDirty: false,
     dirty: false,
     hasConflict: false,
+    stateConflict: false,
+    layoutSettingsConflict: false,
     error: ''
   };
 
@@ -279,30 +288,6 @@
     return JSON.parse(JSON.stringify(value));
   }
 
-  function captureUndoState() {
-    ui.undoState = {
-      state: cloneValue(state),
-      selectedContext: ui.selectedContext,
-      selectedZone: ui.selectedZone,
-      selectedElementId: ui.selectedElementId
-    };
-  }
-
-  function restoreUndoState() {
-    if (!ui.undoState) {
-      return;
-    }
-
-    state = cloneValue(ui.undoState.state);
-    ui.selectedContext = ui.undoState.selectedContext || '';
-    ui.selectedZone = ui.undoState.selectedZone || '';
-    ui.selectedElementId = ui.undoState.selectedElementId || '';
-    ui.undoState = null;
-    ui.error = '';
-    markDirty();
-    render();
-  }
-
   function reloadLatestState() {
     ui.loading = true;
     ui.error = '';
@@ -315,9 +300,14 @@
 
       state = cloneValue(response.data.state || {});
       stateVersion = response.data.version || '';
-      ui.undoState = null;
-      ui.dirty = false;
+      layoutSettings = cloneValue(response.data.layoutSettings || {});
+      layoutSettingsVersion = response.data.layoutSettingsVersion || '';
+      ui.builderDirty = false;
+      ui.layoutSettingsDirty = false;
+      refreshDirtyState();
       ui.hasConflict = false;
+      ui.stateConflict = false;
+      ui.layoutSettingsConflict = false;
 
       if (response.data.previewUrls) {
         previewUrls = response.data.previewUrls;
@@ -332,8 +322,13 @@
         elements = response.data.elements;
       }
 
+      if (response.data.layoutSettingsSchemas) {
+        layoutSettingsSchemas = response.data.layoutSettingsSchemas;
+      }
+
       syncSelectionWithState();
       schedulePreviewReload();
+      scheduleLayoutPreviewUpdate();
     }).catch(function(error) {
       ui.error = error && error.message ? error.message : 'Failed to reload latest builder state.';
     }).finally(function() {
@@ -438,12 +433,47 @@
     }, 180);
   }
 
-  function markDirty() {
-    ui.dirty = true;
+  function refreshDirtyState() {
+    ui.dirty = ui.builderDirty || ui.layoutSettingsDirty;
+  }
+
+  function markDirty(scope) {
+    if (scope === 'layout') {
+      ui.layoutSettingsDirty = true;
+    } else {
+      ui.builderDirty = true;
+    }
+
+    refreshDirtyState();
+  }
+
+  function syncPublishControls() {
+    var publishButton = root.querySelector('[data-action="save-publish"]');
+    var previewStatus = root.querySelector('.starterkit-theme-builder__preview-status span');
+
+    if (publishButton) {
+      publishButton.disabled = ui.loading || !ui.dirty || ui.hasConflict;
+      publishButton.innerHTML = ui.loading ? 'Publishing...' : 'Save &amp; Publish';
+    }
+
+    if (previewStatus) {
+      previewStatus.textContent = ui.loading ? 'Publishing...' : (ui.hasConflict ? 'Conflict detected' : (ui.dirty ? 'Unsaved changes' : 'Published'));
+    }
+  }
+
+  function queueAllLayoutPreviewPartials() {
+    Object.keys(layoutSettingsSchemas || {}).forEach(function(layoutId) {
+      var schema = layoutSettingsSchemas[layoutId] || {};
+      (schema.settings_schema || []).forEach(function(control) {
+        if (control.preview_strategy === 'partial_render' && control.partial) {
+          pendingLayoutPreviewPartials[control.partial] = true;
+        }
+      });
+    });
   }
 
   function saveState() {
-    if (ui.loading || !ui.dirty) {
+    if (ui.loading || !ui.dirty || ui.hasConflict) {
       return;
     }
 
@@ -452,32 +482,67 @@
 
     request('starterkit_theme_builder_save_state', {
       state: JSON.stringify(state),
-      version: stateVersion
+      version: stateVersion,
+      layoutSettings: JSON.stringify(layoutSettings),
+      layoutSettingsVersion: layoutSettingsVersion,
+      saveBuilderState: ui.builderDirty ? '1' : '0',
+      saveLayoutSettings: ui.layoutSettingsDirty ? '1' : '0'
     }).then(function(response) {
       if (response && response.data && response.data.state) {
         state = response.data.state;
         stateVersion = response.data.version || stateVersion;
-        ui.dirty = false;
+        layoutSettings = cloneValue(response.data.layoutSettings || layoutSettings);
+        layoutSettingsVersion = response.data.layoutSettingsVersion || layoutSettingsVersion;
+        if (response.data.savedBuilderState) {
+          ui.builderDirty = false;
+        }
+        if (response.data.savedLayoutSettings) {
+          ui.layoutSettingsDirty = false;
+        }
+        refreshDirtyState();
         ui.error = '';
         ui.hasConflict = false;
+        ui.stateConflict = false;
+        ui.layoutSettingsConflict = false;
         syncSelectionWithState();
-        schedulePreviewReload();
+        if (response.data.savedBuilderState) {
+          schedulePreviewReload();
+        } else if (response.data.savedLayoutSettings) {
+          scheduleLayoutPreviewUpdate();
+        }
       }
     }).catch(function(error) {
-      if (error && error.payload && error.payload.state) {
-        state = error.payload.state;
+      var payload = error && error.payload ? error.payload : null;
+
+      if (payload && payload.state && (!payload.stateConflict || payload.savedBuilderState)) {
+        state = payload.state;
+        stateVersion = payload.version || payload.stateVersion || stateVersion;
       }
 
-      if (error && error.payload && error.payload.serverVersion) {
-        stateVersion = error.payload.serverVersion;
+      if (payload && payload.savedBuilderState) {
+        ui.builderDirty = false;
+      }
+
+      if (payload && payload.serverVersion && payload.code !== 'layout_settings_version_conflict' && !payload.stateConflict) {
+        stateVersion = payload.serverVersion;
+      }
+
+      if (payload && payload.layoutSettings && (!payload.layoutSettingsConflict || payload.savedLayoutSettings)) {
+        layoutSettings = cloneValue(payload.layoutSettings);
+      }
+
+      if (payload && payload.savedLayoutSettings) {
+        layoutSettingsVersion = payload.layoutSettingsVersion || payload.layoutServerVersion || layoutSettingsVersion;
+        ui.layoutSettingsDirty = false;
       }
 
       if (error && error.message && /another session/i.test(error.message)) {
-        ui.undoState = null;
-        ui.dirty = false;
         ui.hasConflict = true;
+        ui.stateConflict = !!(payload && payload.stateConflict);
+        ui.layoutSettingsConflict = !!(payload && payload.layoutSettingsConflict);
       }
 
+      refreshDirtyState();
       syncSelectionWithState();
 
       ui.error = error && error.message ? error.message : 'Failed to save builder state.';
@@ -488,6 +553,7 @@
   }
 
   function selectZone(zoneId, context) {
+    ui.inspectorMode = 'element';
     ui.selectedContext = context || ui.context;
     ui.selectedZone = zoneId || '';
     if (!zoneId) {
@@ -508,6 +574,7 @@
   }
 
   function selectElement(zoneId, elementId, context) {
+    ui.inspectorMode = 'element';
     ui.selectedContext = context || ui.context;
     ui.selectedZone = zoneId || '';
     ui.selectedElementId = elementId || '';
@@ -544,6 +611,76 @@
       },
       getPreviewTargetOrigin()
     );
+  }
+
+  function notifyPreviewLayoutSettings() {
+    var iframe = getPreviewIframe();
+    if (!iframe || !iframe.contentWindow) {
+      return;
+    }
+
+    iframe.contentWindow.postMessage(
+      {
+        type: 'starterkit-builder-layout-settings',
+        settings: layoutSettings
+      },
+      getPreviewTargetOrigin()
+    );
+  }
+
+  function notifyPreviewLayoutPartial(target, html) {
+    var iframe = getPreviewIframe();
+    if (!iframe || !iframe.contentWindow || !target || html === undefined || html === null) {
+      return;
+    }
+
+    iframe.contentWindow.postMessage(
+      {
+        type: 'starterkit-builder-replace-layout-partial',
+        target: target,
+        html: html
+      },
+      getPreviewTargetOrigin()
+    );
+  }
+
+  function refreshLayoutPartial(partial) {
+    request('starterkit_theme_builder_render_layout_partial', {
+      partial: partial,
+      layoutSettings: JSON.stringify(layoutSettings)
+    }).then(function(response) {
+      var data = response && response.data ? response.data : null;
+      if (!data || !data.target || data.html === undefined || data.html === null) {
+        return;
+      }
+
+      notifyPreviewLayoutPartial(data.target, data.html);
+    }).catch(function(error) {
+      ui.error = error && error.message ? error.message : 'Failed to refresh layout preview.';
+      render();
+    });
+  }
+
+  function scheduleLayoutPreviewUpdate(settingId) {
+    if (settingId) {
+      var control = getLayoutControlById(settingId);
+      if (control && control.preview_strategy === 'partial_render' && control.partial) {
+        pendingLayoutPreviewPartials[control.partial] = true;
+      }
+    }
+
+    if (ui.layoutPreviewTimer) {
+      window.clearTimeout(ui.layoutPreviewTimer);
+    }
+
+    ui.layoutPreviewTimer = window.setTimeout(function() {
+      var partials = Object.keys(pendingLayoutPreviewPartials);
+      pendingLayoutPreviewPartials = {};
+      ui.layoutPreviewTimer = null;
+      notifyPreviewLayoutSettings();
+
+      partials.forEach(refreshLayoutPartial);
+    }, 150);
   }
 
   function notifyPreviewElementRemoved(zoneId, elementId) {
@@ -646,7 +783,6 @@
       return;
     }
 
-    captureUndoState();
     var moved = items.splice(index, 1)[0];
     items.splice(target, 0, moved);
     markDirty();
@@ -664,7 +800,6 @@
       return;
     }
 
-    captureUndoState();
     var moved = items.splice(index, 1)[0];
     if (edge === 'top') {
       items.unshift(moved);
@@ -904,8 +1039,6 @@
       return;
     }
 
-    captureUndoState();
-
     var instance = makeInstance(elementId);
     insertIntoZone(zoneId, instance, '', 'after', context);
 
@@ -926,7 +1059,6 @@
     }
 
     if (ui.drag.type === 'library') {
-      captureUndoState();
       var instance = makeInstance(ui.drag.elementId);
       insertIntoZone(zoneId, instance, targetElementId, position, ui.context);
       ui.selectedZone = zoneId;
@@ -952,7 +1084,6 @@
         return;
       }
 
-      captureUndoState();
       var moved = located.items.splice(located.index, 1)[0];
       var sourceZoneId = ui.drag.sourceZoneId;
       insertIntoZone(zoneId, moved, targetElementId, position, ui.context);
@@ -981,34 +1112,10 @@
       return;
     }
 
-    captureUndoState();
     items.splice(index, 1);
     ui.selectedElementId = '';
     markDirty();
     refreshPreviewZone(zoneId, context);
-    render();
-  }
-
-  function duplicateSelected() {
-    var item = getSelectedElement();
-    if (!item) {
-      return;
-    }
-
-    if (!canAddElementToZone(item.type, ui.selectedZone, false, '', getSelectedContext())) {
-      ui.error = getElementLimitMessage(item.type);
-      render();
-      return;
-    }
-
-    captureUndoState();
-    var items = getZoneItems(ui.selectedZone, getSelectedContext());
-    var copy = cloneValue(item);
-    copy.id = 'tb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-    items.push(copy);
-    ui.selectedElementId = copy.id;
-    markDirty();
-    refreshPreviewZone(ui.selectedZone, getSelectedContext());
     render();
   }
 
@@ -1018,7 +1125,6 @@
       return;
     }
 
-    captureUndoState();
     item.enabled = !item.enabled;
     markDirty();
     refreshPreviewZone(ui.selectedZone, getSelectedContext());
@@ -1057,39 +1163,38 @@
   function buildZoneListHtml() {
     var zoneIndex = getZoneIndex(ui.context);
 
-    return Object.keys(zoneIndex)
+    var options = Object.keys(zoneIndex)
       .map(function(zoneId) {
         var zone = zoneIndex[zoneId];
-        var isActive = zoneId === ui.selectedZone ? ' is-active' : '';
-        var isDroppable = canDropOnZone(zoneId) ? ' is-droppable' : '';
         var count = getZoneItems(zoneId).length;
 
         return (
-          '<button class="starterkit-theme-builder__zone-item' +
-          isActive +
-          isDroppable +
-          '" data-action="select-zone" data-zone-id="' +
+          '<option value="' +
           escapeHtml(zoneId) +
-          '" data-drop-zone-id="' +
-          escapeHtml(zoneId) +
-          '">' +
-          '<strong>' +
-          escapeHtml(zone.label) +
-          '</strong>' +
-          '<span>' +
-          escapeHtml(zone.presetId) + ' • ' + escapeHtml(count + ' items') +
-          '</span>' +
-          '</button>'
+          '"' +
+          (zoneId === ui.selectedZone ? ' selected' : '') +
+          '>' +
+          escapeHtml(zone.label + ' - ' + zone.presetId + ' - ' + count + ' items') +
+          '</option>'
         );
       })
       .join('');
+
+    return (
+      '<label class="starterkit-theme-builder__control starterkit-theme-builder__zone-select-control">' +
+      '<span>Zone</span>' +
+      '<select data-action="select-zone-dropdown">' +
+      '<option value="">Select a zone</option>' +
+      options +
+      '</select>' +
+      '</label>'
+    );
   }
 
   function buildNavbarHtml() {
     return (
       '<div class="starterkit-theme-builder__navbar">' +
       '<div class="starterkit-theme-builder__navbar-left">' +
-      '<button type="button" class="button starterkit-theme-builder__exit-button" data-action="exit-builder" aria-label="Exit Theme Builder">Exit</button>' +
       '<div class="starterkit-theme-builder__brand">' +
       '<span class="starterkit-theme-builder__brand-mark">TB</span>' +
       '<strong>Theme Builder</strong>' +
@@ -1109,9 +1214,10 @@
       }).join('') +
       '</nav>' +
       '<div class="starterkit-theme-builder__navbar-actions">' +
-      '<button class="button button-primary" data-action="save-publish"' + (ui.loading || !ui.dirty ? ' disabled' : '') + '>' + (ui.loading ? 'Publishing...' : 'Save &amp; Publish') + '</button>' +
+      (ui.context === 'master' ? '<button class="button' + (ui.inspectorMode === 'settings' ? ' button-primary' : '') + '" data-action="open-layout-settings">Settings</button>' : '') +
+      '<button class="button button-primary" data-action="save-publish"' + (ui.loading || !ui.dirty || ui.hasConflict ? ' disabled' : '') + '>' + (ui.loading ? 'Publishing...' : 'Save &amp; Publish') + '</button>' +
       (ui.hasConflict ? '<button class="button" data-action="reload-latest">Reload Latest State</button>' : '') +
-      (ui.undoState ? '<button class="button" data-action="undo">Undo Last Change</button>' : '') +
+      '<button type="button" class="button starterkit-theme-builder__exit-button" data-action="exit-builder" aria-label="Exit Theme Builder">Exit</button>' +
       '</div>' +
       '</div>'
     );
@@ -1158,9 +1264,13 @@
     }
 
     options = options || {};
+    if (String(element.settings[settingId] === undefined ? '' : element.settings[settingId]) === String(value)) {
+      return;
+    }
+
     element.settings[settingId] = value;
     ui.error = '';
-    markDirty();
+    markDirty('builder');
     refreshPreviewZone(ui.selectedZone, getSelectedContext());
 
     if (options.render !== false) {
@@ -1185,6 +1295,10 @@
     }
 
     options = options || {};
+    var existingRow = Array.isArray(element.settings[settingId]) ? element.settings[settingId][rowIndex] : null;
+    if (existingRow && String(existingRow[fieldId] === undefined ? '' : existingRow[fieldId]) === String(value)) {
+      return;
+    }
 
     if (!Array.isArray(element.settings[settingId])) {
       element.settings[settingId] = [];
@@ -1196,7 +1310,7 @@
 
     element.settings[settingId][rowIndex][fieldId] = value;
     ui.error = '';
-    markDirty();
+    markDirty('builder');
     refreshPreviewZone(ui.selectedZone, getSelectedContext());
 
     if (options.render !== false) {
@@ -1382,6 +1496,137 @@
     );
   }
 
+  function buildLayoutControlHtml(control, value) {
+    var commonAttrs = buildCommonInputAttributes(control);
+    var dataAttr = ' data-layout-setting-id="' + escapeHtml(control.id) + '"';
+
+    if (control.type === 'select') {
+      return (
+        '<label class="starterkit-theme-builder__control">' +
+        '<span>' + escapeHtml(control.label) + '</span>' +
+        '<select' + dataAttr + '>' +
+        (control.options || []).map(function(option) {
+          var selected = String(option.value) === String(value) ? ' selected' : '';
+          return '<option value="' + escapeHtml(option.value) + '"' + selected + '>' + escapeHtml(option.label) + '</option>';
+        }).join('') +
+        '</select>' +
+        buildHelpHtml(control) +
+        '</label>'
+      );
+    }
+
+    if (control.type === 'toggle' || control.type === 'checkbox') {
+      return (
+        '<label class="starterkit-theme-builder__control starterkit-theme-builder__control--toggle">' +
+        '<input type="checkbox"' + dataAttr + (value === true || value === '1' ? ' checked' : '') + '>' +
+        '<span>' + escapeHtml(control.label) + '</span>' +
+        buildHelpHtml(control) +
+        '</label>'
+      );
+    }
+
+    if (control.type === 'range') {
+      return (
+        '<label class="starterkit-theme-builder__control">' +
+        '<span>' + escapeHtml(control.label) + '</span>' +
+        '<div class="starterkit-theme-builder__range-control">' +
+        '<input type="range" value="' + escapeHtml(value) + '"' + dataAttr + commonAttrs + '>' +
+        '<input type="number" value="' + escapeHtml(value) + '"' + dataAttr + commonAttrs + '>' +
+        '</div>' +
+        buildHelpHtml(control) +
+        '</label>'
+      );
+    }
+
+    if (control.type === 'color') {
+      return buildColorInputHtml(
+        control.label,
+        value,
+        dataAttr,
+        commonAttrs,
+        buildHelpHtml(control)
+      );
+    }
+
+    var inputType = control.type === 'url' ? 'url' : (control.type === 'number' ? 'number' : 'text');
+
+    return (
+      '<label class="starterkit-theme-builder__control">' +
+      '<span>' + escapeHtml(control.label) + '</span>' +
+      '<input type="' + escapeHtml(inputType) + '" value="' + escapeHtml(value) + '"' + dataAttr + commonAttrs + '>' +
+      buildHelpHtml(control) +
+      '</label>'
+    );
+  }
+
+  function getLayoutControlById(settingId) {
+    var found = null;
+
+    Object.keys(layoutSettingsSchemas || {}).some(function(layoutId) {
+      var schema = layoutSettingsSchemas[layoutId] || {};
+      return (schema.settings_schema || []).some(function(control) {
+        if (control.id !== settingId) {
+          return false;
+        }
+
+        found = control;
+        return true;
+      });
+    });
+
+    return found;
+  }
+
+  function updateLayoutSetting(settingId, value, options) {
+    if (!settingId) {
+      return;
+    }
+
+    options = options || {};
+    if (String(layoutSettings[settingId] === undefined ? '' : layoutSettings[settingId]) === String(value)) {
+      return;
+    }
+
+    layoutSettings[settingId] = value;
+    ui.error = '';
+    markDirty('layout');
+    scheduleLayoutPreviewUpdate(settingId);
+
+    if (options.render !== false) {
+      render();
+    } else {
+      syncPublishControls();
+    }
+  }
+
+  function buildLayoutSettingsHtml() {
+    var sections = Object.keys(layoutSettingsSchemas || {}).map(function(layoutId) {
+      var schema = layoutSettingsSchemas[layoutId] || {};
+      var controls = schema.settings_schema || [];
+
+      if (!controls.length) {
+        return '';
+      }
+
+      return (
+        '<div class="starterkit-theme-builder__panel-section starterkit-theme-builder__layout-settings-section">' +
+        '<h3>' + escapeHtml(schema.label || layoutId) + '</h3>' +
+        '<p class="starterkit-theme-builder__meta">Layout settings</p>' +
+        controls.map(function(control) {
+          var value = layoutSettings[control.id];
+          if (value === undefined) {
+            value = control.default !== undefined ? cloneValue(control.default) : '';
+          }
+
+          return buildLayoutControlHtml(control, value);
+        }).join('') +
+        '</div>'
+      );
+    }).join('');
+
+    return sections || '<p class="starterkit-theme-builder__empty">No configurable settings for the active master layouts.</p>';
+  }
+
   function initColorPicker() {
     if (!window.Coloris) {
       return;
@@ -1445,6 +1690,10 @@
   }
 
   function buildInspectorHtml() {
+    if (ui.context === 'master' && ui.inspectorMode === 'settings') {
+      return buildLayoutSettingsHtml();
+    }
+
     var zone = getZoneSchema(ui.selectedZone, getSelectedContext());
     var element = getSelectedElement();
 
@@ -1461,7 +1710,6 @@
       '<div class="starterkit-theme-builder__inspector-actions">' +
       '<button type="button" class="button" data-action="move-up">Move Up</button>' +
       '<button type="button" class="button" data-action="move-down">Move Down</button>' +
-      '<button type="button" class="button" data-action="duplicate">Duplicate</button>' +
       '<button type="button" class="button" data-action="toggle">' + (element.enabled ? 'Disable' : 'Enable') + '</button>' +
       '<button type="button" class="button starterkit-theme-builder__danger-button" data-action="delete">Delete</button>' +
       '</div>';
@@ -1492,11 +1740,11 @@
 
     root.querySelector('.js-builder-sidebar').innerHTML =
       '<div class="starterkit-theme-builder__sidebar">' +
-      '<div class="starterkit-theme-builder__panel-section">' +
+      '<div class="starterkit-theme-builder__panel-section starterkit-theme-builder__panel-section--zones">' +
       '<h3>Zones</h3>' +
       '<div class="starterkit-theme-builder__zone-list">' + buildZoneListHtml() + '</div>' +
       '</div>' +
-      '<div class="starterkit-theme-builder__panel-section">' +
+      '<div class="starterkit-theme-builder__panel-section starterkit-theme-builder__panel-section--library">' +
       '<h3>Element Library</h3>' +
       '<p class="starterkit-theme-builder__meta">Select a zone, then click or drag an element into the preview.</p>' +
       '<label class="starterkit-theme-builder__control">' +
@@ -1530,10 +1778,16 @@
 
     notifyPreviewSelection();
     notifyPreviewDragState();
+    notifyPreviewLayoutSettings();
     initColorPicker();
   }
 
   root.addEventListener('input', function(event) {
+    if (event.target.matches('[data-layout-setting-id]')) {
+      updateLayoutSetting(event.target.getAttribute('data-layout-setting-id') || '', getInputValue(event.target), { render: false });
+      return;
+    }
+
     if (!event.target.matches('.starterkit-theme-builder__color-input[data-setting-id]')) {
       return;
     }
@@ -1558,6 +1812,7 @@
   root.addEventListener('change', function(event) {
     if (event.target.matches('[data-action="change-context"]')) {
       ui.context = event.target.value;
+      ui.inspectorMode = ui.context === 'master' ? 'settings' : 'element';
       ui.selectedContext = '';
       ui.selectedZone = '';
       ui.selectedElementId = '';
@@ -1569,6 +1824,11 @@
     if (event.target.matches('[data-action="search-elements"]')) {
       ui.search = event.target.value || '';
       render();
+      return;
+    }
+
+    if (event.target.matches('[data-action="select-zone-dropdown"]')) {
+      selectZone(event.target.value || '');
       return;
     }
 
@@ -1592,6 +1852,10 @@
 
       updateSelectedElementSetting(settingId, getInputValue(event.target));
     }
+
+    if (event.target.matches('[data-layout-setting-id]')) {
+      updateLayoutSetting(event.target.getAttribute('data-layout-setting-id') || '', getInputValue(event.target));
+    }
   });
 
   root.addEventListener('click', function(event) {
@@ -1604,11 +1868,23 @@
 
     if (action === 'change-context-button') {
       ui.context = button.getAttribute('data-context') || ui.context;
+      ui.inspectorMode = ui.context === 'master' ? 'settings' : 'element';
       ui.selectedContext = '';
       ui.selectedZone = '';
       ui.selectedElementId = '';
       reloadPreview();
       render();
+      return;
+    }
+
+    if (action === 'open-layout-settings') {
+      ui.inspectorMode = 'settings';
+      ui.selectedContext = '';
+      ui.selectedZone = '';
+      ui.selectedElementId = '';
+      render();
+      notifyPreviewSelection();
+      notifyPreviewLayoutSettings();
       return;
     }
 
@@ -1667,7 +1943,6 @@
         addElement.settings[addSettingId] = [];
       }
 
-      captureUndoState();
       addElement.settings[addSettingId].push(getRepeaterRowDefaults(addControl));
       markDirty();
       refreshPreviewZone(ui.selectedZone, getSelectedContext());
@@ -1684,7 +1959,6 @@
         return;
       }
 
-      captureUndoState();
       removeElement.settings[removeSettingId].splice(removeIndex, 1);
       markDirty();
       refreshPreviewZone(ui.selectedZone, getSelectedContext());
@@ -1712,18 +1986,8 @@
       return;
     }
 
-    if (action === 'duplicate') {
-      duplicateSelected();
-      return;
-    }
-
     if (action === 'toggle') {
       toggleSelected();
-      return;
-    }
-
-    if (action === 'undo') {
-      restoreUndoState();
       return;
     }
 
@@ -1884,6 +2148,7 @@
     if (event.data.type === 'starterkit-builder-ready') {
       notifyPreviewSelection();
       notifyPreviewDragState();
+      notifyPreviewLayoutSettings();
     }
 
     if (event.data.type === 'starterkit-builder-drop') {

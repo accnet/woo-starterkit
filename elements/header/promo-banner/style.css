@@ -1,3 +1,5 @@
 .starterkit-element-promo-banner {
   text-align: center;
+  --starterkit-element-surface: #f1f8f5;
+  --starterkit-element-border: #b7d9cc;
 }

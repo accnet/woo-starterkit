@@ -7,6 +7,8 @@
 
 namespace StarterKit\Settings;
 
+use StarterKit\Layouts\LayoutRegistry;
+
 class GlobalSettingsManager {
 	/**
 	 * Settings option key.
@@ -14,12 +16,51 @@ class GlobalSettingsManager {
 	const OPTION_KEY = 'starterkit_global_settings';
 
 	/**
+	 * Request-local settings cache.
+	 *
+	 * @var array<string, mixed>|null
+	 */
+	protected $settings_cache = null;
+
+	/**
+	 * Layout registry used to discover schema-driven layout setting controls.
+	 *
+	 * @var LayoutRegistry|null
+	 */
+	protected $layout_registry;
+
+	/**
+	 * Shared control sanitizer.
+	 *
+	 * @var ControlSanitizer|null
+	 */
+	protected $control_sanitizer;
+
+	/**
+	 * Request-local layout controls cache.
+	 *
+	 * @var array<string, array<string, mixed>>|null
+	 */
+	protected $layout_controls_cache = null;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param LayoutRegistry|null   $layout_registry Layout registry.
+	 * @param ControlSanitizer|null $control_sanitizer Shared control sanitizer.
+	 */
+	public function __construct( LayoutRegistry $layout_registry = null, ControlSanitizer $control_sanitizer = null ) {
+		$this->layout_registry   = $layout_registry;
+		$this->control_sanitizer = $control_sanitizer;
+	}
+
+	/**
 	 * Default settings.
 	 *
 	 * @return array<string, mixed>
 	 */
 	public function defaults() {
-		return array(
+		$defaults = array(
 			'logo_id'            => 0,
 			'favicon_id'         => 0,
 			'header_layout'      => 'header-1',
@@ -74,6 +115,8 @@ class GlobalSettingsManager {
 			'body_scripts_top'   => '',
 			'body_scripts_bottom' => '',
 		);
+
+		return array_merge( $defaults, $this->layout_setting_defaults() );
 	}
 
 	/**
@@ -354,9 +397,24 @@ class GlobalSettingsManager {
 	 * @return array<string, mixed>
 	 */
 	public function all() {
+		if ( null !== $this->settings_cache ) {
+			return $this->settings_cache;
+		}
+
 		$saved = get_option( self::OPTION_KEY, array() );
 
-		return wp_parse_args( is_array( $saved ) ? $saved : array(), $this->defaults() );
+		$this->settings_cache = wp_parse_args( is_array( $saved ) ? $saved : array(), $this->defaults() );
+
+		return $this->settings_cache;
+	}
+
+	/**
+	 * Clear request-local settings cache.
+	 *
+	 * @return void
+	 */
+	public function reset_cache() {
+		$this->settings_cache = null;
 	}
 
 	/**
@@ -384,10 +442,16 @@ class GlobalSettingsManager {
 		$saved    = is_array( $saved ) ? $saved : array();
 		$merged   = array_merge( $saved, $input );
 		$defaults = $this->defaults();
+		$layout_controls = $this->layout_controls_by_id();
 		$output   = array();
 
 		foreach ( $defaults as $key => $value ) {
 			$raw = isset( $merged[ $key ] ) ? $merged[ $key ] : $value;
+
+			if ( isset( $layout_controls[ $key ] ) ) {
+				$output[ $key ] = $this->control_sanitizer()->sanitize_control_value( $layout_controls[ $key ], $raw );
+				continue;
+			}
 
 			switch ( $key ) {
 				case 'logo_id':
@@ -473,6 +537,138 @@ class GlobalSettingsManager {
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Return layout setting controls indexed by id.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	protected function layout_controls_by_id() {
+		if ( null !== $this->layout_controls_cache ) {
+			return $this->layout_controls_cache;
+		}
+
+		$this->layout_controls_cache = array();
+		$registry                    = $this->layout_registry();
+
+		if ( ! $registry ) {
+			return $this->layout_controls_cache;
+		}
+
+		foreach ( $registry->all() as $group ) {
+			foreach ( $group as $layout ) {
+				if ( empty( $layout['settings_schema'] ) || ! is_array( $layout['settings_schema'] ) ) {
+					continue;
+				}
+
+				foreach ( $this->control_sanitizer()->normalize_schema( $layout['settings_schema'] ) as $control ) {
+					$id = isset( $control['id'] ) ? sanitize_key( (string) $control['id'] ) : '';
+
+					if ( '' === $id ) {
+						continue;
+					}
+
+					$this->layout_controls_cache[ $id ] = $this->resolve_layout_control_options( (array) $control );
+				}
+			}
+		}
+
+		return $this->layout_controls_cache;
+	}
+
+	/**
+	 * Return schema-defined layout setting defaults.
+	 *
+	 * @return array<string, mixed>
+	 */
+	protected function layout_setting_defaults() {
+		$defaults = array();
+		$registry = $this->layout_registry();
+
+		if ( ! $registry ) {
+			return $defaults;
+		}
+
+		foreach ( $registry->all() as $group ) {
+			foreach ( $group as $layout ) {
+				if ( empty( $layout['settings_schema'] ) || ! is_array( $layout['settings_schema'] ) ) {
+					continue;
+				}
+
+				foreach ( $this->control_sanitizer()->normalize_schema( $layout['settings_schema'] ) as $control ) {
+					$id = isset( $control['id'] ) ? sanitize_key( (string) $control['id'] ) : '';
+
+					if ( '' === $id || ! array_key_exists( 'default', (array) $control ) ) {
+						continue;
+					}
+
+					$defaults[ $id ] = $control['default'];
+				}
+			}
+		}
+
+		return $defaults;
+	}
+
+	/**
+	 * Return a layout registry, lazily constructing one for direct manager usage.
+	 *
+	 * @return LayoutRegistry|null
+	 */
+	protected function layout_registry() {
+		if ( $this->layout_registry ) {
+			return $this->layout_registry;
+		}
+
+		if ( class_exists( LayoutRegistry::class ) ) {
+			$this->layout_registry = new LayoutRegistry();
+		}
+
+		return $this->layout_registry;
+	}
+
+	/**
+	 * Return a shared control sanitizer.
+	 *
+	 * @return ControlSanitizer
+	 */
+	protected function control_sanitizer() {
+		if ( ! $this->control_sanitizer ) {
+			$this->control_sanitizer = new ControlSanitizer();
+		}
+
+		return $this->control_sanitizer;
+	}
+
+	/**
+	 * Resolve dynamic option sources used by layout controls.
+	 *
+	 * @param array<string, mixed> $control Control schema.
+	 * @return array<string, mixed>
+	 */
+	protected function resolve_layout_control_options( array $control ) {
+		if ( isset( $control['options_source'] ) && 'nav_menus' === $control['options_source'] ) {
+			$options = array(
+				array(
+					'value' => '0',
+					'label' => __( 'Use Primary Menu', 'starterkit' ),
+				),
+			);
+
+			if ( function_exists( 'wp_get_nav_menus' ) ) {
+				foreach ( wp_get_nav_menus() as $menu ) {
+					$options[] = array(
+						'value' => (string) $menu->term_id,
+						'label' => (string) $menu->name,
+					);
+				}
+			}
+
+			$control['options'] = $options;
+		}
+
+		return $control;
 	}
 
 	/**
