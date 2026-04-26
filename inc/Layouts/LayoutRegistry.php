@@ -85,6 +85,8 @@ class LayoutRegistry {
 					'description' => __( 'Classic gallery left, summary right composition.', 'starterkit' ),
 					'template'    => 'template-parts/product/product-layout-1/product.php',
 					'asset_base'  => 'template-parts/product/product-layout-1',
+					'settings_version' => 1,
+					'settings_schema'  => $this->product_split_layout_settings_schema(),
 					'slots'       => array(
 						'product_before_gallery',
 						'product_after_gallery',
@@ -100,6 +102,11 @@ class LayoutRegistry {
 					'description' => __( 'Stacked modern product story layout.', 'starterkit' ),
 					'template'    => 'template-parts/product/product-layout-2/product.php',
 					'asset_base'  => 'template-parts/product/product-layout-2',
+					'settings_version' => 1,
+					'settings_schema'  => $this->product_split_layout_settings_schema(
+						true,
+						__( 'This preset uses a single-column product layout, so gallery width is not configurable here.', 'starterkit' )
+					),
 					'slots'       => array(
 						'product_before_summary',
 						'product_after_summary',
@@ -113,6 +120,8 @@ class LayoutRegistry {
 					'description' => __( 'Sticky-summary commerce layout with extended merchandising slots.', 'starterkit' ),
 					'template'    => 'template-parts/product/product-layout-3/product.php',
 					'asset_base'  => 'template-parts/product/product-layout-3',
+					'settings_version' => 1,
+					'settings_schema'  => $this->product_split_layout_settings_schema(),
 					'slots'       => array(
 						'product_before_gallery',
 						'product_after_gallery',
@@ -327,5 +336,43 @@ class LayoutRegistry {
 				'partial'          => 'footer_1_grid',
 			),
 		);
+	}
+
+	/**
+	 * Return settings schema for split product layouts.
+	 *
+	 * @param bool   $disabled Whether the control should be disabled in the UI.
+	 * @param string $help Optional help text.
+	 * @return array<int, array<string, mixed>>
+	 */
+	protected function product_split_layout_settings_schema( $disabled = false, $help = '' ) {
+		$controls = array(
+			array(
+				'id'      => 'product_gallery_column_ratio',
+				'type'    => 'range',
+				'label'   => __( 'Gallery Width', 'starterkit' ),
+				'default' => '60',
+				'min'     => '40',
+				'max'     => '70',
+				'step'    => '1',
+				'unit'    => '%',
+			),
+			array(
+				'id'      => 'product_show_description_tab',
+				'type'    => 'toggle',
+				'label'   => __( 'Show Description Tab', 'starterkit' ),
+				'default' => '1',
+			),
+		);
+
+		if ( $disabled ) {
+			$controls[0]['disabled'] = true;
+		}
+
+		if ( '' !== $help ) {
+			$controls[0]['help'] = $help;
+		}
+
+		return $controls;
 	}
 }

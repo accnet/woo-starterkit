@@ -135,6 +135,10 @@ class ControlSanitizer {
 			$normalized['multiple'] = ! empty( $control['multiple'] );
 		}
 
+		if ( isset( $control['disabled'] ) ) {
+			$normalized['disabled'] = ! empty( $control['disabled'] );
+		}
+
 		if ( 'repeater' === $type ) {
 			$normalized['fields']  = isset( $control['fields'] ) && is_array( $control['fields'] ) ? $this->normalize_schema( $control['fields'] ) : array();
 			$normalized['default'] = $this->normalize_repeater_default( $normalized['default'], $normalized );

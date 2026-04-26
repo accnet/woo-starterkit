@@ -15,9 +15,13 @@ if ( ! $product instanceof \WC_Product ) {
 
 $gallery_items = \StarterKit\Helpers\ProductGallery::get_items( $product );
 $zone_renderer = starterkit()->zone_renderer();
+$layout_settings_manager = starterkit()->layout_settings_manager();
+$layout_inline_style = $layout_settings_manager->product_split_layout_inline_style(
+	$layout_settings_manager->get_layout_settings( 'product-layout-1' )
+);
 ?>
 <div class="starterkit-product-layout product-layout-1">
-	<div class="starterkit-product-layout__product-shell">
+	<div class="starterkit-product-layout__product-shell" style="<?php echo esc_attr( $layout_inline_style ); ?>">
 		<div class="starterkit-product-layout__gallery-column">
 			<?php $zone_renderer->render( 'product_before_gallery', array( 'context' => 'product' ) ); ?>
 			<?php woocommerce_show_product_sale_flash(); ?>

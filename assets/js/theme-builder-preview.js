@@ -269,10 +269,40 @@
     grid.style.setProperty('--footer-1-columns', String(visibleCount || 1));
   }
 
+  function applyProductSplitLayoutSettings(settings) {
+    var galleryWidth = Math.max(40, Math.min(70, Number(settings.product_gallery_column_ratio || 60)));
+    var summaryWidth = 100 - galleryWidth;
+
+    document
+      .querySelectorAll('.starterkit-product-layout.product-layout-1 .starterkit-product-layout__product-shell, .starterkit-product-layout--preset-3 .starterkit-product-layout__product-shell--preset-3')
+      .forEach(function(shell) {
+        shell.style.setProperty('--starterkit-product-gallery-col', String(galleryWidth) + '%');
+        shell.style.setProperty('--starterkit-product-summary-col', String(summaryWidth) + '%');
+      });
+  }
+
+  function applyProductDescriptionTabSettings(settings) {
+    var showDescription = String(settings.product_show_description_tab === undefined ? '1' : settings.product_show_description_tab) === '1';
+
+    document
+      .querySelectorAll('.description_tab, .wc-tab.description_tab')
+      .forEach(function(tab) {
+        tab.style.display = showDescription ? '' : 'none';
+      });
+
+    document
+      .querySelectorAll('#tab-description, .woocommerce-Tabs-panel--description')
+      .forEach(function(panel) {
+        panel.style.display = showDescription ? '' : 'none';
+      });
+  }
+
   function applyLayoutSettings(settings) {
     layoutSettings = Object.assign({}, layoutSettings, settings || {});
     applyHeaderOneSettings(layoutSettings);
     applyFooterOneSettings(layoutSettings);
+    applyProductSplitLayoutSettings(layoutSettings);
+    applyProductDescriptionTabSettings(layoutSettings);
   }
 
   function replaceLayoutPartial(target, html) {

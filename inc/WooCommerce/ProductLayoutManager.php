@@ -7,6 +7,7 @@
 
 namespace StarterKit\WooCommerce;
 
+use StarterKit\Layouts\LayoutSettingsManager;
 use StarterKit\Layouts\LayoutResolver;
 
 class ProductLayoutManager {
@@ -16,6 +17,13 @@ class ProductLayoutManager {
 	 * @var LayoutResolver
 	 */
 	protected $layout_resolver;
+
+	/**
+	 * Layout settings manager.
+	 *
+	 * @var LayoutSettingsManager
+	 */
+	protected $layout_settings_manager;
 
 	/**
 	 * Whether the default layout wrapper is currently open.
@@ -29,8 +37,9 @@ class ProductLayoutManager {
 	 *
 	 * @param LayoutResolver $layout_resolver Resolver.
 	 */
-	public function __construct( LayoutResolver $layout_resolver ) {
-		$this->layout_resolver = $layout_resolver;
+	public function __construct( LayoutResolver $layout_resolver, LayoutSettingsManager $layout_settings_manager ) {
+		$this->layout_resolver         = $layout_resolver;
+		$this->layout_settings_manager = $layout_settings_manager;
 	}
 
 	/**
@@ -113,6 +122,17 @@ class ProductLayoutManager {
 	}
 
 	/**
+	 * Determine whether the Description tab should be shown.
+	 *
+	 * @return bool
+	 */
+	public function should_show_description_tab() {
+		$settings = $this->get_current_layout_settings();
+
+		return '1' === (string) ( isset( $settings['product_show_description_tab'] ) ? $settings['product_show_description_tab'] : '1' );
+	}
+
+	/**
 	 * Determine whether current product layout uses a split gallery/summary composition.
 	 *
 	 * @return bool
@@ -125,5 +145,21 @@ class ProductLayoutManager {
 		}
 
 		return in_array( (string) $layout['id'], array( 'product-layout-1', 'product-layout-3' ), true );
+	}
+
+	/**
+	 * Return sanitized settings for the active product layout.
+	 *
+	 * @return array<string, mixed>
+	 */
+	protected function get_current_layout_settings() {
+		$layout = $this->layout_resolver->resolve( 'product' );
+		$layout_id = isset( $layout['id'] ) ? (string) $layout['id'] : '';
+
+		if ( '' === $layout_id ) {
+			return array();
+		}
+
+		return $this->layout_settings_manager->get_layout_settings( $layout_id );
 	}
 }

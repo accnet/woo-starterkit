@@ -495,7 +495,7 @@ class App {
 		return $this->service(
 			'product_layout_manager',
 			function() {
-				return new ProductLayoutManager( $this->layout_resolver() );
+				return new ProductLayoutManager( $this->layout_resolver(), $this->layout_settings_manager() );
 			}
 		);
 	}

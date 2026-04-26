@@ -1,0 +1,19 @@
+{
+  "id": "description",
+  "label": "Product Description",
+  "context": "product",
+  "category": "content",
+  "max_instances": 1,
+  "allowed_zones": ["product_before_summary", "product_after_summary", "product_before_tabs", "product_after_tabs", "product_before_related", "product_after_related"],
+  "assets": {
+    "css": "style.css",
+    "js": "toggle.js"
+  },
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Product description" },
+    "enable_collapse": { "type": "toggle", "label": "Enable Collapse / Expand", "default": "1" },
+    "collapsed_lines": { "type": "number", "label": "Collapsed Lines", "default": "6", "min": "2", "max": "20", "step": "1" },
+    "expand_label": { "type": "text", "label": "Expand Label", "default": "Read more" },
+    "collapse_label": { "type": "text", "label": "Collapse Label", "default": "Show less" }
+  }
+}

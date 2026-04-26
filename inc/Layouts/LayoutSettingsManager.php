@@ -101,15 +101,17 @@ class LayoutSettingsManager {
 	}
 
 	/**
-	 * Return active Master layout settings as a flat map.
+	 * Return active layout settings as a flat map.
 	 *
 	 * @param array<string, mixed>|null $draft Optional draft settings.
 	 * @return array<string, mixed>
 	 */
-	public function get_active_master_settings( array $draft = null ) {
+	public function get_active_settings( array $draft = null ) {
 		$output = array();
 
-		foreach ( $this->get_active_master_layouts() as $layout ) {
+		foreach ( $this->get_active_layouts() as $resolved ) {
+			$layout = isset( $resolved['layout'] ) && is_array( $resolved['layout'] ) ? $resolved['layout'] : array();
+
 			if ( empty( $layout['id'] ) ) {
 				continue;
 			}
@@ -121,14 +123,18 @@ class LayoutSettingsManager {
 	}
 
 	/**
-	 * Return active Master layout schemas for the builder.
+	 * Return active layout schemas for the builder.
 	 *
 	 * @return array<string, array<string, mixed>>
 	 */
-	public function get_active_master_schemas() {
+	public function get_active_schemas() {
 		$output = array();
 
-		foreach ( $this->get_active_master_layouts() as $part => $layout ) {
+		foreach ( $this->get_active_layouts() as $resolved ) {
+			$part    = isset( $resolved['part'] ) ? (string) $resolved['part'] : '';
+			$context = isset( $resolved['context'] ) ? (string) $resolved['context'] : 'master';
+			$layout  = isset( $resolved['layout'] ) && is_array( $resolved['layout'] ) ? $resolved['layout'] : array();
+
 			if ( empty( $layout['id'] ) ) {
 				continue;
 			}
@@ -143,6 +149,7 @@ class LayoutSettingsManager {
 			$output[ $layout_id ] = array(
 				'id'               => $layout_id,
 				'part'             => $part,
+				'context'          => $context,
 				'label'            => isset( $layout['label'] ) ? (string) $layout['label'] : $layout_id,
 				'settings_version' => isset( $layout['settings_version'] ) ? (int) $layout['settings_version'] : 1,
 				'settings_schema'  => $schema,
@@ -153,22 +160,22 @@ class LayoutSettingsManager {
 	}
 
 	/**
-	 * Return a version hash for active Master layout settings.
+	 * Return a version hash for active layout settings.
 	 *
 	 * @return string
 	 */
 	public function version() {
-		return md5( wp_json_encode( $this->get_active_master_settings() ) );
+		return md5( wp_json_encode( $this->get_active_settings() ) );
 	}
 
 	/**
-	 * Save active Master layout settings from a flat map.
+	 * Save active layout settings from a flat map.
 	 *
 	 * @param array<string, mixed> $raw_settings Raw layout settings.
 	 * @return array<string, mixed>
 	 */
-	public function save_active_master_settings( array $raw_settings ) {
-		$sanitized = $this->get_active_master_settings( $raw_settings );
+	public function save_active_settings( array $raw_settings ) {
+		$sanitized = $this->get_active_settings( $raw_settings );
 		$saved     = get_option( GlobalSettingsManager::OPTION_KEY, array() );
 		$saved     = is_array( $saved ) ? $saved : array();
 
@@ -180,7 +187,36 @@ class LayoutSettingsManager {
 		$this->settings->reset_cache();
 		$this->cache = array();
 
-		return $this->get_active_master_settings();
+		return $this->get_active_settings();
+	}
+
+	/**
+	 * Backward-compatible alias for active Master layout settings.
+	 *
+	 * @param array<string, mixed>|null $draft Optional draft settings.
+	 * @return array<string, mixed>
+	 */
+	public function get_active_master_settings( array $draft = null ) {
+		return $this->get_active_settings( $draft );
+	}
+
+	/**
+	 * Backward-compatible alias for active Master layout schemas.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public function get_active_master_schemas() {
+		return $this->get_active_schemas();
+	}
+
+	/**
+	 * Backward-compatible alias for saving active Master layout settings.
+	 *
+	 * @param array<string, mixed> $raw_settings Raw layout settings.
+	 * @return array<string, mixed>
+	 */
+	public function save_active_master_settings( array $raw_settings ) {
+		return $this->save_active_settings( $raw_settings );
 	}
 
 	/**
@@ -271,6 +307,32 @@ class LayoutSettingsManager {
 				'--header-1-bg' => $settings['header_1_background_color'],
 			)
 		);
+	}
+
+	/**
+	 * Return the configured gallery width percentage for split product layouts.
+	 *
+	 * @param array<string, mixed>|null $settings Optional settings.
+	 * @return int
+	 */
+	public function product_gallery_width_percent( array $settings = null ) {
+		$settings = is_array( $settings ) ? $settings : $this->get_layout_settings( 'product-layout-1' );
+		$gallery  = isset( $settings['product_gallery_column_ratio'] ) ? (int) $settings['product_gallery_column_ratio'] : 60;
+
+		return max( 40, min( 70, $gallery ) );
+	}
+
+	/**
+	 * Return inline CSS variables for split product layouts.
+	 *
+	 * @param array<string, mixed>|null $settings Optional settings.
+	 * @return string
+	 */
+	public function product_split_layout_inline_style( array $settings = null ) {
+		$gallery = $this->product_gallery_width_percent( $settings );
+		$summary = 100 - $gallery;
+
+		return '--starterkit-product-gallery-col:' . $gallery . '%;--starterkit-product-summary-col:' . $summary . '%;';
 	}
 
 	/**
@@ -402,6 +464,45 @@ class LayoutSettingsManager {
 				'footer' => $this->resolver->resolve( 'footer' ),
 			)
 		);
+	}
+
+	/**
+	 * Return active layouts across builder contexts.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	protected function get_active_layouts() {
+		$layouts = array();
+
+		foreach ( $this->get_active_master_layouts() as $part => $layout ) {
+			$layouts[] = array(
+				'context' => 'master',
+				'part'    => $part,
+				'layout'  => $layout,
+			);
+		}
+
+		$product = $this->resolver->resolve( 'product' );
+
+		if ( ! empty( $product['id'] ) ) {
+			$layouts[] = array(
+				'context' => 'product',
+				'part'    => 'product',
+				'layout'  => $product,
+			);
+		}
+
+		$archive = $this->resolver->resolve( 'archive' );
+
+		if ( ! empty( $archive['id'] ) ) {
+			$layouts[] = array(
+				'context' => 'archive',
+				'part'    => 'archive',
+				'layout'  => $archive,
+			);
+		}
+
+		return $layouts;
 	}
 
 	/**

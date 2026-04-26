@@ -1214,7 +1214,7 @@
       }).join('') +
       '</nav>' +
       '<div class="starterkit-theme-builder__navbar-actions">' +
-      (ui.context === 'master' ? '<button class="button' + (ui.inspectorMode === 'settings' ? ' button-primary' : '') + '" data-action="open-layout-settings">Settings</button>' : '') +
+      (contextHasLayoutSettings(ui.context) ? '<button class="button' + (ui.inspectorMode === 'settings' ? ' button-primary' : '') + '" data-action="open-layout-settings">Settings</button>' : '') +
       '<button class="button button-primary" data-action="save-publish"' + (ui.loading || !ui.dirty || ui.hasConflict ? ' disabled' : '') + '>' + (ui.loading ? 'Publishing...' : 'Save &amp; Publish') + '</button>' +
       (ui.hasConflict ? '<button class="button" data-action="reload-latest">Reload Latest State</button>' : '') +
       '<button type="button" class="button starterkit-theme-builder__exit-button" data-action="exit-builder" aria-label="Exit Theme Builder">Exit</button>' +
@@ -1225,6 +1225,10 @@
 
   function buildHelpHtml(control) {
     return control.help ? '<span class="starterkit-theme-builder__control-help">' + escapeHtml(control.help) + '</span>' : '';
+  }
+
+  function buildDisabledAttribute(control) {
+    return control && control.disabled ? ' disabled' : '';
   }
 
   function buildCommonInputAttributes(control) {
@@ -1499,12 +1503,13 @@
   function buildLayoutControlHtml(control, value) {
     var commonAttrs = buildCommonInputAttributes(control);
     var dataAttr = ' data-layout-setting-id="' + escapeHtml(control.id) + '"';
+    var disabledAttr = buildDisabledAttribute(control);
 
     if (control.type === 'select') {
       return (
         '<label class="starterkit-theme-builder__control">' +
         '<span>' + escapeHtml(control.label) + '</span>' +
-        '<select' + dataAttr + '>' +
+        '<select' + dataAttr + disabledAttr + '>' +
         (control.options || []).map(function(option) {
           var selected = String(option.value) === String(value) ? ' selected' : '';
           return '<option value="' + escapeHtml(option.value) + '"' + selected + '>' + escapeHtml(option.label) + '</option>';
@@ -1518,7 +1523,7 @@
     if (control.type === 'toggle' || control.type === 'checkbox') {
       return (
         '<label class="starterkit-theme-builder__control starterkit-theme-builder__control--toggle">' +
-        '<input type="checkbox"' + dataAttr + (value === true || value === '1' ? ' checked' : '') + '>' +
+        '<input type="checkbox"' + dataAttr + disabledAttr + (value === true || value === '1' ? ' checked' : '') + '>' +
         '<span>' + escapeHtml(control.label) + '</span>' +
         buildHelpHtml(control) +
         '</label>'
@@ -1530,8 +1535,8 @@
         '<label class="starterkit-theme-builder__control">' +
         '<span>' + escapeHtml(control.label) + '</span>' +
         '<div class="starterkit-theme-builder__range-control">' +
-        '<input type="range" value="' + escapeHtml(value) + '"' + dataAttr + commonAttrs + '>' +
-        '<input type="number" value="' + escapeHtml(value) + '"' + dataAttr + commonAttrs + '>' +
+        '<input type="range" value="' + escapeHtml(value) + '"' + dataAttr + commonAttrs + disabledAttr + '>' +
+        '<input type="number" value="' + escapeHtml(value) + '"' + dataAttr + commonAttrs + disabledAttr + '>' +
         '</div>' +
         buildHelpHtml(control) +
         '</label>'
@@ -1553,7 +1558,7 @@
     return (
       '<label class="starterkit-theme-builder__control">' +
       '<span>' + escapeHtml(control.label) + '</span>' +
-      '<input type="' + escapeHtml(inputType) + '" value="' + escapeHtml(value) + '"' + dataAttr + commonAttrs + '>' +
+      '<input type="' + escapeHtml(inputType) + '" value="' + escapeHtml(value) + '"' + dataAttr + commonAttrs + disabledAttr + '>' +
       buildHelpHtml(control) +
       '</label>'
     );
@@ -1577,8 +1582,32 @@
     return found;
   }
 
+  function getCurrentLayoutSettingsSchemas() {
+    return Object.keys(layoutSettingsSchemas || {}).reduce(function(result, layoutId) {
+      var schema = layoutSettingsSchemas[layoutId] || {};
+
+      if ((schema.context || 'master') === ui.context) {
+        result[layoutId] = schema;
+      }
+
+      return result;
+    }, {});
+  }
+
+  function contextHasLayoutSettings(contextId) {
+    return Object.keys(layoutSettingsSchemas || {}).some(function(layoutId) {
+      var schema = layoutSettingsSchemas[layoutId] || {};
+      return (schema.context || 'master') === (contextId || ui.context) && Array.isArray(schema.settings_schema) && schema.settings_schema.length > 0;
+    });
+  }
+
   function updateLayoutSetting(settingId, value, options) {
     if (!settingId) {
+      return;
+    }
+
+    var control = getLayoutControlById(settingId);
+    if (control && control.disabled) {
       return;
     }
 
@@ -1600,8 +1629,9 @@
   }
 
   function buildLayoutSettingsHtml() {
-    var sections = Object.keys(layoutSettingsSchemas || {}).map(function(layoutId) {
-      var schema = layoutSettingsSchemas[layoutId] || {};
+    var currentSchemas = getCurrentLayoutSettingsSchemas();
+    var sections = Object.keys(currentSchemas).map(function(layoutId) {
+      var schema = currentSchemas[layoutId] || {};
       var controls = schema.settings_schema || [];
 
       if (!controls.length) {
@@ -1624,7 +1654,7 @@
       );
     }).join('');
 
-    return sections || '<p class="starterkit-theme-builder__empty">No configurable settings for the active master layouts.</p>';
+    return sections || '<p class="starterkit-theme-builder__empty">No configurable settings for the active layouts in this context.</p>';
   }
 
   function initColorPicker() {
@@ -1690,7 +1720,7 @@
   }
 
   function buildInspectorHtml() {
-    if (ui.context === 'master' && ui.inspectorMode === 'settings') {
+    if (ui.inspectorMode === 'settings' && contextHasLayoutSettings(ui.context)) {
       return buildLayoutSettingsHtml();
     }
 
@@ -1783,6 +1813,10 @@
   }
 
   root.addEventListener('input', function(event) {
+    if (event.target.disabled) {
+      return;
+    }
+
     if (event.target.matches('[data-layout-setting-id]')) {
       updateLayoutSetting(event.target.getAttribute('data-layout-setting-id') || '', getInputValue(event.target), { render: false });
       return;
@@ -1810,9 +1844,13 @@
   });
 
   root.addEventListener('change', function(event) {
+    if (event.target.disabled) {
+      return;
+    }
+
     if (event.target.matches('[data-action="change-context"]')) {
       ui.context = event.target.value;
-      ui.inspectorMode = ui.context === 'master' ? 'settings' : 'element';
+      ui.inspectorMode = contextHasLayoutSettings(ui.context) ? 'settings' : 'element';
       ui.selectedContext = '';
       ui.selectedZone = '';
       ui.selectedElementId = '';
@@ -1868,7 +1906,7 @@
 
     if (action === 'change-context-button') {
       ui.context = button.getAttribute('data-context') || ui.context;
-      ui.inspectorMode = ui.context === 'master' ? 'settings' : 'element';
+      ui.inspectorMode = contextHasLayoutSettings(ui.context) ? 'settings' : 'element';
       ui.selectedContext = '';
       ui.selectedZone = '';
       ui.selectedElementId = '';

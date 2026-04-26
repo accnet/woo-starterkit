@@ -45,6 +45,7 @@ class HookRegistrar {
 		add_action( 'woocommerce_after_main_content', array( $this->archive_layout_manager, 'render_layout_close' ), 50 );
 		add_filter( 'loop_shop_per_page', array( $this, 'filter_loop_shop_per_page' ), 20 );
 		add_filter( 'loop_shop_columns', array( $this, 'filter_loop_shop_columns' ), 20 );
+		add_filter( 'woocommerce_product_tabs', array( $this, 'filter_product_tabs' ), 20 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_woocommerce_styles' ), 100 );
 
 		add_action( 'wp_ajax_starterkit_apply_coupon', array( $this, 'ajax_apply_coupon' ) );
@@ -120,6 +121,26 @@ class HookRegistrar {
 		$defaults['wrap_after']  = '</nav>';
 
 		return $defaults;
+	}
+
+	/**
+	 * Remove the Description tab when disabled in the active product layout settings.
+	 *
+	 * @param array<string, mixed> $tabs Product tabs.
+	 * @return array<string, mixed>
+	 */
+	public function filter_product_tabs( $tabs ) {
+		if ( ! is_array( $tabs ) || ! function_exists( 'is_product' ) || ! is_product() ) {
+			return $tabs;
+		}
+
+		if ( $this->product_layout_manager->should_show_description_tab() ) {
+			return $tabs;
+		}
+
+		unset( $tabs['description'] );
+
+		return $tabs;
 	}
 
 	/**

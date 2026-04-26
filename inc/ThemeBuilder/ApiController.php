@@ -115,7 +115,7 @@ class ApiController {
 		$state_conflict      = $save_state && '' !== $version && $version !== $current;
 		$layout_conflict     = $save_layout && '' !== $layout_version && $layout_version !== $current_layout;
 		$state               = $this->state_repository->all();
-		$layout_settings     = $this->layout_settings_manager->get_active_master_settings();
+		$layout_settings     = $this->layout_settings_manager->get_active_settings();
 		$saved_state         = false;
 		$saved_layout        = false;
 
@@ -125,7 +125,7 @@ class ApiController {
 		}
 
 		if ( $save_layout && ! $layout_conflict ) {
-			$layout_settings = is_array( $raw_layout_settings ) ? $this->layout_settings_manager->save_active_master_settings( $raw_layout_settings ) : $layout_settings;
+			$layout_settings = is_array( $raw_layout_settings ) ? $this->layout_settings_manager->save_active_settings( $raw_layout_settings ) : $layout_settings;
 			$saved_layout    = true;
 		}
 
@@ -158,7 +158,7 @@ class ApiController {
 					'stateServerVersion'    => $current,
 					'layoutServerVersion'   => $current_layout,
 					'layoutSettingsVersion' => $this->layout_settings_manager->version(),
-					'layoutSettings'        => $this->layout_settings_manager->get_active_master_settings(),
+					'layoutSettings'        => $this->layout_settings_manager->get_active_settings(),
 				),
 				409
 			);
@@ -298,9 +298,9 @@ class ApiController {
 			'previewUrls'   => $this->preview_context_resolver->all(),
 			'state'         => $this->state_repository->all(),
 			'version'       => $this->state_repository->version(),
-			'layoutSettings' => $this->layout_settings_manager->get_active_master_settings(),
+			'layoutSettings' => $this->layout_settings_manager->get_active_settings(),
 			'layoutSettingsVersion' => $this->layout_settings_manager->version(),
-			'layoutSettingsSchemas' => $this->layout_settings_manager->get_active_master_schemas(),
+			'layoutSettingsSchemas' => $this->layout_settings_manager->get_active_schemas(),
 			'navMenus'      => $this->layout_settings_manager->get_nav_menu_options(),
 		);
 	}

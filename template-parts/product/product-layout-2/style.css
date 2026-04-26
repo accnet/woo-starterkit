@@ -7,6 +7,11 @@
   margin: 0 auto;
 }
 
+.starterkit-product-layout.product-layout-2 .starterkit-product-layout__stack--preset-2 {
+  display: grid;
+  gap: clamp(16px, 2.6vw, 28px);
+}
+
 .starterkit-product-layout.product-layout-2 .images,
 .starterkit-product-layout.product-layout-2 .summary {
   width: 100%;
