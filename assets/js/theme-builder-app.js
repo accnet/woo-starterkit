@@ -13,6 +13,7 @@
   var previewUrls = bootstrap.previewUrls || {};
   var activeSchemas = bootstrap.activeSchemas || {};
   var elements = bootstrap.elements || {};
+  var exitUrl = config.exitUrl || '';
   var allowedMessageOrigins = getAllowedMessageOrigins();
   var colorPickerInitialized = false;
 
@@ -1087,9 +1088,12 @@
   function buildNavbarHtml() {
     return (
       '<div class="starterkit-theme-builder__navbar">' +
+      '<div class="starterkit-theme-builder__navbar-left">' +
+      '<button type="button" class="button starterkit-theme-builder__exit-button" data-action="exit-builder" aria-label="Exit Theme Builder">Exit</button>' +
       '<div class="starterkit-theme-builder__brand">' +
       '<span class="starterkit-theme-builder__brand-mark">TB</span>' +
       '<strong>Theme Builder</strong>' +
+      '</div>' +
       '</div>' +
       '<nav class="starterkit-theme-builder__nav" aria-label="Builder layout context">' +
       contexts.map(function(context) {
@@ -1605,6 +1609,15 @@
       ui.selectedElementId = '';
       reloadPreview();
       render();
+      return;
+    }
+
+    if (action === 'exit-builder') {
+      if (ui.dirty && !window.confirm('You have unpublished changes. Exit Theme Builder?')) {
+        return;
+      }
+
+      window.location.href = exitUrl || 'admin.php?page=starterkit-theme-builder';
       return;
     }
 

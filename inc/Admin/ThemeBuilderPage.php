@@ -27,6 +27,8 @@ class ThemeBuilderPage {
 
 		add_action( 'admin_menu', array( $this, 'register_page' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_filter( 'admin_body_class', array( $this, 'add_admin_body_class' ) );
+		add_action( 'admin_head', array( $this, 'print_fullscreen_admin_css' ) );
 	}
 
 	/**
@@ -53,7 +55,7 @@ class ThemeBuilderPage {
 	 * @return void
 	 */
 	public function enqueue_assets( $hook_suffix ) {
-		if ( 'theme-settings_page_starterkit-live-theme-builder' !== $hook_suffix && 'starterkit-theme-builder_page_starterkit-live-theme-builder' !== $hook_suffix ) {
+		if ( ! $this->is_builder_hook( $hook_suffix ) ) {
 			return;
 		}
 
@@ -108,9 +110,37 @@ class ThemeBuilderPage {
 				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
 				'nonce'       => wp_create_nonce( 'starterkit_theme_builder' ),
 				'adminOrigin' => $admin_origin,
+				'exitUrl'     => admin_url( 'admin.php?page=starterkit-theme-builder' ),
 				'bootstrap'   => $this->api_controller->get_bootstrap_payload(),
 			)
 		);
+	}
+
+	/**
+	 * Add a body class for fullscreen admin chrome overrides.
+	 *
+	 * @param string $classes Admin body class string.
+	 * @return string
+	 */
+	public function add_admin_body_class( $classes ) {
+		if ( ! $this->is_builder_request() ) {
+			return $classes;
+		}
+
+		return trim( $classes . ' starterkit-theme-builder-admin-fullscreen' );
+	}
+
+	/**
+	 * Remove the WordPress admin toolbar offset for the fullscreen builder page.
+	 *
+	 * @return void
+	 */
+	public function print_fullscreen_admin_css() {
+		if ( ! $this->is_builder_request() ) {
+			return;
+		}
+
+		echo '<style id="starterkit-theme-builder-admin-fullscreen-css">html.wp-toolbar{padding-top:0!important;}</style>' . "\n";
 	}
 
 	/**
@@ -125,5 +155,33 @@ class ThemeBuilderPage {
 			<div id="starterkit-theme-builder-app" class="starterkit-theme-builder-app"></div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Determine whether the current admin hook belongs to the live builder.
+	 *
+	 * @param string $hook_suffix Hook suffix.
+	 * @return bool
+	 */
+	protected function is_builder_hook( $hook_suffix ) {
+		return in_array(
+			$hook_suffix,
+			array(
+				'theme-settings_page_starterkit-live-theme-builder',
+				'starterkit-theme-builder_page_starterkit-live-theme-builder',
+			),
+			true
+		);
+	}
+
+	/**
+	 * Determine whether the current admin request is the live builder page.
+	 *
+	 * @return bool
+	 */
+	protected function is_builder_request() {
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( (string) $_GET['page'] ) ) : '';
+
+		return 'starterkit-live-theme-builder' === $page;
 	}
 }

@@ -24,6 +24,8 @@ class PreviewAssetManager {
 		$this->builder_mode = $builder_mode;
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_preview_assets' ) );
+		add_filter( 'show_admin_bar', array( $this, 'hide_admin_bar_in_preview' ) );
+		add_filter( 'body_class', array( $this, 'add_preview_body_class' ) );
 	}
 
 	/**
@@ -50,5 +52,33 @@ class PreviewAssetManager {
 			filemtime( get_template_directory() . '/assets/js/theme-builder-preview.js' ),
 			true
 		);
+	}
+
+	/**
+	 * Hide the WordPress admin bar inside builder preview iframes.
+	 *
+	 * @param bool $show Whether to show the admin bar.
+	 * @return bool
+	 */
+	public function hide_admin_bar_in_preview( $show ) {
+		if ( $this->builder_mode->is_builder_mode() ) {
+			return false;
+		}
+
+		return $show;
+	}
+
+	/**
+	 * Add a preview mode body class for scoped preview styling.
+	 *
+	 * @param array<int, string> $classes Body classes.
+	 * @return array<int, string>
+	 */
+	public function add_preview_body_class( $classes ) {
+		if ( $this->builder_mode->is_builder_mode() ) {
+			$classes[] = 'starterkit-builder-preview-mode';
+		}
+
+		return $classes;
 	}
 }

@@ -1,111 +1,67 @@
-# StarterKit Theme
+# Phân Tích: Layout Settings Schema Cho `header-1` Và `footer-1`
 
-StarterKit is a custom WooCommerce-focused WordPress theme built around configurable layout presets and theme-level commerce UI overrides.
+**Source Of Truth**
+- Thêm `settings_schema` vào từng preset trong `LayoutRegistry`.
+- Theme Builder chỉ đọc schema của layout đang active trong Master:
+  - Active header: `header_layout`, mặc định `header-1`.
+  - Active footer: `footer_layout`, mặc định `footer-1`.
+- Nếu preset không có `settings_schema`, panel Settings hiển thị “No configurable settings”.
 
-## Current Architecture
+**Header-1 Configurable Parts**
+- `header_1_logo_max_height`
+  - Điều khiển logo trong `.site-header--preset-1 .site-logo`.
+  - Hiện tại đang hard-code `max-height: 45px`.
+  - Type: `range`, default `45`, min `24`, max `96`, unit `px`.
 
-The active theme no longer uses the older section-based MVP described in previous documentation.
+- `header_1_header_min_height`
+  - Điều khiển chiều cao vùng header shell `.header-shell--preset-1`.
+  - Hiện tại chưa có min-height riêng, nên thêm CSS var/style.
+  - Type: `range`, default `72`, min `56`, max `128`, unit `px`.
 
-Current focus areas:
+- `header_1_background_color`
+  - Điều khiển background của `<header class="site-header--preset-1">`.
+  - Type: `color`, default `#ffffff`.
+  - Đây là setting riêng layout, không thay thế global theme colors.
 
-- global settings and design tokens
-- layout registry and layout resolution
-- WooCommerce template overrides and hook-based wrappers
-- layout-specific assets in `template-parts`
-- theme-owned cart, checkout, archive, and product UI behavior
+- `header_1_main_menu_id`
+  - Điều khiển menu render trong `.site-navigation`.
+  - Default `0` nghĩa là giữ `theme_location => primary`.
+  - Nếu chọn menu cụ thể thì dùng `menu => absint(header_1_main_menu_id)`.
 
-## Boot Flow
+**Footer-1 Configurable Parts**
+- `footer_1_column_count`
+  - Điều khiển số cột tối đa hiển thị trong `.footer-grid--preset-1`.
+  - Type: `select`, options `1`, `2`, `3`, `4`, default `4`.
 
-1. `functions.php` loads `inc/bootstrap.php`
-2. `inc/bootstrap.php` registers the autoloader and boots `StarterKit\Core\App`
-3. `inc/Core/App.php` initializes the shared services used by the theme
+- `footer_1_show_column_1` đến `footer_1_show_column_4`
+  - Toggle từng footer widget column.
+  - Default `1`.
+  - Render rule: column được hiển thị nếu `index <= column_count` và toggle đang bật.
+  - Nếu tất cả bị tắt, fallback hiển thị column 1 để footer không rỗng.
 
-## Directory Overview
+**Schema Shape**
+- Mỗi layout preset có dạng:
+  - `settings_schema`: danh sách control để UI render.
+  - `settings_defaults`: có thể suy ra từ `settings_schema.default`.
+  - `settings_group`: `header` hoặc `footer` để panel nhóm field rõ ràng.
+- Control nên tái dùng format đang có của element builder:
+  - `id`
+  - `type`
+  - `label`
+  - `default`
+  - `min/max/step`
+  - `options`
+  - `help`
 
-- `inc/Core`
-  - app bootstrap, theme setup, asset loading, performance controls, script injection
-- `inc/Settings`
-  - global settings storage and CSS variable output
-- `inc/Layouts`
-  - preset registry and active layout resolution
-- `inc/WooCommerce`
-  - product/archive wrappers, cart drawer behavior, WooCommerce hook integration
-- `inc/Admin`
-  - theme settings page
-- `inc/Rules`
-  - page context and rule evaluation helpers used by the asset/layout pipeline
-- `template-parts`
-  - header, footer, product, and archive layout templates with their own `style.css` and `script.js`
-- `woocommerce`
-  - WooCommerce template overrides
-- `assets/css`, `assets/js`
-  - shared theme-level CSS and JS for commerce flows such as cart and checkout
+**How Settings Knows What Is Configurable**
+- API bootstrap trả về `layoutSettingsSchemas` chỉ gồm active Master layouts.
+- Inspector Settings render theo schema:
+  - Section `Header 1`
+  - Section `Footer 1`
+- Khi user đổi header/footer layout sau này, schema sẽ đổi theo preset active.
+- Không có schema thì không có field, nên UI tự biết preset nào cấu hình được.
 
-## Layout Presets
-
-Registered layout groups live in `inc/Layouts/LayoutRegistry.php`.
-
-Available presets:
-
-- headers: `header-1`, `header-2`, `header-3`
-- footers: `footer-1`, `footer-2`, `footer-3`
-- product pages: `product-layout-1`, `product-layout-2`, `product-layout-3`
-- archives: `archive-layout-1`, `archive-layout-2`
-
-Each preset typically points to:
-
-- a PHP template
-- an `asset_base` directory under `template-parts/...`
-- an optional `style.css`
-- an optional `script.js`
-
-`inc/Core/AssetManager.php` enqueues only the active layout assets for the current request.
-
-## WooCommerce Behavior
-
-The theme takes strong control over storefront presentation:
-
-- default WooCommerce frontend styles are removed
-- product and archive pages are wrapped with custom layout markup
-- cart and checkout have dedicated assets
-- product layout 1 conditionally loads Swiper for the custom gallery UI
-- archive layout 1 forces 5 columns and 25 products per page on shop/category/tag archives
-
-Primary integration files:
-
-- `inc/WooCommerce/HookRegistrar.php`
-- `inc/WooCommerce/ProductLayoutManager.php`
-- `inc/WooCommerce/ArchiveLayoutManager.php`
-- `inc/WooCommerce/CartDrawerManager.php`
-
-## Product Layout 1 Notes
-
-Main files:
-
-- `template-parts/product/product-layout-1/product.php`
-- `template-parts/product/product-layout-1/style.css`
-- `template-parts/product/product-layout-1/script.js`
-
-Current behavior:
-
-- two-column desktop product layout
-- sticky summary column
-- custom gallery with main stage and thumbnail rail
-- desktop thumbnails behave more like a scroll column
-- mobile and desktop gallery behavior intentionally differ
-
-If more gallery work is needed, prefer simplifying the implementation instead of adding more layered fixes.
-
-## Wootify Dependency
-
-The theme integrates with `wootify-core` for some product and variant behavior.
-
-Recommended boundary:
-
-- business/data mapping belongs in `wootify-core`
-- visual rendering and interaction details belong in the theme
-
-## Documentation
-
-- Use [`context.md`](./context.md) as the fast operational reference for current project state.
-- Treat older docs mentioning the section system as obsolete.
+**Assumptions**
+- Style global như typography, nav font, button style, spacing token vẫn ở Theme Settings.
+- Các field trên là layout-level settings, lưu trong `starterkit_global_settings`.
+- Preview dùng draft settings trong iframe để thấy thay đổi trước khi `Save & Publish`.

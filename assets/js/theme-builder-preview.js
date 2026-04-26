@@ -221,6 +221,19 @@
     marker.style.top = (position === 'before' ? rect.top : rect.bottom - 2) + 'px';
   }
 
+  function blockPreviewNavigation(event) {
+    if (event.defaultPrevented || !event.target.closest) {
+      return;
+    }
+
+    var link = event.target.closest('a[href]');
+    if (!link) {
+      return;
+    }
+
+    event.preventDefault();
+  }
+
   document.addEventListener(
     'click',
     function(event) {
@@ -275,6 +288,16 @@
           elementId: elementId
         }
       );
+    },
+    true
+  );
+
+  document.addEventListener('click', blockPreviewNavigation, true);
+
+  document.addEventListener(
+    'submit',
+    function(event) {
+      event.preventDefault();
     },
     true
   );
