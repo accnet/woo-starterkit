@@ -1,0 +1,29 @@
+{
+  "id": "description-tabs",
+  "label": "Description Tabs",
+  "context": "product",
+  "category": "content",
+  "max_instances": 1,
+  "allowed_zones": ["product_after_gallery", "product_before_summary", "product_after_summary", "product_before_tabs", "product_after_tabs", "product_before_related", "product_after_related"],
+  "assets": {
+    "css": "style.css",
+    "js": "script.js"
+  },
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Product details" },
+    "description_label": { "type": "text", "label": "Description Tab Label", "default": "Description" },
+    "items": {
+      "type": "repeater",
+      "label": "Additional Tabs",
+      "item_label": "Tab",
+      "default": [
+        { "label": "Shipping Policy", "content": "Orders usually ship within 24 hours from our local warehouse." },
+        { "label": "Returns & Refunds", "content": "Returns are accepted within 30 days in original condition." }
+      ],
+      "fields": [
+        { "id": "label", "type": "text", "label": "Tab Label", "default": "" },
+        { "id": "content", "type": "textarea", "label": "Tab Content", "default": "" }
+      ]
+    }
+  }
+}

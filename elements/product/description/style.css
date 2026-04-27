@@ -1,11 +1,18 @@
+
 .starterkit-element-card--description .starterkit-element-card__inner {
-  gap: 12px;
+  gap: 10px;
+  width: 100%;
 }
 
 .starterkit-element-description {
   display: grid;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
+}
+
+.starterkit-element-description.is-placeholder .starterkit-element-description__body {
+  color: #64748b;
+  font-style: italic;
 }
 
 .starterkit-element-description.is-collapsible {

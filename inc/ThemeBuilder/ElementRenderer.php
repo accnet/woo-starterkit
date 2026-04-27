@@ -53,13 +53,14 @@ class ElementRenderer {
 			return '';
 		}
 
+		$is_builder_mode = is_bool( $is_builder_mode ) ? $is_builder_mode : $this->builder_mode->is_builder_mode();
+		$instance['__builder_mode'] = $is_builder_mode ? '1' : '0';
 		$content = $this->element_registry->render( $instance, $zone_id, $context );
 
 		if ( '' === $content ) {
 			return '';
 		}
 
-		$is_builder_mode = is_bool( $is_builder_mode ) ? $is_builder_mode : $this->builder_mode->is_builder_mode();
 		$classes         = array(
 			'starterkit-element-wrapper',
 			'starterkit-element-wrapper--' . sanitize_html_class( (string) $instance['type'] ),

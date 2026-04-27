@@ -262,19 +262,27 @@
 .starterkit-cart-summary {
   position: sticky;
   top: 100px;
-  padding: 28px;
-  border: 1px solid var(--cart-border-strong);
-  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 18px;
   background: var(--cart-surface);
-  box-shadow: 0 4px 32px rgba(15, 23, 42, 0.07), 0 1px 4px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
 }
 
 .starterkit-cart-summary__title {
-  margin: 0 0 20px;
-  font-size: 20px;
+  margin: 0;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   color: var(--cart-accent);
+}
+
+.starterkit-cart-summary__subtitle {
+  margin: 10px 0 20px;
+  color: var(--cart-muted);
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .starterkit-cart-summary .cart_totals {
@@ -290,11 +298,11 @@
 .starterkit-cart-summary .shop_table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 .starterkit-cart-summary .shop_table tr {
-  border-bottom: 1px solid var(--cart-border);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 .starterkit-cart-summary .shop_table tr:last-child {
@@ -303,10 +311,11 @@
 
 .starterkit-cart-summary .shop_table th,
 .starterkit-cart-summary .shop_table td {
-  padding: 12px 0;
+  padding: 15px 15px 10px 0;
   border: 0;
-  font-size: 15px;
-  text-align: right;
+  font-size: 14px;
+  text-align: left;
+  vertical-align: top;
 }
 
 .starterkit-cart-summary .shop_table th {
@@ -317,18 +326,56 @@
 
 .starterkit-cart-summary .shop_table td {
   color: var(--cart-accent);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .starterkit-cart-summary .shop_table .order-total th,
 .starterkit-cart-summary .shop_table .order-total td {
-  padding-top: 16px;
-  padding-bottom: 2px;
-  border-top: 2px solid var(--cart-accent) !important;
-  font-size: 22px;
+  padding-top: 18px;
+  padding-bottom: 0;
+  border-top: 1.5px solid var(--cart-accent) !important;
+  font-size: 20px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
   color: var(--cart-accent);
+}
+
+.starterkit-cart-summary .woocommerce-shipping-destination,
+.starterkit-cart-summary .woocommerce-shipping-calculator,
+.starterkit-cart-summary .shipping-calculator-button {
+  color: var(--cart-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.starterkit-cart-summary .shipping-calculator-button {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--cart-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.starterkit-cart-summary .woocommerce-shipping-methods {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.starterkit-cart-summary .woocommerce-shipping-methods li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.starterkit-cart-summary .woocommerce-shipping-methods label {
+  color: var(--cart-accent);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /* — Checkout CTA button — */
@@ -336,30 +383,29 @@
 .starterkit-cart-summary__checkout {
   display: flex;
   width: 100%;
-  min-height: 52px;
-  margin-top: 18px;
+  min-height: 54px;
+  margin-top: 20px;
   align-items: center;
   justify-content: center;
   gap: 8px;
   border: 0;
-  border-radius: 12px;
+  border-radius: 999px;
   background: var(--cart-accent);
   color: #fff;
   text-align: center;
   text-decoration: none;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   font-family: inherit;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   cursor: pointer;
-  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.2);
+  box-shadow: none;
   transition: background-color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
 }
 
 .starterkit-cart-summary .checkout-button:hover,
 .starterkit-cart-summary__checkout:hover {
   background: var(--cart-accent-hover);
-  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.28);
   transform: translateY(-1px);
 }
 
@@ -375,7 +421,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin-top: 12px;
+  margin-top: 14px;
   color: var(--cart-muted);
   font-size: 12px;
   line-height: 1.4;
@@ -506,13 +552,13 @@
   }
 
   .starterkit-cart-summary {
-    padding: 22px;
-    border-radius: 20px;
+    padding: 20px;
+    border-radius: 16px;
   }
 
   .starterkit-cart-summary .shop_table .order-total th,
   .starterkit-cart-summary .shop_table .order-total td {
-    font-size: 24px;
+    font-size: 20px;
   }
 
   .starterkit-cart-empty {

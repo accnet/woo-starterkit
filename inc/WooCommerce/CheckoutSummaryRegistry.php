@@ -49,12 +49,6 @@ class CheckoutSummaryRegistry {
 				'enabled'         => true,
 				'render_callback' => array( $this->layout_manager, 'render_summary_order_review' ),
 			),
-			array(
-				'id'              => 'trust',
-				'priority'        => 40,
-				'enabled'         => true,
-				'render_callback' => array( $this->layout_manager, 'render_summary_trust' ),
-			),
 		);
 
 		$components = array_values(

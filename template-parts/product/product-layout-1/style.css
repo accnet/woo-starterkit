@@ -165,9 +165,9 @@
   grid-row: 1;
   overflow: hidden;
   align-self: start;
-  flex: 0 0 72px;
-  width: 72px;
-  max-width: 72px;
+  flex: 0 0 85px;
+  width: 85px;
+  max-width: 85px;
   height: auto;
   max-height: none;
   overflow-y: auto;
@@ -615,16 +615,16 @@
   min-height: 44px;
   padding: 10px 18px;
   border: 1px solid var(--starterkit-product-border);
-  border-radius: 0;
+  border-radius: 0px;
   color: var(--color-primary);
   text-decoration: none;
-  font-weight: 600;selected-variant-info
+  font-weight: 600;
 }
 
 .starterkit-product-layout.product-layout-1 .woocommerce-tabs .panel {
   padding: clamp(24px, 3vw, 32px);
   border: 1px solid var(--starterkit-product-border);
-  border-radius: 0;
+  border-radius: 0px;
 }
 
 .starterkit-product-layout.product-layout-1 .related.products,

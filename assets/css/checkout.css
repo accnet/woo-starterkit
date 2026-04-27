@@ -24,7 +24,6 @@
 .starterkit-checkout-shell__header,
 .starterkit-checkout-shell__footer {
   display: flex;
-  width: min(100% - 40px, 1120px);
   align-items: center;
   justify-content: space-between;
   gap: 24px;
@@ -38,6 +37,7 @@
   border-bottom: 0;
   background: #fff;
   backdrop-filter: none;
+  border-bottom: 1px solid gainsboro;
 }
 
 .starterkit-checkout-shell__logo {
@@ -121,6 +121,7 @@
   min-height: calc(100vh - 180px);
   background: #fff;
   box-shadow: none;
+  padding: 30px 0;
 }
 
 .starterkit-checkout__main,
@@ -129,7 +130,7 @@
 }
 
 .starterkit-checkout__main {
-  padding: 30px 28px 40px;
+  padding: 0px 28px 40px;
   border-right: 0;
   background: var(--checkout-surface);
 }
@@ -345,7 +346,7 @@
 
 /* — Section headings — */
 .starterkit-checkout__section-title {
-  margin: 0 0 10px;
+  margin: 0 0 15px;
   color: var(--checkout-text);
   font-size: 17px;
   font-weight: 700;
@@ -437,11 +438,10 @@
 .starterkit-checkout-summary .payment_box .input-text,
 .starterkit-checkout__payment .payment_box .input-text {
   width: 100%;
-  min-height: 42px;
-  padding: 0 12px;
+  min-height: 45px;
+  padding: 10px 12px;
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 5px;
-  background: var(--checkout-surface-soft);
   box-shadow: none;
   color: var(--checkout-text);
   font-family: inherit;
@@ -543,7 +543,7 @@
 .starterkit-checkout-details__fields .select2-selection {
   display: flex;
   align-items: center;
-  min-height: 42px;
+  min-height: 45px;
   padding: 0 12px;
 }
 
@@ -855,7 +855,6 @@
   padding: 0 12px;
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 5px;
-  background: var(--checkout-surface-soft);
   font: inherit;
   font-size: 13px;
 }
@@ -965,7 +964,7 @@
   }
 
   .starterkit-checkout__sidebar {
-    padding: 0 14px 28px;
+    padding: 14px 28px;
   }
 
   .starterkit-checkout-step__section {

@@ -11,6 +11,8 @@ $collapsed_lines  = isset( $settings['collapsed_lines'] ) ? max( 2, min( 20, abs
 $expand_label     = isset( $settings['expand_label'] ) ? trim( (string) $settings['expand_label'] ) : __( 'Read more', 'starterkit' );
 $collapse_label   = isset( $settings['collapse_label'] ) ? trim( (string) $settings['collapse_label'] ) : __( 'Show less', 'starterkit' );
 $description_html = '';
+$is_builder_mode  = isset( $instance['__builder_mode'] ) && '1' === (string) $instance['__builder_mode'];
+$is_placeholder   = false;
 
 if ( function_exists( 'wc_get_product' ) ) {
 	global $product;
@@ -27,12 +29,17 @@ if ( function_exists( 'wc_get_product' ) ) {
 }
 
 if ( '' === $description_html ) {
-	return;
+	if ( ! $is_builder_mode ) {
+		return;
+	}
+
+	$is_placeholder   = true;
+	$description_html = wpautop( __( 'Add a product description to preview this element on the live product page.', 'starterkit' ) );
 }
 
 $plain_description = trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $description_html ) ) );
 $word_count        = count( preg_split( '/\s+/', $plain_description ) ?: array() );
-$has_toggle        = $enable_collapse && $word_count > 40;
+$has_toggle        = ! $is_builder_mode && $enable_collapse && $word_count > 40;
 $element_id        = function_exists( 'wp_unique_id' ) ? wp_unique_id( 'starterkit-product-description-' ) : 'starterkit-product-description-' . wp_rand();
 ?>
 <div class="starterkit-element-card starterkit-element-card--description">
@@ -40,7 +47,7 @@ $element_id        = function_exists( 'wp_unique_id' ) ? wp_unique_id( 'starterk
 		<?php if ( '' !== $title ) : ?>
 			<strong class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></strong>
 		<?php endif; ?>
-		<div class="starterkit-element-description<?php echo $has_toggle ? ' is-collapsible' : ''; ?>" data-starterkit-description>
+		<div class="starterkit-element-description<?php echo $has_toggle ? ' is-collapsible' : ''; ?><?php echo $is_placeholder ? ' is-placeholder' : ''; ?>" data-starterkit-description>
 			<div
 				id="<?php echo esc_attr( $element_id ); ?>"
 				class="starterkit-element-description__body starterkit-element-card__content<?php echo $has_toggle ? ' is-collapsed' : ''; ?>"

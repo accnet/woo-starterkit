@@ -178,6 +178,75 @@
     applySelection(selectedZoneId === zoneId ? zoneId : '', '');
   }
 
+  function buildOptimisticElement(instanceId, elementType, label) {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'starterkit-element-wrapper starterkit-element-wrapper--' + String(elementType || 'element').replace(/[^a-z0-9_-]/gi, '-').toLowerCase() + ' starterkit-builder-element starterkit-builder-element--optimistic';
+    wrapper.setAttribute('data-builder-element-id', instanceId || '');
+    wrapper.setAttribute('data-builder-element-type', elementType || '');
+
+    var toolbar = document.createElement('div');
+    toolbar.className = 'starterkit-builder-element__toolbar';
+    toolbar.setAttribute('aria-hidden', 'false');
+    toolbar.innerHTML =
+      '<button type="button" class="starterkit-builder-element__move" draggable="true" data-builder-move-element="' + (instanceId || '') + '" aria-label="Move element">↕</button>' +
+      '<button type="button" class="starterkit-builder-element__delete" data-builder-delete-element="' + (instanceId || '') + '" aria-label="Remove element">&times;</button>';
+
+    var card = document.createElement('div');
+    card.className = 'starterkit-element-card starterkit-builder-element-card--optimistic';
+
+    var inner = document.createElement('div');
+    inner.className = 'container starterkit-element-card__inner';
+
+    var title = document.createElement('strong');
+    title.className = 'starterkit-element-card__title';
+    title.textContent = label || elementType || 'Element';
+
+    inner.appendChild(title);
+    card.appendChild(inner);
+    wrapper.appendChild(toolbar);
+    wrapper.appendChild(card);
+
+    return wrapper;
+  }
+
+  function insertOptimisticElement(zoneId, instanceId, elementType, label, targetElementId, position) {
+    if (!zoneId || !instanceId) {
+      return;
+    }
+
+    var zone = document.querySelector('[data-builder-zone="' + cssEscape(zoneId) + '"]');
+    if (!zone) {
+      return;
+    }
+
+    var existing = zone.querySelector('[data-builder-element-id="' + cssEscape(instanceId) + '"]');
+    if (existing) {
+      applySelection(zoneId, instanceId);
+      return;
+    }
+
+    var optimistic = buildOptimisticElement(instanceId, elementType, label);
+    var target = targetElementId ? zone.querySelector('[data-builder-element-id="' + cssEscape(targetElementId) + '"]') : null;
+
+    var placeholder = zone.querySelector('.starterkit-builder-zone__placeholder');
+    if (placeholder) {
+      placeholder.remove();
+    }
+
+    if (target && target.parentNode === zone) {
+      if (position === 'before') {
+        zone.insertBefore(optimistic, target);
+      } else {
+        zone.insertBefore(optimistic, target.nextSibling);
+      }
+    } else {
+      zone.appendChild(optimistic);
+    }
+
+    syncZonePlaceholder(zone);
+    applySelection(zoneId, instanceId);
+  }
+
   function replaceZoneMarkup(zoneId, html) {
     if (!zoneId || !html) {
       return;
@@ -589,6 +658,18 @@
 
     if (event.data.type === 'starterkit-builder-remove-element') {
       removeElementFromPreview(event.data.zoneId || '', event.data.elementId || '');
+      return;
+    }
+
+    if (event.data.type === 'starterkit-builder-insert-element') {
+      insertOptimisticElement(
+        event.data.zoneId || '',
+        event.data.instanceId || '',
+        event.data.elementType || '',
+        event.data.label || '',
+        event.data.targetElementId || '',
+        event.data.position || 'after'
+      );
       return;
     }
 

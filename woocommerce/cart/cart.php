@@ -204,6 +204,7 @@ do_action( 'woocommerce_before_cart' ); ?>
 		<aside class="starterkit-cart__sidebar">
 			<div class="starterkit-cart-summary cart-collaterals">
 				<h2 class="starterkit-cart-summary__title"><?php esc_html_e( 'Order Summary', 'starterkit' ); ?></h2>
+				<p class="starterkit-cart-summary__subtitle"><?php esc_html_e( 'Review your subtotal before continuing to checkout.', 'starterkit' ); ?></p>
 				<?php
 					/**
 					 * Cart collaterals hook.

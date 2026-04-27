@@ -91,34 +91,34 @@ class PresetSchemaRegistry {
 			'product-layout-1' => $this->product_schema(
 				'product-layout-1',
 				array(
-					'product_before_gallery' => array( 'product-badges', 'review-summary', 'countdown', 'trust-badge', 'shipping-info' ),
-					'product_after_gallery'  => array( 'product-badges', 'review-summary', 'countdown', 'trust-badge', 'shipping-info' ),
-					'product_before_summary' => array( 'product-badges', 'review-summary', 'countdown', 'stock-counter', 'trust-badge', 'shipping-info', 'description', 'guarantee' ),
-					'product_after_summary'  => array( 'product-badges', 'review-summary', 'countdown', 'stock-counter', 'trust-badge', 'shipping-info', 'description', 'faq', 'guarantee' ),
-					'product_before_related' => array( 'description', 'faq', 'guarantee', 'trust-badge' ),
-					'product_after_related'  => array( 'description', 'faq', 'guarantee', 'trust-badge' ),
+					'product_before_gallery' => array(),
+					'product_after_gallery'  => array( 'description-tabs', 'description-accordion' ),
+					'product_before_summary' => array( 'description' ),
+					'product_after_summary'  => array( 'description', 'description-tabs', 'description-accordion', 'faq' ),
+					'product_before_related' => array( 'description', 'faq' ),
+					'product_after_related'  => array( 'description', 'faq' ),
 				)
 			),
 			'product-layout-2' => $this->product_schema(
 				'product-layout-2',
 				array(
-					'product_before_summary' => array( 'product-badges', 'review-summary', 'countdown', 'stock-counter', 'trust-badge', 'shipping-info', 'description', 'guarantee' ),
-					'product_after_summary'  => array( 'product-badges', 'stock-counter', 'description', 'faq', 'guarantee', 'trust-badge' ),
-					'product_before_tabs'    => array( 'description', 'faq', 'guarantee', 'shipping-info' ),
-					'product_after_tabs'     => array( 'description', 'faq', 'guarantee', 'trust-badge' ),
+					'product_before_summary' => array( 'description' ),
+					'product_after_summary'  => array( 'description', 'description-tabs', 'description-accordion', 'faq' ),
+					'product_before_tabs'    => array( 'description', 'faq' ),
+					'product_after_tabs'     => array( 'description', 'faq' ),
 				)
 			),
 			'product-layout-3' => $this->product_schema(
 				'product-layout-3',
 				array(
-					'product_before_gallery' => array( 'product-badges', 'review-summary', 'countdown', 'trust-badge', 'shipping-info' ),
-					'product_after_gallery'  => array( 'product-badges', 'review-summary', 'countdown', 'trust-badge', 'shipping-info' ),
-					'product_before_summary' => array( 'product-badges', 'review-summary', 'countdown', 'stock-counter', 'trust-badge', 'shipping-info', 'description', 'guarantee' ),
-					'product_after_summary'  => array( 'product-badges', 'review-summary', 'countdown', 'stock-counter', 'trust-badge', 'shipping-info', 'description', 'faq', 'guarantee' ),
-					'product_before_tabs'    => array( 'description', 'faq', 'shipping-info', 'guarantee' ),
-					'product_after_tabs'     => array( 'description', 'faq', 'guarantee', 'trust-badge' ),
-					'product_before_related' => array( 'description', 'faq', 'guarantee', 'trust-badge' ),
-					'product_after_related'  => array( 'description', 'faq', 'guarantee', 'trust-badge' ),
+					'product_before_gallery' => array(),
+					'product_after_gallery'  => array( 'description-tabs', 'description-accordion' ),
+					'product_before_summary' => array( 'description' ),
+					'product_after_summary'  => array( 'description', 'description-tabs', 'description-accordion', 'faq' ),
+					'product_before_tabs'    => array( 'description', 'faq' ),
+					'product_after_tabs'     => array( 'description', 'faq' ),
+					'product_before_related' => array( 'description', 'faq' ),
+					'product_after_related'  => array( 'description', 'faq' ),
 				)
 			),
 			'archive-layout-1' => $this->archive_schema( 'archive-layout-1' ),

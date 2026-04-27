@@ -1,0 +1,29 @@
+{
+  "id": "description-accordion",
+  "label": "Description Accordion",
+  "context": "product",
+  "category": "content",
+  "max_instances": 1,
+  "allowed_zones": ["product_after_gallery", "product_before_summary", "product_after_summary", "product_before_tabs", "product_after_tabs", "product_before_related", "product_after_related"],
+  "assets": {
+    "css": "style.css"
+  },
+  "settings": {
+    "title": { "type": "text", "label": "Title", "default": "Product details" },
+    "description_label": { "type": "text", "label": "Description Item Label", "default": "Description" },
+    "open_first_item": { "type": "toggle", "label": "Open First Item By Default", "default": "1" },
+    "items": {
+      "type": "repeater",
+      "label": "Additional Accordion Items",
+      "item_label": "Item",
+      "default": [
+        { "label": "Shipping Policy", "content": "Orders usually ship within 24 hours from our local warehouse." },
+        { "label": "Returns & Refunds", "content": "Returns are accepted within 30 days in original condition." }
+      ],
+      "fields": [
+        { "id": "label", "type": "text", "label": "Item Label", "default": "" },
+        { "id": "content", "type": "textarea", "label": "Item Content", "default": "" }
+      ]
+    }
+  }
+}

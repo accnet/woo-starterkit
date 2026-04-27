@@ -13,6 +13,7 @@
   var previewUrls = bootstrap.previewUrls || {};
   var activeSchemas = bootstrap.activeSchemas || {};
   var elements = bootstrap.elements || {};
+  var navMenus = bootstrap.navMenus || [];
   var layoutSettings = JSON.parse(JSON.stringify(bootstrap.layoutSettings || {}));
   var layoutSettingsVersion = bootstrap.layoutSettingsVersion || '';
   var layoutSettingsSchemas = bootstrap.layoutSettingsSchemas || {};
@@ -151,6 +152,22 @@
 
   function getElementDefinition(elementId) {
     return elements[elementId] || null;
+  }
+
+  function getControlOptions(control) {
+    if (!control) {
+      return [];
+    }
+
+    if (Array.isArray(control.options) && control.options.length) {
+      return control.options;
+    }
+
+    if (control.options_source === 'nav_menus' && Array.isArray(navMenus)) {
+      return navMenus;
+    }
+
+    return [];
   }
 
   function getElementLimitMessage(elementId) {
@@ -699,6 +716,29 @@
     );
   }
 
+  function notifyPreviewElementInserted(zoneId, instance, targetElementId, position, context) {
+    var iframe = getPreviewIframe();
+    var definition = instance && instance.type ? getElementDefinition(instance.type) : null;
+
+    if (!iframe || !iframe.contentWindow || !zoneId || !instance || !instance.id || !instance.type || !definition) {
+      return;
+    }
+
+    iframe.contentWindow.postMessage(
+      {
+        type: 'starterkit-builder-insert-element',
+        zoneId: zoneId,
+        context: context || ui.context,
+        instanceId: instance.id,
+        elementType: instance.type,
+        label: definition.label || instance.type,
+        targetElementId: targetElementId || '',
+        position: position || 'after'
+      },
+      getPreviewTargetOrigin()
+    );
+  }
+
   function refreshPreviewZone(zoneId, context) {
     requestZoneMarkup(zoneId, context || ui.context)
       .then(function(payload) {
@@ -1047,6 +1087,7 @@
     ui.selectedElementId = instance.id;
     ui.error = '';
     markDirty();
+    notifyPreviewElementInserted(zoneId, instance, '', 'after', context);
     refreshPreviewZone(zoneId, context);
     render();
   }
@@ -1065,6 +1106,7 @@
       ui.selectedElementId = instance.id;
       clearDragState();
       markDirty();
+      notifyPreviewElementInserted(zoneId, instance, targetElementId, position, ui.context);
       refreshPreviewZone(zoneId, ui.context);
       render();
       return;
@@ -1348,11 +1390,13 @@
     }
 
     if (field.type === 'select') {
+      var fieldOptions = getControlOptions(field);
+
       return (
         '<label class="starterkit-theme-builder__control">' +
         '<span>' + escapeHtml(field.label) + '</span>' +
         '<select' + dataAttrs + '>' +
-        (field.options || []).map(function(option) {
+        fieldOptions.map(function(option) {
           var selected = option.value === value ? ' selected' : '';
           return '<option value="' + escapeHtml(option.value) + '"' + selected + '>' + escapeHtml(option.label) + '</option>';
         }).join('') +
@@ -1401,11 +1445,13 @@
     }
 
     if (control.type === 'select') {
+      var controlOptions = getControlOptions(control);
+
       return (
         '<label class="starterkit-theme-builder__control">' +
         '<span>' + escapeHtml(control.label) + '</span>' +
         '<select data-setting-id="' + escapeHtml(control.id) + '">' +
-        (control.options || []).map(function(option) {
+        controlOptions.map(function(option) {
           var selected = option.value === value ? ' selected' : '';
           return '<option value="' + escapeHtml(option.value) + '"' + selected + '>' + escapeHtml(option.label) + '</option>';
         }).join('') +
@@ -1506,11 +1552,13 @@
     var disabledAttr = buildDisabledAttribute(control);
 
     if (control.type === 'select') {
+      var layoutOptions = getControlOptions(control);
+
       return (
         '<label class="starterkit-theme-builder__control">' +
         '<span>' + escapeHtml(control.label) + '</span>' +
         '<select' + dataAttr + disabledAttr + '>' +
-        (control.options || []).map(function(option) {
+        layoutOptions.map(function(option) {
           var selected = String(option.value) === String(value) ? ' selected' : '';
           return '<option value="' + escapeHtml(option.value) + '"' + selected + '>' + escapeHtml(option.label) + '</option>';
         }).join('') +
@@ -1692,6 +1740,21 @@
     colorPickerInitialized = true;
   }
 
+  function syncRangePair(input) {
+    var wrap = input && input.closest ? input.closest('.starterkit-theme-builder__range-control') : null;
+    var value = input ? String(input.value || '') : '';
+
+    if (!wrap) {
+      return;
+    }
+
+    wrap.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(field) {
+      if (field !== input) {
+        field.value = value;
+      }
+    });
+  }
+
   function chooseImage(settingId) {
     if (!window.wp || !window.wp.media) {
       ui.error = 'Media library is unavailable on this screen.';
@@ -1817,6 +1880,15 @@
       return;
     }
 
+    if (event.target.matches('.starterkit-theme-builder__range-control input[type="range"], .starterkit-theme-builder__range-control input[type="number"]')) {
+      syncRangePair(event.target);
+    }
+
+    if (event.target.matches('.starterkit-theme-builder__color-input[data-layout-setting-id]')) {
+      updateLayoutSetting(event.target.getAttribute('data-layout-setting-id') || '', getInputValue(event.target), { render: false });
+      return;
+    }
+
     if (event.target.matches('[data-layout-setting-id]')) {
       updateLayoutSetting(event.target.getAttribute('data-layout-setting-id') || '', getInputValue(event.target), { render: false });
       return;
@@ -1845,6 +1917,15 @@
 
   root.addEventListener('change', function(event) {
     if (event.target.disabled) {
+      return;
+    }
+
+    if (event.target.matches('.starterkit-theme-builder__range-control input[type="range"], .starterkit-theme-builder__range-control input[type="number"]')) {
+      syncRangePair(event.target);
+    }
+
+    if (event.target.matches('.starterkit-theme-builder__color-input[data-layout-setting-id]')) {
+      updateLayoutSetting(event.target.getAttribute('data-layout-setting-id') || '', getInputValue(event.target));
       return;
     }
 
