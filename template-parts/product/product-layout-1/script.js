@@ -159,6 +159,58 @@
     thumbs.style.height = stageHeight > 0 ? stageHeight + 'px' : '';
   }
 
+  function scheduleGalleryMeasurement(gallery) {
+    if (!gallery) {
+      return;
+    }
+
+    window.requestAnimationFrame(function () {
+      syncDesktopThumbsHeight(gallery);
+
+      if (gallery.starterkitMainSwiper) {
+        gallery.starterkitMainSwiper.update();
+      }
+
+      if (gallery.starterkitThumbsSwiper) {
+        gallery.starterkitThumbsSwiper.update();
+      }
+    });
+  }
+
+  function bindGalleryImageLoadSync(gallery) {
+    if (!gallery) {
+      return;
+    }
+
+    var images = gallery.querySelectorAll(
+      '.starterkit-product-gallery__image-image, .starterkit-product-gallery__thumb-image'
+    );
+
+    images.forEach(function (image) {
+      if (image.dataset.starterkitLoadSyncBound === 'true') {
+        if (image.complete) {
+          scheduleGalleryMeasurement(gallery);
+        }
+        return;
+      }
+
+      image.dataset.starterkitLoadSyncBound = 'true';
+
+      if (image.complete) {
+        scheduleGalleryMeasurement(gallery);
+        return;
+      }
+
+      image.addEventListener('load', function () {
+        scheduleGalleryMeasurement(gallery);
+      }, { once: true });
+
+      image.addEventListener('error', function () {
+        scheduleGalleryMeasurement(gallery);
+      }, { once: true });
+    });
+  }
+
   function syncActiveThumbState(gallery, index) {
     var thumbs = gallery ? gallery.querySelector('.starterkit-product-gallery__thumbs') : null;
 
@@ -231,8 +283,6 @@
     var mainWrapper = gallery.querySelector('.starterkit-product-gallery__main .swiper-wrapper');
     var thumbs = gallery.querySelector('.starterkit-product-gallery__thumbs');
     var thumbsWrapper = thumbs ? thumbs.querySelector('.swiper-wrapper') : null;
-    var prevButton = gallery.querySelector('.starterkit-product-gallery__nav--prev');
-    var nextButton = gallery.querySelector('.starterkit-product-gallery__nav--next');
     var hasThumbs = slides.length > 1 && thumbsWrapper;
 
     if (mainWrapper) {
@@ -253,13 +303,7 @@
       thumbs.hidden = !hasThumbs;
     }
 
-    if (prevButton) {
-      prevButton.hidden = slides.length <= 1;
-    }
-
-    if (nextButton) {
-      nextButton.hidden = slides.length <= 1;
-    }
+    bindGalleryImageLoadSync(gallery);
   }
 
   function initializeSwipers(gallery) {
@@ -279,8 +323,6 @@
     }
 
     var thumbs = gallery.querySelector('.starterkit-product-gallery__thumbs');
-    var prevButton = gallery.querySelector('.starterkit-product-gallery__nav--prev');
-    var nextButton = gallery.querySelector('.starterkit-product-gallery__nav--next');
     var hasThumbs = thumbs && !thumbs.hidden;
     var thumbsSwiper = null;
 
@@ -374,10 +416,6 @@
       watchOverflow: true,
       observer: true,
       observeParents: true,
-      navigation: prevButton && nextButton && !prevButton.hidden && !nextButton.hidden ? {
-        prevEl: prevButton,
-        nextEl: nextButton
-      } : undefined,
       thumbs: thumbsSwiper ? { swiper: thumbsSwiper } : undefined,
       on: {
         init: function (swiper) {
@@ -394,13 +432,7 @@
     gallery.dataset.starterkitSwiperReady = 'true';
     initAttempts = 0;
 
-    window.requestAnimationFrame(function () {
-      syncDesktopThumbsHeight(gallery);
-
-      if (gallery.starterkitThumbsSwiper) {
-        gallery.starterkitThumbsSwiper.update();
-      }
-    });
+    scheduleGalleryMeasurement(gallery);
   }
 
   function getSlidesSignature(slides) {
@@ -688,6 +720,7 @@
 
     collectBaseSlides(gallery);
     initializeSwipers(gallery);
+    bindGalleryImageLoadSync(gallery);
     gallery.dataset.starterkitGalleryBooted = 'true';
   }
 
@@ -700,11 +733,13 @@
 
     window.addEventListener('resize', function () {
       galleries.forEach(function (gallery) {
-        syncDesktopThumbsHeight(gallery);
+        scheduleGalleryMeasurement(gallery);
+      });
+    });
 
-        if (gallery.starterkitThumbsSwiper) {
-          gallery.starterkitThumbsSwiper.update();
-        }
+    window.addEventListener('load', function () {
+      galleries.forEach(function (gallery) {
+        scheduleGalleryMeasurement(gallery);
       });
     });
 

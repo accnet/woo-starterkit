@@ -42,7 +42,25 @@ $layout_inline_style = $layout_settings_manager->product_split_layout_inline_sty
 										type="button"
 										aria-label="<?php echo esc_attr( sprintf( __( 'View image %d', 'starterkit' ), $index + 1 ) ); ?>"
 									>
-										<img class="starterkit-product-gallery__thumb-image" src="<?php echo esc_url( (string) $gallery_item['thumb_src'] ); ?>" alt="<?php echo esc_attr( (string) ( $gallery_item['alt'] ?? '' ) ); ?>" loading="lazy" decoding="async">
+										<?php
+										if ( ! empty( $gallery_item['id'] ) ) {
+											echo wp_get_attachment_image(
+												(int) $gallery_item['id'],
+												'woocommerce_thumbnail',
+												false,
+												array(
+													'class'    => 'starterkit-product-gallery__thumb-image',
+													'alt'      => (string) ( $gallery_item['alt'] ?? '' ),
+													'loading'  => 'lazy',
+													'decoding' => 'async',
+												)
+											); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+										} else {
+											?>
+											<img class="starterkit-product-gallery__thumb-image" src="<?php echo esc_url( (string) $gallery_item['thumb_src'] ); ?>" alt="<?php echo esc_attr( (string) ( $gallery_item['alt'] ?? '' ) ); ?>" loading="lazy" decoding="async">
+											<?php
+										}
+										?>
 									</button>
 								</div>
 							<?php endforeach; ?>
@@ -62,21 +80,31 @@ $layout_inline_style = $layout_settings_manager->product_split_layout_inline_sty
 									data-featured-variant-ids="<?php echo esc_attr( wp_json_encode( array_values( array_map( 'intval', (array) $gallery_item['featured_variant_ids'] ) ) ) ); ?>"
 								>
 									<div class="starterkit-product-gallery__image-link">
-										<img class="starterkit-product-gallery__image-image" src="<?php echo esc_url( (string) $gallery_item['src'] ); ?>" alt="<?php echo esc_attr( (string) ( $gallery_item['alt'] ?? '' ) ); ?>" loading="<?php echo 0 === $index ? 'eager' : 'lazy'; ?>" decoding="async" fetchpriority="<?php echo 0 === $index ? 'high' : 'auto'; ?>">
+										<?php
+										if ( ! empty( $gallery_item['id'] ) ) {
+											echo wp_get_attachment_image(
+												(int) $gallery_item['id'],
+												'full',
+												false,
+												array(
+													'class'         => 'starterkit-product-gallery__image-image',
+													'alt'           => (string) ( $gallery_item['alt'] ?? '' ),
+													'loading'       => 0 === $index ? 'eager' : 'lazy',
+													'decoding'      => 'async',
+													'fetchpriority' => 0 === $index ? 'high' : 'auto',
+												)
+											); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+										} else {
+											?>
+											<img class="starterkit-product-gallery__image-image" src="<?php echo esc_url( (string) $gallery_item['src'] ); ?>" alt="<?php echo esc_attr( (string) ( $gallery_item['alt'] ?? '' ) ); ?>" loading="<?php echo 0 === $index ? 'eager' : 'lazy'; ?>" decoding="async" fetchpriority="<?php echo 0 === $index ? 'high' : 'auto'; ?>">
+											<?php
+										}
+										?>
 									</div>
 								</div>
 							<?php endforeach; ?>
 						</div>
 					</div>
-
-					<?php if ( count( $gallery_items ) > 1 ) : ?>
-						<button class="starterkit-product-gallery__nav starterkit-product-gallery__nav--prev" type="button" aria-label="<?php esc_attr_e( 'Previous image', 'starterkit' ); ?>">
-							<span aria-hidden="true">&larr;</span>
-						</button>
-						<button class="starterkit-product-gallery__nav starterkit-product-gallery__nav--next" type="button" aria-label="<?php esc_attr_e( 'Next image', 'starterkit' ); ?>">
-							<span aria-hidden="true">&rarr;</span>
-						</button>
-					<?php endif; ?>
 				</div>
 			</div>
 			<?php $zone_renderer->render( 'product_after_gallery', array( 'context' => 'product' ) ); ?>

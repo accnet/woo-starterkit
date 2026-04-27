@@ -73,7 +73,7 @@
 
 @media (max-width: 767px) {
   .starterkit-description-accordion__summary {
-    padding: 10px 36px 10px 12px;
+    padding: 10px 36px 0px 0px;
   }
 
   .starterkit-description-accordion__content {

@@ -9,3 +9,6 @@ assets/fonts/generated/
 # Local editor and environment metadata
 .idea/
 .vscode/
+
+# Local planning notes
+plan.md

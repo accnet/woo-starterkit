@@ -8,7 +8,6 @@
   --starterkit-product-surface: #f8f8f8;
   --starterkit-product-gallery-col: 60%;
   --starterkit-product-summary-col: 40%;
-  /* --starterkit-product-main-ratio: 4 / 5; */
 }
 
 .starterkit-product-layout.product-layout-1 .starterkit-product-layout__product-shell {
@@ -104,7 +103,6 @@
   grid-row: 1;
   min-width: 0;
   width: 100%;
-  aspect-ratio: var(--starterkit-product-main-ratio);
 }
 
 .starterkit-product-layout.product-layout-1 .starterkit-product-gallery.starterkit-product-gallery--has-thumbs .starterkit-product-gallery__stage {
@@ -113,11 +111,8 @@
 }
 
 .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__stage,
-.starterkit-product-layout.product-layout-1 .starterkit-product-gallery__stage > .starterkit-product-gallery__main,
-.starterkit-product-layout.product-layout-1 .starterkit-product-gallery__main.swiper,
-.starterkit-product-layout.product-layout-1 .starterkit-product-gallery__main .swiper-wrapper,
-.starterkit-product-layout.product-layout-1 .starterkit-product-gallery__main .swiper-slide {
-  height: 100%;
+.starterkit-product-layout.product-layout-1 .starterkit-product-gallery__stage > .starterkit-product-gallery__main {
+  height: auto;
 }
 
 .starterkit-product-layout.product-layout-1 .starterkit-product-layout__supporting {
@@ -135,7 +130,6 @@
   overflow: visible;
   background: var(--starterkit-product-surface);
   width: 100%;
-  height: 100%;
 }
 
 .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__image-link,
@@ -146,9 +140,7 @@
 }
 
 .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__image-link {
-  aspect-ratio: var(--starterkit-product-main-ratio);
   max-width: 100%;
-  height: 100%;
   background: var(--starterkit-product-surface);
   overflow: hidden;
 }
@@ -156,8 +148,7 @@
 .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__image-image {
   max-width: 100%;
   width: 100%;
-  height: 100%;
-  object-fit: contain;
+  height: auto;
 }
 
 .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__thumbs {
@@ -225,56 +216,9 @@
   opacity: 0.78;
 }
 
-.starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav {
-  position: absolute;
-  top: 50%;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background: rgba(255, 255, 255, 0.92);
-  color: #0f172a;
-  cursor: pointer;
-  transform: translateY(-50%);
-  opacity: 0;
-  pointer-events: none;
-  transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
-  backdrop-filter: blur(6px);
-}
-
-.starterkit-product-layout.product-layout-1 .starterkit-product-gallery__stage:hover .starterkit-product-gallery__nav:not(.swiper-button-disabled),
-.starterkit-product-layout.product-layout-1 .starterkit-product-gallery__stage:focus-within .starterkit-product-gallery__nav:not(.swiper-button-disabled) {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav:hover {
-  border-color: rgba(15, 23, 42, 0.22);
-  background: #fff;
-}
-
-.starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav.swiper-button-disabled {
-  opacity: 0;
-  pointer-events: none;
-  cursor: default;
-}
-
-.starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav--prev {
-  left: 16px;
-}
-
-.starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav--next {
-  right: 16px;
-}
-
 @media (max-width: 767px) {
   .starterkit-product-layout.product-layout-1 {
     --starterkit-product-mobile-gutter: 24px;
-    --starterkit-product-main-ratio: 1 / 1.15;
   }
 
   .starterkit-product-layout.product-layout-1 .starterkit-product-layout__product-shell {
@@ -332,26 +276,6 @@
 
   .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__thumbs.is-static .swiper-wrapper {
     justify-content: flex-start;
-  }
-
-  .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav {
-    width: 40px;
-    height: 40px;
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav.swiper-button-disabled {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav--prev {
-    left: 8px;
-  }
-
-  .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav--next {
-    right: 8px;
   }
 
   .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__image-link {
@@ -418,7 +342,7 @@
   .starterkit-product-layout.product-layout-1 .woocommerce-tabs ul.tabs li a {
     width: 100%;
     justify-content: center;
-    min-height: 42px;
+    min-height: 45px;
     padding: 10px 14px;
   }
 
@@ -440,7 +364,7 @@
 
 .starterkit-product-layout.product-layout-1 .product_title {
   margin: 0 0 20px;
-  font-size: clamp(1.5rem, 1.8vw, 2rem);
+  font-size: clamp(1.3rem, 1.8vw, 2rem);
   line-height: 1.25;
   letter-spacing: -0.03em;
   font-weight: 400;
@@ -772,12 +696,21 @@
 
   .starterkit-product-layout.product-layout-1 .starterkit-add-to-cart-row {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 14px;
+    align-items: stretch;
   }
 
   .starterkit-product-layout.product-layout-1 form.cart .quantity {
+    width: 76px;
+    min-width: 0;
+    flex: 0 0 auto;
+  }
+
+  .starterkit-product-layout.product-layout-1 form.cart input.qty,
+  .starterkit-product-layout.product-layout-1 form.cart .quantity .qty {
+    min-width: 0;
     width: 100%;
-    flex: none;
   }
 
   .starterkit-product-layout.product-layout-1 .related.products .products,
@@ -790,19 +723,6 @@
   .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__thumbs {
     margin: 0;
     padding: 0 0 4px;
-  }
-
-  .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav {
-    width: 36px;
-    height: 36px;
-  }
-
-  .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav--prev {
-    left: 10px;
-  }
-
-  .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__nav--next {
-    right: 10px;
   }
 
   .starterkit-product-layout.product-layout-1 .starterkit-product-gallery__thumbs .swiper-slide {

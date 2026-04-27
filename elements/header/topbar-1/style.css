@@ -11,7 +11,7 @@
 .starterkit-element-topbar-1__inner {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 16px;
+  gap: 0px;
   align-items: center;
 }
 
