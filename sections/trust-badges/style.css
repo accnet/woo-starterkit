@@ -1,0 +1,22 @@
+.starterkit-section--trust-badges {
+  padding: clamp(24px, 4vw, 44px) 0;
+}
+
+.starterkit-section-trust-badges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.starterkit-section-trust-badges li {
+  padding: 14px 16px;
+  border: 1px solid rgba(17, 24, 39, 0.1);
+  border-radius: 6px;
+  color: var(--color-primary);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  text-align: center;
+}

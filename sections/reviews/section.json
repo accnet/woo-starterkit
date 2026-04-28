@@ -1,0 +1,10 @@
+{
+  "id": "reviews",
+  "label": "Reviews",
+  "assets": {
+    "css": "style.css"
+  },
+  "defaults": {
+    "limit": 3
+  }
+}

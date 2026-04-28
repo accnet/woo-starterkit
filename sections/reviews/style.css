@@ -1,0 +1,43 @@
+.starterkit-section--reviews {
+  padding: clamp(36px, 6vw, 72px) 0;
+}
+
+.starterkit-section-reviews {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.starterkit-section-reviews__item {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid rgba(17, 24, 39, 0.1);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.starterkit-section-reviews__rating {
+  color: var(--color-accent);
+  letter-spacing: 2px;
+}
+
+.starterkit-section-reviews__content {
+  margin: 0;
+  color: var(--color-primary);
+  line-height: var(--line-height-body);
+}
+
+.starterkit-section-reviews__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--color-secondary);
+  font-size: 0.92em;
+}
+
+.starterkit-section-reviews__product {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}

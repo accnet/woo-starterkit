@@ -45,7 +45,6 @@
 }
 
 .starterkit-archive-preset--1 .products li.product .woocommerce-LoopProduct-link {
-  display: grid;
   gap: 14px;
   justify-items: center;
   text-align: center;

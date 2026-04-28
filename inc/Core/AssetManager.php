@@ -239,11 +239,11 @@ class AssetManager {
 	}
 
 	/**
-	 * Register the Swiper dependency used by product layout 1.
+	 * Register the shared Swiper dependency.
 	 *
 	 * @return void
 	 */
-	protected function register_swiper_dependency() {
+	public function register_swiper_dependency() {
 		if ( wp_script_is( 'starterkit-swiper', 'registered' ) ) {
 			return;
 		}

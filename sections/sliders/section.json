@@ -1,0 +1,14 @@
+{
+  "id": "sliders",
+  "label": "Sliders",
+  "assets": {
+    "css": "style.css",
+    "js": "script.js"
+  },
+  "defaults": {
+    "autoplay": 5000,
+    "speed": 600,
+    "show_pagination": "1",
+    "show_navigation": "1"
+  }
+}

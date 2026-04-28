@@ -1,0 +1,58 @@
+.starterkit-section--product {
+  padding: clamp(36px, 6vw, 72px) 0;
+}
+
+.starterkit-section--product ul.products {
+  display: grid;
+  gap: clamp(18px, 2.5vw, 28px);
+  margin-bottom: 0;
+}
+
+.starterkit-section--product ul.products.columns-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.starterkit-section--product ul.products.columns-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.starterkit-section--product ul.products.columns-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.starterkit-section--product ul.products.columns-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.starterkit-section--product ul.products.columns-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.starterkit-section--product ul.products.columns-6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.starterkit-section--product ul.products li.product {
+  float: none;
+  width: auto;
+  min-width: 0;
+  margin: 0;
+}
+
+@media (max-width: 960px) {
+  .starterkit-section--product .container {
+    width: 100%;
+  }
+
+  .starterkit-section--product ul.products,
+  .starterkit-section--product ul.products.columns-1,
+  .starterkit-section--product ul.products.columns-2,
+  .starterkit-section--product ul.products.columns-3,
+  .starterkit-section--product ul.products.columns-4,
+  .starterkit-section--product ul.products.columns-5,
+  .starterkit-section--product ul.products.columns-6 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 14px;
+    padding: 0;
+  }
+}

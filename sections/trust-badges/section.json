@@ -1,0 +1,8 @@
+{
+  "id": "trust-badges",
+  "label": "Trust Badges",
+  "assets": {
+    "css": "style.css"
+  },
+  "defaults": {}
+}

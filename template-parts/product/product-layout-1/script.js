@@ -177,6 +177,24 @@
     });
   }
 
+  function setGalleryImageReadyState(image, isReady) {
+    if (!image) {
+      return;
+    }
+
+    image.dataset.starterkitImageReady = isReady ? 'true' : 'false';
+
+    var wrapper = image.closest(
+      '.starterkit-product-gallery__image-link, .starterkit-product-gallery__thumb-button'
+    );
+
+    if (!wrapper) {
+      return;
+    }
+
+    wrapper.classList.toggle('is-image-loading', !isReady);
+  }
+
   function bindGalleryImageLoadSync(gallery) {
     if (!gallery) {
       return;
@@ -187,8 +205,11 @@
     );
 
     images.forEach(function (image) {
+      setGalleryImageReadyState(image, false);
+
       if (image.dataset.starterkitLoadSyncBound === 'true') {
         if (image.complete) {
+          setGalleryImageReadyState(image, true);
           scheduleGalleryMeasurement(gallery);
         }
         return;
@@ -197,15 +218,18 @@
       image.dataset.starterkitLoadSyncBound = 'true';
 
       if (image.complete) {
+        setGalleryImageReadyState(image, true);
         scheduleGalleryMeasurement(gallery);
         return;
       }
 
       image.addEventListener('load', function () {
+        setGalleryImageReadyState(image, true);
         scheduleGalleryMeasurement(gallery);
       }, { once: true });
 
       image.addEventListener('error', function () {
+        setGalleryImageReadyState(image, true);
         scheduleGalleryMeasurement(gallery);
       }, { once: true });
     });

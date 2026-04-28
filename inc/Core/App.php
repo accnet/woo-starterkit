@@ -18,6 +18,10 @@ use StarterKit\Rules\PageContextResolver;
 use StarterKit\Settings\ControlSanitizer;
 use StarterKit\Settings\CssVariableOutput;
 use StarterKit\Settings\GlobalSettingsManager;
+use StarterKit\Sections\SectionAssetManager;
+use StarterKit\Sections\SectionRegistry;
+use StarterKit\Sections\SectionRenderer;
+use StarterKit\Sections\SectionShortcodeManager;
 use StarterKit\ThemeBuilder\ApiController;
 use StarterKit\ThemeBuilder\BuilderContext;
 use StarterKit\ThemeBuilder\BuilderMode;
@@ -95,6 +99,10 @@ class App {
 		$this->context_resolver();
 		$this->display_rule_evaluator();
 		$this->asset_manager();
+		$this->section_registry();
+		$this->section_renderer();
+		$this->section_shortcode_manager();
+		$this->section_asset_manager();
 		$this->performance_manager();
 		$this->script_injection_manager();
 		$this->product_layout_manager();
@@ -348,6 +356,62 @@ class App {
 			'theme_builder_element_asset_manager',
 			function() {
 				return new ElementAssetManager( $this->element_registry(), $this->builder_state_repository(), $this->preset_schema_registry(), $this->context_resolver() );
+			}
+		);
+	}
+
+	/**
+	 * Section registry service.
+	 *
+	 * @return SectionRegistry
+	 */
+	public function section_registry() {
+		return $this->service(
+			'section_registry',
+			function() {
+				return new SectionRegistry( get_template_directory() . '/sections', get_template_directory_uri() . '/sections' );
+			}
+		);
+	}
+
+	/**
+	 * Section renderer service.
+	 *
+	 * @return SectionRenderer
+	 */
+	public function section_renderer() {
+		return $this->service(
+			'section_renderer',
+			function() {
+				return new SectionRenderer( $this->section_registry() );
+			}
+		);
+	}
+
+	/**
+	 * Section shortcode manager service.
+	 *
+	 * @return SectionShortcodeManager
+	 */
+	public function section_shortcode_manager() {
+		return $this->service(
+			'section_shortcode_manager',
+			function() {
+				return new SectionShortcodeManager( $this->section_renderer() );
+			}
+		);
+	}
+
+	/**
+	 * Section asset manager service.
+	 *
+	 * @return SectionAssetManager
+	 */
+	public function section_asset_manager() {
+		return $this->service(
+			'section_asset_manager',
+			function() {
+				return new SectionAssetManager( $this->section_registry(), $this->asset_manager() );
 			}
 		);
 	}

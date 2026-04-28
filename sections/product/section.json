@@ -1,0 +1,17 @@
+{
+  "id": "product",
+  "label": "Product",
+  "assets": {
+    "css": "style.css"
+  },
+  "defaults": {
+    "limit": 8,
+    "columns": 4,
+    "source": "latest",
+    "category": "",
+    "tag": "",
+    "featured": "0",
+    "on_sale": "0",
+    "ids": ""
+  }
+}

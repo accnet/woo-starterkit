@@ -670,7 +670,6 @@ body.starterkit-builder-preview-mode #wpadminbar {
   z-index: 20;
   display: flex;
   gap: 4px;
-  opacity: 0;
   transition: opacity 140ms ease;
 }
 

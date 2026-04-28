@@ -1,0 +1,13 @@
+{
+  "id": "banner",
+  "label": "Banner",
+  "assets": {
+    "css": "style.css"
+  },
+  "defaults": {
+    "title": "",
+    "image": "",
+    "link": "",
+    "overlay": "0"
+  }
+}
