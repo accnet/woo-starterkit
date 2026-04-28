@@ -117,6 +117,80 @@ class IconRegistry {
 	}
 
 	/**
+	 * Return one icon definition by id.
+	 *
+	 * @param string $icon_id Icon id in group:slug format.
+	 * @return array<string, mixed>|null
+	 */
+	public function icon( $icon_id ) {
+		$icon_id = sanitize_text_field( (string) $icon_id );
+
+		foreach ( $this->icons() as $icon ) {
+			if ( $icon_id === ( isset( $icon['id'] ) ? $icon['id'] : '' ) ) {
+				return $icon;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Render inline SVG markup for one icon.
+	 *
+	 * @param string               $icon_id Icon id in group:slug format.
+	 * @param array<string, mixed> $args Optional render args.
+	 * @return string
+	 */
+	public function render( $icon_id, array $args = array() ) {
+		$icon = $this->icon( $icon_id );
+
+		if ( ! $icon || empty( $icon['filePath'] ) || ! file_exists( (string) $icon['filePath'] ) ) {
+			return '';
+		}
+
+		$svg = file_get_contents( (string) $icon['filePath'] );
+
+		if ( ! is_string( $svg ) || '' === trim( $svg ) ) {
+			return '';
+		}
+
+		$classes = array(
+			'starterkit-icon',
+			'starterkit-icon--' . sanitize_html_class( str_replace( ':', '-', (string) $icon['id'] ) ),
+		);
+
+		if ( ! empty( $args['class'] ) ) {
+			$extra_classes = preg_split( '/\s+/', (string) $args['class'] );
+
+			if ( is_array( $extra_classes ) ) {
+				foreach ( $extra_classes as $extra_class ) {
+					$extra_class = sanitize_html_class( (string) $extra_class );
+
+					if ( '' !== $extra_class ) {
+						$classes[] = $extra_class;
+					}
+				}
+			}
+		}
+
+		$attributes = array(
+			'class' => implode( ' ', array_unique( $classes ) ),
+		);
+
+		if ( ! empty( $args['label'] ) ) {
+			$attributes['role'] = 'img';
+			$attributes['aria-label'] = sanitize_text_field( (string) $args['label'] );
+		} else {
+			$attributes['aria-hidden'] = 'true';
+			$attributes['focusable'] = 'false';
+		}
+
+		$svg = preg_replace( '/<svg\b[^>]*>/i', '<svg ' . $this->build_svg_attributes( $attributes ) . '>', $svg, 1 );
+
+		return is_string( $svg ) ? $svg : '';
+	}
+
+	/**
 	 * Return picker configuration merged with live counts.
 	 *
 	 * @return array<string, mixed>
@@ -368,5 +442,28 @@ class IconRegistry {
 	 */
 	protected function humanize_slug( $slug ) {
 		return ucwords( str_replace( array( '-', '_' ), ' ', (string) $slug ) );
+	}
+
+	/**
+	 * Build safe SVG attribute markup.
+	 *
+	 * @param array<string, string> $attributes Attribute map.
+	 * @return string
+	 */
+	protected function build_svg_attributes( array $attributes ) {
+		$parts = array();
+
+		foreach ( $attributes as $name => $value ) {
+			$name  = preg_replace( '/[^a-zA-Z0-9:_-]/', '', (string) $name );
+			$value = esc_attr( (string) $value );
+
+			if ( '' === $name ) {
+				continue;
+			}
+
+			$parts[] = $name . '="' . $value . '"';
+		}
+
+		return implode( ' ', $parts );
 	}
 }

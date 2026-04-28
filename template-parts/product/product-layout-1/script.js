@@ -753,7 +753,13 @@
       return 5;
     }
 
-    var value = window.getComputedStyle(layout).getPropertyValue('--starterkit-related-products-columns');
+    var computedStyle = window.getComputedStyle(layout);
+    var value = computedStyle.getPropertyValue('--starterkit-related-products-columns-current');
+
+    if (!String(value || '').trim()) {
+      value = computedStyle.getPropertyValue('--starterkit-related-products-columns');
+    }
+
     var columns = Number(String(value || '').trim() || 5);
 
     return Math.max(1, Math.min(6, columns || 5));
