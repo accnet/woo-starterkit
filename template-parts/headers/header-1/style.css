@@ -44,6 +44,7 @@
 
 .site-header--preset-1 .site-navigation ul {
   justify-content: center;
+  gap: var(--header-1-nav-gap, 28px);
 }
 
 .site-header--preset-1 .header-icon-button,

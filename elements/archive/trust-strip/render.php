@@ -26,7 +26,7 @@ $items = array_values(
 <div class="starterkit-element-card starterkit-element-card--list">
 	<div class="container starterkit-element-card__inner">
 		<?php if ( '' !== $title ) : ?>
-			<strong class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></strong>
+			<h3 class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></h3>
 		<?php endif; ?>
 		<?php if ( ! empty( $items ) ) : ?>
 			<ul class="starterkit-element-list">

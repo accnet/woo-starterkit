@@ -38,7 +38,10 @@ class LayoutRegistry {
 					'description' => __( 'Topbar plus branded navigation row.', 'starterkit' ),
 					'template'    => 'template-parts/headers/header-2/header.php',
 					'asset_base'  => 'template-parts/headers/header-2',
-					'slots'       => array( 'header_top', 'header_bottom', 'home_after_header' ),
+					'slots'       => array( 'header_top', 'header_2_top_left', 'header_2_before_navigation', 'header_2_after_navigation', 'header_bottom', 'home_after_header' ),
+					'features'         => array( 'menu', 'search', 'cart' ),
+					'settings_version' => 1,
+					'settings_schema'  => $this->header_2_settings_schema(),
 				),
 				'header-3' => array(
 					'id'          => 'header-3',
@@ -86,7 +89,7 @@ class LayoutRegistry {
 					'template'    => 'template-parts/product/product-layout-1/product.php',
 					'asset_base'  => 'template-parts/product/product-layout-1',
 					'settings_version' => 1,
-					'settings_schema'  => $this->product_split_layout_settings_schema(),
+					'settings_schema'  => $this->product_layout_1_settings_schema(),
 					'slots'       => array(
 						'product_before_gallery',
 						'product_after_gallery',
@@ -259,6 +262,18 @@ class LayoutRegistry {
 				'target'           => '--header-1-bg',
 			),
 			array(
+				'id'               => 'header_1_navigation_gap',
+				'type'             => 'range',
+				'label'            => __( 'Navigation Gap', 'starterkit' ),
+				'default'          => '28',
+				'min'              => '8',
+				'max'              => '48',
+				'step'             => '1',
+				'unit'             => 'px',
+				'preview_strategy' => 'css_variable',
+				'target'           => '--header-1-nav-gap',
+			),
+			array(
 				'id'               => 'header_1_main_menu_id',
 				'type'             => 'select',
 				'label'            => __( 'Main Menu', 'starterkit' ),
@@ -273,6 +288,78 @@ class LayoutRegistry {
 				'preview_strategy' => 'partial_render',
 				'target'           => '.site-header--preset-1 .site-navigation',
 				'partial'          => 'header_1_navigation',
+			),
+		);
+	}
+
+	/**
+	 * Return settings schema for header-2.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	protected function header_2_settings_schema() {
+		return array(
+			array(
+				'id'               => 'header_2_enable_sticky',
+				'type'             => 'toggle',
+				'label'            => __( 'Enable Sticky Header', 'starterkit' ),
+				'default'          => '1',
+			),
+			array(
+				'id'               => 'header_2_logo_max_height',
+				'type'             => 'range',
+				'label'            => __( 'Logo Max Height', 'starterkit' ),
+				'default'          => '52',
+				'min'              => '24',
+				'max'              => '120',
+				'step'             => '1',
+				'unit'             => 'px',
+				'preview_strategy' => 'css_variable',
+				'target'           => '--header-2-logo-max-height',
+			),
+			array(
+				'id'               => 'header_2_navigation_gap',
+				'type'             => 'range',
+				'label'            => __( 'Navigation Gap', 'starterkit' ),
+				'default'          => '28',
+				'min'              => '8',
+				'max'              => '48',
+				'step'             => '1',
+				'unit'             => 'px',
+				'preview_strategy' => 'css_variable',
+				'target'           => '--header-2-nav-gap',
+			),
+			array(
+				'id'               => 'header_2_background_color',
+				'type'             => 'color',
+				'label'            => __( 'Background Color', 'starterkit' ),
+				'default'          => '#ffffff',
+				'preview_strategy' => 'css_variable',
+				'target'           => '--header-2-bg',
+			),
+			array(
+				'id'               => 'header_2_navigation_background_color',
+				'type'             => 'color',
+				'label'            => __( 'Navigation Background Color', 'starterkit' ),
+				'default'          => 'transparent',
+				'preview_strategy' => 'css_variable',
+				'target'           => '--header-2-nav-bg',
+			),
+			array(
+				'id'               => 'header_2_main_menu_id',
+				'type'             => 'select',
+				'label'            => __( 'Main Menu', 'starterkit' ),
+				'default'          => '0',
+				'options_source'   => 'nav_menus',
+				'options'          => array(
+					array(
+						'value' => '0',
+						'label' => __( 'Use Primary Menu', 'starterkit' ),
+					),
+				),
+				'preview_strategy' => 'partial_render',
+				'target'           => '.site-header--preset-2 .site-navigation',
+				'partial'          => 'header_2_navigation',
 			),
 		);
 	}
@@ -372,6 +459,41 @@ class LayoutRegistry {
 		if ( '' !== $help ) {
 			$controls[0]['help'] = $help;
 		}
+
+		return $controls;
+	}
+
+	/**
+	 * Return settings schema for product-layout-1.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	protected function product_layout_1_settings_schema() {
+		$controls   = $this->product_split_layout_settings_schema();
+		$controls[] = array(
+			'id'      => 'product_layout_1_show_related_products',
+			'type'    => 'toggle',
+			'label'   => __( 'Show Related Products', 'starterkit' ),
+			'default' => '1',
+		);
+		$controls[] = array(
+			'id'      => 'product_layout_1_related_products_count',
+			'type'    => 'range',
+			'label'   => __( 'Related Products Count', 'starterkit' ),
+			'default' => '5',
+			'min'     => '1',
+			'max'     => '12',
+			'step'    => '1',
+		);
+		$controls[] = array(
+			'id'      => 'product_layout_1_related_products_columns',
+			'type'    => 'range',
+			'label'   => __( 'Related Products Columns', 'starterkit' ),
+			'default' => '5',
+			'min'     => '1',
+			'max'     => '6',
+			'step'    => '1',
+		);
 
 		return $controls;
 	}

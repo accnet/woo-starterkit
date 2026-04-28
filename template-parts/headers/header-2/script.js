@@ -7,12 +7,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var toggle = header.querySelector('.site-header__toggle');
   var panel = header.querySelector('.site-header__panel');
+  var searchToggle = header.querySelector('.header-search-toggle');
+  var searchPanel = document.getElementById('site-header-search-2');
 
   if (toggle && panel) {
     toggle.addEventListener('click', function () {
       var expanded = toggle.getAttribute('aria-expanded') === 'true';
       toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
       header.classList.toggle('is-menu-open', !expanded);
+    });
+  }
+
+  if (searchToggle && searchPanel) {
+    searchToggle.addEventListener('click', function () {
+      var expanded = searchToggle.getAttribute('aria-expanded') === 'true';
+      searchToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+      searchPanel.hidden = expanded;
     });
   }
 

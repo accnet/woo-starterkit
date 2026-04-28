@@ -10,6 +10,7 @@ namespace StarterKit\Core;
 use StarterKit\Admin\SettingsPage;
 use StarterKit\Admin\ThemeBuilderPage;
 use StarterKit\Compatibility\WootifyCore\CartDrawerIntegration as WootifyCartDrawerIntegration;
+use StarterKit\Icons\IconRegistry;
 use StarterKit\Layouts\LayoutRegistry;
 use StarterKit\Layouts\LayoutResolver;
 use StarterKit\Layouts\LayoutSettingsManager;
@@ -84,6 +85,7 @@ class App {
 		$this->layout_resolver();
 		$this->layout_settings_manager();
 		$this->settings_page();
+		$this->icon_registry();
 		$this->builder_context();
 		$this->builder_mode();
 		$this->preset_schema_registry();
@@ -286,6 +288,20 @@ class App {
 			'settings_page',
 			function() {
 				return new SettingsPage( $this->settings_manager(), $this->layout_registry(), $this->builder_state_repository() );
+			}
+		);
+	}
+
+	/**
+	 * Icon registry service.
+	 *
+	 * @return IconRegistry
+	 */
+	public function icon_registry() {
+		return $this->service(
+			'icon_registry',
+			function() {
+				return new IconRegistry();
 			}
 		);
 	}

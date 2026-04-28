@@ -101,7 +101,7 @@ if ( '' === $title && '' === $content && ! $image_url && empty( $highlights ) &&
 
 		<div class="starterkit-element-category-banner__body">
 			<?php if ( '' !== $title ) : ?>
-				<strong class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></strong>
+				<h3 class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></h3>
 			<?php endif; ?>
 
 			<?php if ( '' !== $content ) : ?>

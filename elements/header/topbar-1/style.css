@@ -2,7 +2,7 @@
   padding: 10px 0;
   border-bottom: 1px solid #dfe3e8;
   color: #202223;
-  background: #f6f6f7;
+  background: var(--color-primary);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0;

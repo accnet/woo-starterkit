@@ -36,7 +36,7 @@ if ( 'woocommerce' === $source && function_exists( 'wc_get_product' ) ) {
 <div class="starterkit-element-card starterkit-element-card--<?php echo esc_attr( $style ); ?>">
 	<div class="container starterkit-element-card__inner">
 		<?php if ( '' !== $title ) : ?>
-			<strong class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></strong>
+			<h3 class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></h3>
 		<?php endif; ?>
 		<?php if ( $show_stars && $rating > 0 ) : ?>
 			<div class="starterkit-element-card__rating" aria-label="<?php echo esc_attr( sprintf( __( 'Rated %s out of 5', 'starterkit' ), number_format_i18n( $rating, 1 ) ) ); ?>">

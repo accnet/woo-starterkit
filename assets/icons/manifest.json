@@ -1,0 +1,503 @@
+{
+  "version": 1,
+  "basePath": "assets/icons",
+  "picker": {
+    "defaultGroup": "ui",
+    "allowSearch": true,
+    "allowClear": true,
+    "groupOrder": [
+      "ui",
+      "ecommerce",
+      "social",
+      "product",
+      "trust",
+      "user"
+    ],
+    "searchKeys": [
+      "label",
+      "keywords",
+      "group"
+    ]
+  },
+  "groups": [
+    {
+      "id": "ui",
+      "label": "UI",
+      "path": "ui",
+      "description": "General interface icons such as menu, close, arrows, and status marks."
+    },
+    {
+      "id": "ecommerce",
+      "label": "Ecommerce",
+      "path": "ecommerce",
+      "description": "Cart, bag, delivery, payment, and commerce-related icons."
+    },
+    {
+      "id": "social",
+      "label": "Social",
+      "path": "social",
+      "description": "Brand and community icons for social profiles and sharing."
+    },
+    {
+      "id": "product",
+      "label": "Product",
+      "path": "product",
+      "description": "Product feature, catalog, badge, and merchandising icons."
+    },
+    {
+      "id": "trust",
+      "label": "Trust",
+      "path": "trust",
+      "description": "Security, guarantee, shipping, return, and trust-building icons."
+    },
+    {
+      "id": "user",
+      "label": "User",
+      "path": "user",
+      "description": "Account, profile, login, support, and user journey icons."
+    }
+  ],
+  "icons": [
+    {
+      "group": "ui",
+      "slug": "arrow-down",
+      "label": "Arrow Down",
+      "keywords": ["down", "direction", "navigation"],
+      "path": "assets/icons/ui/arrow-down.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "arrow-left",
+      "label": "Arrow Left",
+      "keywords": ["left", "direction", "navigation", "back"],
+      "path": "assets/icons/ui/arrow-left.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "arrow-right",
+      "label": "Arrow Right",
+      "keywords": ["right", "direction", "navigation", "next"],
+      "path": "assets/icons/ui/arrow-right.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "arrow-up",
+      "label": "Arrow Up",
+      "keywords": ["up", "direction", "navigation"],
+      "path": "assets/icons/ui/arrow-up.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "check",
+      "label": "Check",
+      "keywords": ["success", "done", "confirm"],
+      "path": "assets/icons/ui/check.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "close",
+      "label": "Close",
+      "keywords": ["dismiss", "cancel", "x"],
+      "path": "assets/icons/ui/close.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "external-link",
+      "label": "External Link",
+      "keywords": ["outbound", "link", "new tab"],
+      "path": "assets/icons/ui/external-link.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "filter",
+      "label": "Filter",
+      "keywords": ["sort", "refine", "controls"],
+      "path": "assets/icons/ui/filter.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "grid-dots",
+      "label": "Grid Dots",
+      "keywords": ["grid", "apps", "layout"],
+      "path": "assets/icons/ui/grid-dots.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "list",
+      "label": "List",
+      "keywords": ["menu", "rows", "layout"],
+      "path": "assets/icons/ui/list.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "menu",
+      "label": "Menu",
+      "keywords": ["hamburger", "navigation"],
+      "path": "assets/icons/ui/menu.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "minus",
+      "label": "Minus",
+      "keywords": ["remove", "decrease", "collapse"],
+      "path": "assets/icons/ui/minus.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "plus",
+      "label": "Plus",
+      "keywords": ["add", "increase", "expand"],
+      "path": "assets/icons/ui/plus.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "search",
+      "label": "Search",
+      "keywords": ["find", "magnifier", "lookup"],
+      "path": "assets/icons/ui/search.svg"
+    },
+    {
+      "group": "ui",
+      "slug": "ticket",
+      "label": "Ticket",
+      "keywords": ["voucher", "coupon", "pass"],
+      "path": "assets/icons/ui/ticket.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "box",
+      "label": "Box",
+      "keywords": ["package", "shipping", "product"],
+      "path": "assets/icons/ecommerce/box.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "credit-card",
+      "label": "Credit Card",
+      "keywords": ["payment", "checkout", "card"],
+      "path": "assets/icons/ecommerce/credit-card.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "discount",
+      "label": "Discount",
+      "keywords": ["sale", "offer", "promotion"],
+      "path": "assets/icons/ecommerce/discount.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "flame",
+      "label": "Flame",
+      "keywords": ["hot", "trending", "popular"],
+      "path": "assets/icons/ecommerce/flame.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "garden-cart",
+      "label": "Garden Cart",
+      "keywords": ["cart", "shop", "basket"],
+      "path": "assets/icons/ecommerce/garden-cart.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "gift",
+      "label": "Gift",
+      "keywords": ["present", "bundle", "offer"],
+      "path": "assets/icons/ecommerce/gift.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "heart",
+      "label": "Heart",
+      "keywords": ["wishlist", "favorite", "like"],
+      "path": "assets/icons/ecommerce/heart.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "receipt",
+      "label": "Receipt",
+      "keywords": ["order", "invoice", "billing"],
+      "path": "assets/icons/ecommerce/receipt.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "refresh",
+      "label": "Refresh",
+      "keywords": ["reload", "return", "repeat"],
+      "path": "assets/icons/ecommerce/refresh.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "shield-check",
+      "label": "Shield Check",
+      "keywords": ["secure", "verified", "protection"],
+      "path": "assets/icons/ecommerce/shield-check.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "shopping-bag",
+      "label": "Shopping Bag",
+      "keywords": ["bag", "cart", "checkout"],
+      "path": "assets/icons/ecommerce/shopping-bag.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "star",
+      "label": "Star",
+      "keywords": ["rating", "featured", "favorite"],
+      "path": "assets/icons/ecommerce/star.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "tag",
+      "label": "Tag",
+      "keywords": ["price", "label", "sale"],
+      "path": "assets/icons/ecommerce/tag.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "ticket",
+      "label": "Ticket",
+      "keywords": ["coupon", "voucher", "promotion"],
+      "path": "assets/icons/ecommerce/ticket.svg"
+    },
+    {
+      "group": "ecommerce",
+      "slug": "truck",
+      "label": "Truck",
+      "keywords": ["delivery", "shipping", "logistics"],
+      "path": "assets/icons/ecommerce/truck.svg"
+    },
+    {
+      "group": "social",
+      "slug": "facebook",
+      "label": "Facebook",
+      "keywords": ["meta", "social", "share"],
+      "path": "assets/icons/social/facebook.svg"
+    },
+    {
+      "group": "social",
+      "slug": "instagram",
+      "label": "Instagram",
+      "keywords": ["social", "photo", "reels"],
+      "path": "assets/icons/social/instagram.svg"
+    },
+    {
+      "group": "social",
+      "slug": "tiktok",
+      "label": "TikTok",
+      "keywords": ["social", "video", "shorts"],
+      "path": "assets/icons/social/tiktok.svg"
+    },
+    {
+      "group": "social",
+      "slug": "x",
+      "label": "X",
+      "keywords": ["twitter", "social", "post"],
+      "path": "assets/icons/social/x.svg"
+    },
+    {
+      "group": "social",
+      "slug": "youtube",
+      "label": "YouTube",
+      "keywords": ["social", "video", "channel"],
+      "path": "assets/icons/social/youtube.svg"
+    },
+    {
+      "group": "product",
+      "slug": "box-model",
+      "label": "Box Model",
+      "keywords": ["dimensions", "size", "packaging"],
+      "path": "assets/icons/product/box-model.svg"
+    },
+    {
+      "group": "product",
+      "slug": "clock",
+      "label": "Clock",
+      "keywords": ["time", "duration", "schedule"],
+      "path": "assets/icons/product/clock.svg"
+    },
+    {
+      "group": "product",
+      "slug": "info-circle",
+      "label": "Info Circle",
+      "keywords": ["info", "details", "help"],
+      "path": "assets/icons/product/info-circle.svg"
+    },
+    {
+      "group": "product",
+      "slug": "library-photo",
+      "label": "Library Photo",
+      "keywords": ["gallery", "photos", "media"],
+      "path": "assets/icons/product/library-photo.svg"
+    },
+    {
+      "group": "product",
+      "slug": "map-pin",
+      "label": "Map Pin",
+      "keywords": ["location", "origin", "store"],
+      "path": "assets/icons/product/map-pin.svg"
+    },
+    {
+      "group": "product",
+      "slug": "palette",
+      "label": "Palette",
+      "keywords": ["color", "style", "customize"],
+      "path": "assets/icons/product/palette.svg"
+    },
+    {
+      "group": "product",
+      "slug": "ruler",
+      "label": "Ruler",
+      "keywords": ["size", "measurement", "dimensions"],
+      "path": "assets/icons/product/ruler.svg"
+    },
+    {
+      "group": "trust",
+      "slug": "certificate",
+      "label": "Certificate",
+      "keywords": ["verified", "authentic", "approval"],
+      "path": "assets/icons/trust/certificate.svg"
+    },
+    {
+      "group": "trust",
+      "slug": "circle-check",
+      "label": "Circle Check",
+      "keywords": ["approved", "confirmed", "trusted"],
+      "path": "assets/icons/trust/circle-check.svg"
+    },
+    {
+      "group": "trust",
+      "slug": "help",
+      "label": "Help",
+      "keywords": ["support", "assistance", "faq"],
+      "path": "assets/icons/trust/help.svg"
+    },
+    {
+      "group": "trust",
+      "slug": "lock",
+      "label": "Lock",
+      "keywords": ["security", "secure", "privacy"],
+      "path": "assets/icons/trust/lock.svg"
+    },
+    {
+      "group": "trust",
+      "slug": "money-back",
+      "label": "Money Back",
+      "keywords": ["refund", "guarantee", "return"],
+      "path": "assets/icons/trust/money-back.svg"
+    },
+    {
+      "group": "trust",
+      "slug": "package-export",
+      "label": "Package Export",
+      "keywords": ["shipping", "delivery", "dispatch"],
+      "path": "assets/icons/trust/package-export.svg"
+    },
+    {
+      "group": "trust",
+      "slug": "shield",
+      "label": "Shield",
+      "keywords": ["protection", "security", "trust"],
+      "path": "assets/icons/trust/shield.svg"
+    },
+    {
+      "group": "trust",
+      "slug": "truck",
+      "label": "Truck",
+      "keywords": ["delivery", "shipping", "transport"],
+      "path": "assets/icons/trust/truck.svg"
+    },
+    {
+      "group": "trust",
+      "slug": "truck-delivery",
+      "label": "Truck Delivery",
+      "keywords": ["shipping", "arrival", "delivery"],
+      "path": "assets/icons/trust/truck-delivery.svg"
+    },
+    {
+      "group": "trust",
+      "slug": "truck-return",
+      "label": "Truck Return",
+      "keywords": ["returns", "reverse logistics", "refund"],
+      "path": "assets/icons/trust/truck-return.svg"
+    },
+    {
+      "group": "trust",
+      "slug": "user",
+      "label": "User",
+      "keywords": ["support", "account", "service"],
+      "path": "assets/icons/trust/user.svg"
+    },
+    {
+      "group": "user",
+      "slug": "address-book",
+      "label": "Address Book",
+      "keywords": ["contacts", "addresses", "profile"],
+      "path": "assets/icons/user/address-book.svg"
+    },
+    {
+      "group": "user",
+      "slug": "heart",
+      "label": "Heart",
+      "keywords": ["wishlist", "favorites", "likes"],
+      "path": "assets/icons/user/heart.svg"
+    },
+    {
+      "group": "user",
+      "slug": "help-circle",
+      "label": "Help Circle",
+      "keywords": ["support", "faq", "assistance"],
+      "path": "assets/icons/user/help-circle.svg"
+    },
+    {
+      "group": "user",
+      "slug": "login",
+      "label": "Login",
+      "keywords": ["sign in", "account", "auth"],
+      "path": "assets/icons/user/login.svg"
+    },
+    {
+      "group": "user",
+      "slug": "logout",
+      "label": "Logout",
+      "keywords": ["sign out", "account", "auth"],
+      "path": "assets/icons/user/logout.svg"
+    },
+    {
+      "group": "user",
+      "slug": "shopping-cart",
+      "label": "Shopping Cart",
+      "keywords": ["cart", "orders", "checkout"],
+      "path": "assets/icons/user/shopping-cart.svg"
+    },
+    {
+      "group": "user",
+      "slug": "user",
+      "label": "User",
+      "keywords": ["account", "profile", "person"],
+      "path": "assets/icons/user/user.svg"
+    },
+    {
+      "group": "user",
+      "slug": "user-check",
+      "label": "User Check",
+      "keywords": ["verified", "approved", "member"],
+      "path": "assets/icons/user/user-check.svg"
+    },
+    {
+      "group": "user",
+      "slug": "user-circle",
+      "label": "User Circle",
+      "keywords": ["avatar", "account", "profile"],
+      "path": "assets/icons/user/user-circle.svg"
+    },
+    {
+      "group": "user",
+      "slug": "user-plus",
+      "label": "User Plus",
+      "keywords": ["register", "invite", "add user"],
+      "path": "assets/icons/user/user-plus.svg"
+    }
+  ]
+}

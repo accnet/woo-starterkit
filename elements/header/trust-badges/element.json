@@ -3,7 +3,7 @@
   "label": "Trust Badges",
   "context": "header",
   "category": "trust",
-  "allowed_zones": ["header_top", "header_bottom", "footer_top", "footer_bottom"],
+  "allowed_zones": ["header_top", "header_2_top_left", "header_2_before_navigation", "header_2_after_navigation", "header_bottom", "footer_top", "footer_bottom"],
   "settings": {
     "title": { "type": "text", "label": "Title", "default": "Trust Badges" },
     "items": {

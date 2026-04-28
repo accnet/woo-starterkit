@@ -239,12 +239,24 @@ class ApiController {
 		$partial = isset( $_POST['partial'] ) ? sanitize_key( wp_unslash( (string) $_POST['partial'] ) ) : '';
 		$raw_settings = $this->read_json_array_param( 'layoutSettings' );
 
-		if ( ! in_array( $partial, array( 'header_1_navigation', 'footer_1_grid' ), true ) ) {
+		if ( ! in_array( $partial, array( 'header_1_navigation', 'header_2_navigation', 'footer_1_grid' ), true ) ) {
 			wp_send_json_error(
 				array(
 					'message' => __( 'Invalid layout partial request.', 'starterkit' ),
 				),
 				400
+			);
+		}
+
+		if ( 'header_2_navigation' === $partial ) {
+			$settings = $this->layout_settings_manager->get_layout_settings( 'header-2', $raw_settings );
+
+			wp_send_json_success(
+				array(
+					'partial' => $partial,
+					'target'  => '.site-header--preset-2 .site-navigation',
+					'html'    => $this->layout_settings_manager->render_header_2_navigation( $settings ),
+				)
 			);
 		}
 

@@ -45,7 +45,7 @@ $element_id        = function_exists( 'wp_unique_id' ) ? wp_unique_id( 'starterk
 <div class="starterkit-element-card starterkit-element-card--description">
 	<div class="container starterkit-element-card__inner">
 		<?php if ( '' !== $title ) : ?>
-			<strong class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></strong>
+			<h3 class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></h3>
 		<?php endif; ?>
 		<div class="starterkit-element-description<?php echo $has_toggle ? ' is-collapsible' : ''; ?><?php echo $is_placeholder ? ' is-placeholder' : ''; ?>" data-starterkit-description>
 			<div

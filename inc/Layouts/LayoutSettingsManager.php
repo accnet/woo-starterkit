@@ -286,6 +286,43 @@ class LayoutSettingsManager {
 	}
 
 	/**
+	 * Build navigation args for header-2.
+	 *
+	 * @param array<string, mixed>|null $settings Optional settings.
+	 * @return array<string, mixed>
+	 */
+	protected function header_2_menu_args( array $settings = null ) {
+		$settings = is_array( $settings ) ? $settings : $this->get_layout_settings( 'header-2' );
+		$menu_id  = isset( $settings['header_2_main_menu_id'] ) ? absint( $settings['header_2_main_menu_id'] ) : 0;
+		$args     = array( 'fallback_cb' => false );
+
+		if ( $menu_id && wp_get_nav_menu_object( $menu_id ) ) {
+			$args['menu'] = $menu_id;
+		} else {
+			$args['theme_location'] = 'primary';
+		}
+
+		return $args;
+	}
+
+	/**
+	 * Render header-2 navigation.
+	 *
+	 * @param array<string, mixed>|null $settings Optional settings.
+	 * @return string
+	 */
+	public function render_header_2_navigation( array $settings = null ) {
+		ob_start();
+		?>
+		<nav class="site-navigation">
+			<?php wp_nav_menu( $this->header_2_menu_args( $settings ) ); ?>
+		</nav>
+		<?php
+
+		return (string) ob_get_clean();
+	}
+
+	/**
 	 * Return inline CSS variables for header-1.
 	 *
 	 * @param array<string, mixed>|null $settings Optional settings.
@@ -305,6 +342,35 @@ class LayoutSettingsManager {
 					'unit'  => 'px',
 				),
 				'--header-1-bg' => $settings['header_1_background_color'],
+				'--header-1-nav-gap' => array(
+					'value' => $settings['header_1_navigation_gap'],
+					'unit'  => 'px',
+				),
+			)
+		);
+	}
+
+	/**
+	 * Return inline CSS variables for header-2.
+	 *
+	 * @param array<string, mixed>|null $settings Optional settings.
+	 * @return string
+	 */
+	public function header_2_inline_style( array $settings = null ) {
+		$settings = is_array( $settings ) ? array_merge( $this->get_layout_settings( 'header-2' ), $settings ) : $this->get_layout_settings( 'header-2' );
+
+		return CssVariableBuilder::build(
+			array(
+				'--header-2-logo-max-height' => array(
+					'value' => $settings['header_2_logo_max_height'],
+					'unit'  => 'px',
+				),
+				'--header-2-nav-gap' => array(
+					'value' => $settings['header_2_navigation_gap'],
+					'unit'  => 'px',
+				),
+				'--header-2-bg' => $settings['header_2_background_color'],
+				'--header-2-nav-bg' => $settings['header_2_navigation_background_color'],
 			)
 		);
 	}
@@ -333,6 +399,22 @@ class LayoutSettingsManager {
 		$summary = 100 - $gallery;
 
 		return '--starterkit-product-gallery-col:' . $gallery . '%;--starterkit-product-summary-col:' . $summary . '%;';
+	}
+
+	/**
+	 * Return related products settings for product-layout-1.
+	 *
+	 * @param array<string, mixed>|null $settings Optional settings.
+	 * @return array<string, int|string>
+	 */
+	public function product_layout_1_related_products_settings( array $settings = null ) {
+		$settings = is_array( $settings ) ? $settings : $this->get_layout_settings( 'product-layout-1' );
+
+		return array(
+			'show'    => isset( $settings['product_layout_1_show_related_products'] ) ? (string) $settings['product_layout_1_show_related_products'] : '1',
+			'limit'   => isset( $settings['product_layout_1_related_products_count'] ) ? max( 1, min( 12, (int) $settings['product_layout_1_related_products_count'] ) ) : 5,
+			'columns' => isset( $settings['product_layout_1_related_products_columns'] ) ? max( 1, min( 6, (int) $settings['product_layout_1_related_products_columns'] ) ) : 5,
+		);
 	}
 
 	/**

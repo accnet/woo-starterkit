@@ -26,7 +26,7 @@ if ( is_string( $rows ) ) {
 	<div class="starterkit-element-card starterkit-element-card--faq">
 		<div class="container starterkit-element-card__inner">
 			<?php if ( '' !== $title ) : ?>
-				<strong class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></strong>
+				<h3 class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></h3>
 			<?php endif; ?>
 			<div class="starterkit-element-faq">
 				<?php foreach ( (array) $rows as $row ) : ?>

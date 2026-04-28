@@ -56,7 +56,7 @@ if ( empty( $items ) ) {
 <div class="starterkit-element-card starterkit-element-card--description-accordion">
 	<div class="container starterkit-element-card__inner">
 		<?php if ( '' !== $title ) : ?>
-			<strong class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></strong>
+			<h3 class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></h3>
 		<?php endif; ?>
 		<div class="starterkit-description-accordion">
 			<?php foreach ( $items as $index => $item ) : ?>

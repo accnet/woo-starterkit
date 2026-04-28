@@ -62,6 +62,18 @@ class PresetSchemaRegistry {
 						'label'            => __( 'Header Top', 'starterkit' ),
 						'allowed_elements' => array( 'topbar', 'topbar-1', 'promo-banner' ),
 					),
+					'header_2_top_left' => array(
+						'label'            => __( 'Header 2 Top Left', 'starterkit' ),
+						'allowed_elements' => array( 'promo-banner', 'trust-badges', 'payment-icons' ),
+					),
+					'header_2_before_navigation' => array(
+						'label'            => __( 'Header 2 Before Navigation', 'starterkit' ),
+						'allowed_elements' => array( 'promo-banner', 'trust-badges', 'payment-icons' ),
+					),
+					'header_2_after_navigation' => array(
+						'label'            => __( 'Header 2 After Navigation', 'starterkit' ),
+						'allowed_elements' => array( 'promo-banner', 'trust-badges', 'payment-icons' ),
+					),
 					'header_bottom'    => array(
 						'label'            => __( 'Header Bottom', 'starterkit' ),
 						'allowed_elements' => array( 'promo-banner', 'trust-badges', 'payment-icons' ),

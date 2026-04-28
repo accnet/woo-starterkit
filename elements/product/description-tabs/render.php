@@ -57,7 +57,7 @@ $instance_id = function_exists( 'wp_unique_id' ) ? wp_unique_id( 'starterkit-des
 <div class="starterkit-element-card starterkit-element-card--description-tabs">
 	<div class="container starterkit-element-card__inner">
 		<?php if ( '' !== $title ) : ?>
-			<strong class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></strong>
+			<h3 class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></h3>
 		<?php endif; ?>
 		<div class="starterkit-description-tabs" data-starterkit-tabs>
 			<div class="starterkit-description-tabs__nav" role="tablist" aria-label="<?php echo esc_attr( $title ? $title : __( 'Product details', 'starterkit' ) ); ?>">

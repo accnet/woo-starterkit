@@ -146,7 +146,7 @@
     placeholder = document.createElement('div');
     placeholder.className = 'starterkit-builder-zone__placeholder';
 
-    var title = document.createElement('strong');
+    var title = document.createElement('h3');
     title.textContent = zone.getAttribute('data-builder-zone-label') || 'Zone';
 
     var description = document.createElement('span');
@@ -197,7 +197,7 @@
     var inner = document.createElement('div');
     inner.className = 'container starterkit-element-card__inner';
 
-    var title = document.createElement('strong');
+    var title = document.createElement('h3');
     title.className = 'starterkit-element-card__title';
     title.textContent = label || elementType || 'Element';
 
@@ -308,6 +308,38 @@
     if (settings.header_1_background_color) {
       header.style.setProperty('--header-1-bg', String(settings.header_1_background_color));
     }
+
+    if (settings.header_1_navigation_gap !== undefined) {
+      header.style.setProperty('--header-1-nav-gap', String(settings.header_1_navigation_gap || 28) + 'px');
+    }
+  }
+
+  function applyHeaderTwoSettings(settings) {
+    var header = document.querySelector('.site-header--preset-2');
+    if (!header) {
+      return;
+    }
+
+    header.classList.toggle(
+      'site-header--not-sticky',
+      String(settings.header_2_enable_sticky === undefined ? '1' : settings.header_2_enable_sticky) !== '1'
+    );
+
+    if (settings.header_2_logo_max_height !== undefined) {
+      header.style.setProperty('--header-2-logo-max-height', String(settings.header_2_logo_max_height || 52) + 'px');
+    }
+
+    if (settings.header_2_navigation_gap !== undefined) {
+      header.style.setProperty('--header-2-nav-gap', String(settings.header_2_navigation_gap || 28) + 'px');
+    }
+
+    if (settings.header_2_background_color) {
+      header.style.setProperty('--header-2-bg', String(settings.header_2_background_color));
+    }
+
+    if (settings.header_2_navigation_background_color !== undefined) {
+      header.style.setProperty('--header-2-nav-bg', String(settings.header_2_navigation_background_color || 'transparent'));
+    }
   }
 
   function applyFooterOneSettings(settings) {
@@ -366,12 +398,40 @@
       });
   }
 
+  function applyProductLayoutOneRelatedSettings(settings) {
+    var layout = document.querySelector('.starterkit-product-layout.product-layout-1');
+    if (!layout) {
+      return;
+    }
+
+    var showRelated = String(settings.product_layout_1_show_related_products === undefined ? '1' : settings.product_layout_1_show_related_products) === '1';
+    var relatedCount = Math.max(1, Math.min(12, Number(settings.product_layout_1_related_products_count || 5)));
+    var relatedColumns = Math.max(1, Math.min(6, Number(settings.product_layout_1_related_products_columns || 5)));
+    var relatedSection = layout.querySelector('.related.products');
+
+    layout.style.setProperty('--starterkit-related-products-columns', String(relatedColumns));
+
+    if (!relatedSection) {
+      return;
+    }
+
+    relatedSection.style.display = showRelated ? '' : 'none';
+
+    relatedSection
+      .querySelectorAll('.products > li.product')
+      .forEach(function(item, index) {
+        item.style.display = showRelated && index < relatedCount ? '' : 'none';
+      });
+  }
+
   function applyLayoutSettings(settings) {
     layoutSettings = Object.assign({}, layoutSettings, settings || {});
     applyHeaderOneSettings(layoutSettings);
+    applyHeaderTwoSettings(layoutSettings);
     applyFooterOneSettings(layoutSettings);
     applyProductSplitLayoutSettings(layoutSettings);
     applyProductDescriptionTabSettings(layoutSettings);
+    applyProductLayoutOneRelatedSettings(layoutSettings);
   }
 
   function replaceLayoutPartial(target, html) {

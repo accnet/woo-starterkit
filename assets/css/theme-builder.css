@@ -871,6 +871,7 @@ body.starterkit-builder-preview-mode #wpadminbar {
   font-weight: 600;
   line-height: 1.4;
   letter-spacing: normal;
+  margin: 0 0 0 0;
 }
 
 .starterkit-element-card__content {

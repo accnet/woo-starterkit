@@ -13,7 +13,7 @@ $button_text = isset( $settings['button_text'] ) ? (string) $settings['button_te
 	<div class="container starterkit-element-card__inner">
 		<div>
 			<?php if ( '' !== $title ) : ?>
-				<strong class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></strong>
+				<h3 class="starterkit-element-card__title"><?php echo esc_html( $title ); ?></h3>
 			<?php endif; ?>
 			<?php if ( '' !== $description ) : ?>
 				<div class="starterkit-element-card__content"><?php echo wp_kses_post( wpautop( $description ) ); ?></div>
